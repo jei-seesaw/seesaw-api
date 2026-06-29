@@ -1,30 +1,14 @@
 import {
   ArgumentsHost,
-  CallHandler,
   Catch,
   ExceptionFilter,
-  ExecutionContext,
   HttpException,
   HttpStatus,
   Injectable,
-  NestInterceptor,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { ApiErrorResponse } from './api-response';
 import { AppLogger } from './logging/app-logger.service';
-
-export interface ApiSuccessResponse<T> {
-  data: T;
-}
-
-export interface ApiErrorResponse {
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-}
 
 const ERROR_CODES: Record<number, string> = {
   [HttpStatus.BAD_REQUEST]: 'bad_request',
@@ -36,18 +20,6 @@ const ERROR_CODES: Record<number, string> = {
   [HttpStatus.TOO_MANY_REQUESTS]: 'too_many_requests',
   [HttpStatus.INTERNAL_SERVER_ERROR]: 'internal_server_error',
 };
-
-@Injectable()
-export class ApiResponseInterceptor<T>
-  implements NestInterceptor<T, ApiSuccessResponse<T>>
-{
-  intercept(
-    _context: ExecutionContext,
-    next: CallHandler<T>,
-  ): Observable<ApiSuccessResponse<T>> {
-    return next.handle().pipe(map((data) => ({ data })));
-  }
-}
 
 @Catch()
 @Injectable()

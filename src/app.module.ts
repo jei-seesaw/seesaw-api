@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import {
-  ApiResponseInterceptor,
-  GlobalExceptionFilter,
-} from './common/http-response';
+import { ApiResponseInterceptor } from './common/api-response';
+import { GlobalExceptionFilter } from './common/global-exception.filter';
 import { LoggingModule } from './common/logging/logging.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { getEnvFilePaths, validateEnv } from './config/env';
