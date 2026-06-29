@@ -11,6 +11,7 @@ Harness CI/CD 제품을 뜻하지 않는다.
 
 - 의존성 설치: `pnpm install`
 - 로컬 실행: `pnpm start:dev`
+- 린트: `pnpm lint`
 - 타입 검사: `pnpm typecheck`
 - 빌드: `pnpm build`
 
@@ -29,6 +30,7 @@ Harness CI/CD 제품을 뜻하지 않는다.
 ## 검증
 
 - TypeScript 파일을 수정했다면 `pnpm typecheck`를 실행한다.
+- TypeScript 파일이나 lint 설정을 수정했다면 `pnpm lint`를 실행한다.
 - Nest module, provider, bootstrap, decorator wiring을 수정했다면
   `pnpm build`를 실행한다.
 - 테스트 스크립트가 추가되면 같은 변경에서 이 섹션을 갱신한다.

@@ -70,7 +70,7 @@ function buildErrorResponse(exception: unknown): {
     return internalServerErrorResponse();
   }
 
-  const status = exception.getStatus();
+  const status: HttpStatus = exception.getStatus();
 
   if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
     return internalServerErrorResponse(status);
@@ -90,7 +90,7 @@ function buildErrorResponse(exception: unknown): {
 }
 
 function internalServerErrorResponse(
-  status = HttpStatus.INTERNAL_SERVER_ERROR,
+  status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
 ): { body: ApiErrorResponse; status: number } {
   return {
     status,
@@ -103,7 +103,7 @@ function internalServerErrorResponse(
   };
 }
 
-function getErrorCode(status: number, response: string | object): string {
+function getErrorCode(status: HttpStatus, response: string | object): string {
   if (
     status === HttpStatus.BAD_REQUEST &&
     isRecord(response) &&
