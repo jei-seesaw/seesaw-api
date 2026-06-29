@@ -12,6 +12,7 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AppLogger } from './logging/app-logger.service';
 
 export interface ApiSuccessResponse<T> {
   data: T;
@@ -51,15 +52,39 @@ export class ApiResponseInterceptor<T>
 @Catch()
 @Injectable()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly logger: AppLogger,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const { httpAdapter } = this.httpAdapterHost;
     const { body, status } = buildErrorResponse(exception);
 
+    if (shouldLogException(exception, status)) {
+      const request = ctx.getRequest<ErrorLogRequest>();
+
+      this.logger.errorEvent(
+        'unhandled_exception',
+        exception,
+        {
+          method: request.method ?? 'UNKNOWN',
+          path: request.originalUrl ?? request.url ?? 'unknown',
+          statusCode: status,
+        },
+        GlobalExceptionFilter.name,
+      );
+    }
+
     httpAdapter.reply(ctx.getResponse(), body, status);
   }
+}
+
+interface ErrorLogRequest {
+  method?: string;
+  originalUrl?: string;
+  url?: string;
 }
 
 function buildErrorResponse(exception: unknown): {
@@ -149,4 +174,8 @@ function getErrorMessage(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function shouldLogException(exception: unknown, status: number): boolean {
+  return !(exception instanceof HttpException) || status >= 500;
 }
