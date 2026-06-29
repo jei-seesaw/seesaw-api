@@ -6,8 +6,7 @@ import { GlobalExceptionFilter } from './common/global-exception.filter';
 import { LoggingModule } from './common/logging/logging.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { getEnvFilePaths, validateEnv } from './config/env';
-import { ExamplesController } from './examples.controller';
-import { HealthController } from './health.controller';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -18,7 +17,7 @@ import { HealthController } from './health.controller';
       validate: validateEnv,
     }),
   ],
-  controllers: [HealthController, ExamplesController],
+  controllers: [HealthController],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ApiResponseInterceptor },
