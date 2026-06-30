@@ -17,6 +17,8 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 린트: `pnpm lint`
 - 타입 검사: `pnpm typecheck`
 - 빌드: `pnpm build`
+- 테스트: `pnpm test`
+- E2E 테스트: `pnpm test:e2e`
 
 ## 작업 규칙
 
@@ -29,6 +31,11 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 명시적 승인 없이 production dependency를 추가하지 않는다.
 - 사용자의 기존 변경을 보존한다. 관련 없는 변경을 되돌리지 않는다.
 - 모든 변경 라인은 사용자 요청과 직접 연결되어야 한다.
+- 기능 구현, 버그 수정, 비즈니스 규칙, DTO validation, guard/filter/interceptor
+  같은 런타임 동작 변경은 먼저 실패 테스트를 작성하고 `red -> green ->
+  refactor` 순서로 진행한다.
+- 문서-only, Swagger metadata-only, 기계적 rename, 단순 문자열/상수 변경처럼
+  typecheck/lint로 충분한 변경에는 테스트를 억지로 만들지 않는다.
 
 ## 검증
 
@@ -36,6 +43,9 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - TypeScript 파일이나 lint 설정을 수정했다면 `pnpm lint`를 실행한다.
 - Nest module, provider, bootstrap, decorator wiring을 수정했다면
   `pnpm build`를 실행한다.
+- 기능/버그 코드를 수정했다면 관련 targeted test가 먼저 실패했는지 확인한 뒤
+  통과시킨다. 마지막에는 영향 범위에 맞게 `pnpm test` 또는 `pnpm test:e2e`를
+  실행한다.
 - 테스트 스크립트가 추가되면 같은 변경에서 이 섹션을 갱신한다.
 - 실제로 실행하지 않은 검증을 실행했다고 말하지 않는다.
 
@@ -71,6 +81,8 @@ Harness CI/CD 제품을 뜻하지 않는다.
   `.agents/skills/nestjs-patterns/SKILL.md`를 읽는다.
 - Persistence, caching, jobs, logging, server internals 작업은
   `.agents/skills/backend-patterns/SKILL.md`를 읽는다.
+- 기능 구현이나 버그 수정처럼 테스트 가능한 런타임 동작 변경은
+  `.agents/skills/tdd-workflow/SKILL.md`를 읽는다.
 
 ## Harness 관리
 

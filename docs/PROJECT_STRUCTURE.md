@@ -20,12 +20,16 @@ src/
   health/
     health.controller.ts
     health.swagger.ts
+test/
+  health/
+    health.e2e-spec.ts
 
 .agents/
   skills/
     api-design/
     nestjs-patterns/
     backend-patterns/
+    tdd-workflow/
 ```
 
 ## Runtime entrypoints
@@ -57,6 +61,14 @@ src/
 - Controller Swagger metadata stays beside the controller in `*.swagger.ts`.
 - New feature code should live in its own feature directory once it grows beyond
   the initial health endpoint.
+
+## Tests
+
+- `src/**/*.spec.ts` is for focused unit tests when feature code needs them.
+- `test/**/*.e2e-spec.ts` is for request-level Nest app behavior and mirrors
+  the matching `src/` feature path when possible.
+- New runtime behavior should follow `.agents/skills/tdd-workflow/SKILL.md`
+  unless the change is docs-only, Swagger-only, mechanical, or trivial.
 
 ## Generated files
 

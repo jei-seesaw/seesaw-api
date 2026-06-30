@@ -24,6 +24,8 @@ AI와 함께 개발하기 위한 작업 합의다.
 - `.agents/skills/nestjs-patterns/SKILL.md`: Nest module/controller/provider 작업.
 - `.agents/skills/backend-patterns/SKILL.md`: persistence, logging, jobs, server
   internals 작업.
+- `.agents/skills/tdd-workflow/SKILL.md`: 테스트 가능한 기능 구현과 버그 수정의
+  red-green-refactor workflow.
 
 ## 만들지 않는 것
 
@@ -38,6 +40,7 @@ AI와 함께 개발하기 위한 작업 합의다.
 아래가 바뀌면 같은 변경에서 가장 작은 Harness surface를 갱신한다.
 
 - build, lint, typecheck, local-run command
+- test command 또는 반복 테스트 workflow
 - public API shape, error response, Swagger 노출 조건
 - module boundary, cross-cutting provider, persistence convention
 - 같은 review comment나 agent 실수가 두 번 이상 반복되는 규칙
