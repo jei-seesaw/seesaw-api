@@ -127,6 +127,9 @@ export class UsersService {
 - Controllers should stay thin: parse HTTP input, call a provider, return response DTOs.
 - Put business logic in injectable services, not controllers.
 - Export only the providers other modules genuinely need.
+- When one feature needs another feature's entity or lookup, import the owning
+  feature module and inject its exported repository/provider. Do not place
+  cross-feature persistence queries in the caller's repository.
 
 ## DTOs and Validation
 
@@ -190,6 +193,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 - Keep one consistent error envelope across the API.
 - Throw framework exceptions for expected client errors; log and wrap unexpected failures centrally.
+- Expected domain 4xx errors should be feature-local custom exception classes.
+  Service methods should throw those classes, not build `{ code, message }`
+  response payloads directly.
 
 ## Config and Environment Validation
 

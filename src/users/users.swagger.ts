@@ -1,14 +1,32 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBody,
   ApiBadRequestResponse,
+  ApiConflictResponse,
+  ApiCreatedResponse,
   ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnprocessableEntityResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+import {
+  CreateUserRequestDto,
+  CreateUserResponseDto,
+} from './dto/create-user.dto';
 import { NicknameAvailabilityResponseDto } from './dto/nickname-availability.dto';
+
+const createUserResponseSchema = {
+  properties: {
+    data: {
+      $ref: getSchemaPath(CreateUserResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
 
 const nicknameAvailabilityResponseSchema = {
   properties: {
@@ -23,7 +41,25 @@ const nicknameAvailabilityResponseSchema = {
 export function ApiUsersController() {
   return applyDecorators(
     ApiTags('Users'),
-    ApiExtraModels(NicknameAvailabilityResponseDto),
+    ApiExtraModels(
+      CreateUserRequestDto,
+      CreateUserResponseDto,
+      NicknameAvailabilityResponseDto,
+    ),
+  );
+}
+
+export function ApiCreateUser() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Create user' }),
+    ApiBody({ type: CreateUserRequestDto }),
+    ApiCreatedResponse({
+      description: 'User created',
+      schema: createUserResponseSchema,
+    }),
+    ApiBadRequestResponse({ description: 'Invalid signup request body' }),
+    ApiConflictResponse({ description: 'Nickname already exists' }),
+    ApiUnprocessableEntityResponse({ description: 'Invalid affiliation code' }),
   );
 }
 

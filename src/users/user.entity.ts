@@ -20,23 +20,23 @@ export class User {
 
   @ManyToOne(() => Affiliation, {
     fieldName: 'affiliation_code',
-    nullable: true,
   })
-  affiliation: Affiliation | null = null;
+  affiliation: Affiliation;
 
   @Property({
     columnType: 'int',
-    default: 0,
+    default: 1000,
     fieldName: 'vote_token',
     type: 'number',
   })
-  voteToken: number = 0;
+  voteToken: number = 1000;
 
   @Property({ type: Date, fieldName: 'created_at' })
   createdAt: Date = new Date();
 
-  constructor(nickname: string, passwordHash: string) {
+  constructor(nickname: string, passwordHash: string, affiliation: Affiliation) {
     this.nickname = nickname;
     this.passwordHash = passwordHash;
+    this.affiliation = affiliation;
   }
 }

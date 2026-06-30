@@ -145,6 +145,9 @@ Future paginated APIs may need a wider envelope:
 - Use `camelCase` JSON fields unless the existing API already chose another convention.
 - Do not expose stack traces, SQL errors, password hashes, tokens, or audit internals.
 - For internal APIs, returning the resource directly is acceptable if errors still use a standard shape.
+- Public error `code`, message, and HTTP status are part of the API contract.
+  Keep them in documented custom exceptions or the global exception boundary,
+  not assembled ad hoc inside service workflow methods.
 
 ## Pagination
 
@@ -304,6 +307,8 @@ Prefer URL path versioning for APIs that clients call directly:
 - List endpoint has bounded pagination.
 - Filters and sort fields are allowlisted.
 - Error response uses a stable `code` and human-readable `message`.
+- Service code does not inline public error payload objects; custom exceptions
+  or the global filter own that mapping.
 - Auth requirement is explicit: public, bearer token, API key, or internal only.
 - Authorization behavior is defined for ownership and role failures.
 - Rate limit headers and `429` body are consistent.

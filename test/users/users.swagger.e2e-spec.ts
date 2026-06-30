@@ -21,6 +21,7 @@ describe('Users Swagger', () => {
           provide: UsersService,
           useValue: {
             checkNicknameAvailability: () => Promise.resolve(undefined),
+            create: () => Promise.resolve(undefined),
           },
         },
       ],
@@ -82,5 +83,50 @@ describe('Users Swagger', () => {
         },
       },
     });
+  });
+
+  it('회원가입 계약을 Swagger JSON에 노출한다', () => {
+    expect(document.components?.schemas?.CreateUserRequestDto).toMatchObject({
+      properties: {
+        affiliationCode: { maxLength: 50, minLength: 1, type: 'string' },
+        nickname: { maxLength: 120, minLength: 1, type: 'string' },
+        password: { maxLength: 128, minLength: 8, type: 'string' },
+      },
+      required: ['nickname', 'password', 'affiliationCode'],
+      type: 'object',
+    });
+    expect(document.components?.schemas?.CreateUserResponseDto).toMatchObject({
+      properties: {
+        id: { type: 'string' },
+      },
+      required: ['id'],
+      type: 'object',
+    });
+    expect(document.paths['/api/v2/users']?.post?.requestBody).toMatchObject({
+      content: {
+        'application/json': {
+          schema: {
+            $ref: '#/components/schemas/CreateUserRequestDto',
+          },
+        },
+      },
+      required: true,
+    });
+    expect(document.paths['/api/v2/users']?.post?.responses['201']).toMatchObject({
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              data: {
+                $ref: '#/components/schemas/CreateUserResponseDto',
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(document.paths['/api/v2/users']?.post?.responses['400']).toBeDefined();
+    expect(document.paths['/api/v2/users']?.post?.responses['409']).toBeDefined();
+    expect(document.paths['/api/v2/users']?.post?.responses['422']).toBeDefined();
   });
 });

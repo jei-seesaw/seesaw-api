@@ -80,6 +80,35 @@ The public response is wrapped by the global interceptor:
 
 ## User endpoints
 
+`POST /api/v2/users` creates a user. It does not issue auth tokens.
+
+Request:
+
+```json
+{
+  "nickname": "someName",
+  "password": "password123",
+  "affiliationCode": "teacher"
+}
+```
+
+Public response:
+
+```json
+{
+  "data": {
+    "id": "generated-user-id"
+  }
+}
+```
+
+- `nickname` must be unique.
+- `password` must be 8 to 128 characters and is never returned.
+- `affiliationCode` must match an existing affiliation.
+- New users receive `1000` voteToken by default.
+- Duplicate nicknames return `409` with `nickname_already_exists`.
+- Unknown affiliation code values return `422` with `invalid_affiliation`.
+
 `GET /api/v2/users/nickname-availability` checks whether a nickname is already
 used.
 

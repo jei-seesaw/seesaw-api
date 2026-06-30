@@ -70,14 +70,22 @@ Harness CI/CD 제품을 뜻하지 않는다.
   details? } }` 형태를 유지한다.
 - 예상 가능한 도메인 4xx 오류는 Nest `HttpException` 계열 커스텀 예외로
   표현한다. 현재 규모에서는 오류 code 상수를 별도 registry 파일에 모으지 않는다.
+- Service method 안에서 `{ code, message }` 같은 public error payload를 직접
+  조립하지 않는다. 예상 가능한 도메인 오류는 feature-local custom exception이
+  HTTP status, public code, message를 소유하게 하고, service는 그 예외를 던진다.
 - 내부 장애나 5xx 오류는 generic `internal_server_error`로 숨긴다.
 - Swagger bootstrap은 `src/config/swagger.ts`에 두고, controller별 Swagger
   decorator는 controller 옆 `*.swagger.ts`에 둔다.
+- 다른 feature의 entity나 table을 조회해야 하면 caller repository에 임시 query를
+  넣지 않는다. owning feature가 repository/provider를 소유하고 module에서 export한
+  뒤 caller module이 import해서 사용한다.
 
 ## Review guidelines
 
 - public API shape, error shape, validation boundary, Swagger 노출 조건이 바뀌면
   docs와 controller Swagger metadata가 함께 맞는지 확인한다.
+- service가 HTTP error code/message/status를 직접 만들거나, repository가 다른
+  feature 소유 데이터를 조회하면 provider boundary 위반으로 본다.
 - `APP_ENV=live`에서는 `/api/v2/docs`와 `/api/v2/docs-json`이 노출되지 않아야 한다.
 - logging, exception, response envelope 같은 cross-cutting provider 변경은
   `AppModule` wiring과 실행 순서 영향을 같이 본다.

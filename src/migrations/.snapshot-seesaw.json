@@ -82,7 +82,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "unique": false,
           "length": 50,
           "precision": null,
@@ -172,7 +172,7 @@
           "length": null,
           "precision": null,
           "scale": null,
-          "default": "0",
+          "default": "1000",
           "comment": null,
           "collation": null,
           "enumItems": [],
@@ -224,7 +224,8 @@
             "code"
           ],
           "referencedTableName": "affiliations",
-          "deleteRule": "set null"
+          "updateRule": "restrict",
+          "deleteRule": "restrict"
         }
       },
       "comment": null

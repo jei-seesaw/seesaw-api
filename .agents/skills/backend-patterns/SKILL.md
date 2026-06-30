@@ -79,6 +79,9 @@ export class MarketsModule {}
 - Keep ORM-specific code behind providers that speak domain language.
 - Do not add repositories for trivial single-query modules unless they remove real duplication.
 - Export repository providers only when another module genuinely needs them.
+- Repositories must not absorb queries for entities owned by another feature.
+  If a workflow needs another feature's data, export that feature's repository
+  or provider from its module and inject it into the workflow service.
 
 ### Service Layer Pattern
 
@@ -107,6 +110,10 @@ export class MarketsService {
 - Put business rules and authorization decisions in services.
 - Throw Nest framework exceptions for expected client errors.
 - Do not let controllers coordinate multi-step writes.
+- Services may decide that a domain error happened, but they must not assemble
+  public `{ code, message }` error payloads inline. Use feature-local custom
+  exception classes for expected 4xx errors so HTTP status, public code, and
+  message stay in one boundary.
 
 ## Database Patterns
 
