@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
-import { promisify } from 'node:util';
 import { AffiliationRepository } from '../affiliations/affiliations.repository';
 import {
   CreateUserRequestDto,
@@ -14,13 +12,8 @@ import {
   InvalidAffiliationException,
   NicknameAlreadyExistsException,
 } from './users.exceptions';
+import { hashPassword } from './password';
 import { UsersRepository } from './users.repository';
-
-const scrypt = promisify(scryptCallback) as (
-  password: string,
-  salt: string,
-  keylen: number,
-) => Promise<Buffer>;
 
 @Injectable()
 export class UsersService {
@@ -69,13 +62,6 @@ export class UsersService {
 
     return { available: !exists };
   }
-}
-
-async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString('hex');
-  const key = await scrypt(password, salt, 64);
-
-  return `scrypt:${salt}:${key.toString('hex')}`;
 }
 
 function isDuplicateKeyError(error: unknown): boolean {

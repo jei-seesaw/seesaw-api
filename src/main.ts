@@ -14,7 +14,12 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(API_PREFIX);
 
   const config = app.get(ConfigService<EnvConfig, true>);
+  const corsOrigins = config.getOrThrow<string[]>('CORS_ORIGINS');
 
+  app.enableCors({
+    credentials: true,
+    origin: corsOrigins,
+  });
   setupSwagger(app, config.getOrThrow('APP_ENV'));
 
   await app.listen(config.getOrThrow('PORT'));

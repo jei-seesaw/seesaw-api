@@ -7,6 +7,7 @@ import { GlobalExceptionFilter } from './common/global-exception.filter';
 import { LoggingModule } from './common/logging/logging.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { AffiliationsModule } from './affiliations/affiliations.module';
+import { AuthModule } from './auth/auth.module';
 import { getEnvFilePaths, validateEnv } from './config/env';
 import mikroOrmConfig from './config/mikro-orm.config';
 import { HealthController } from './health/health.controller';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     MikroOrmModule.forRoot(mikroOrmConfig),
     AffiliationsModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [HealthController],
   providers: [

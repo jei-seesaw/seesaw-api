@@ -59,6 +59,7 @@ changed first. That would double-wrap the response.
   exposed in live.
 - Swagger summary, description, example은 한국어로 작성하고 API마다 실제 사용
   흐름에 맞는 예시를 둔다.
+- Swagger에는 bearer auth와 `refreshToken` cookie auth scheme을 노출한다.
 
 ## Health endpoint
 
@@ -79,6 +80,65 @@ The public response is wrapped by the global interceptor:
   }
 }
 ```
+
+## Auth endpoints
+
+`POST /api/v2/auth/login`은 닉네임과 비밀번호로 로그인한다.
+
+요청:
+
+```json
+{
+  "nickname": "someName",
+  "password": "password123"
+}
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "accessToken": "jwt-access-token"
+  }
+}
+```
+
+같은 응답은 `refreshToken`을 `HttpOnly` cookie로 설정한다.
+
+```text
+Set-Cookie: refreshToken=jwt-refresh-token; HttpOnly; Secure; SameSite=None; Path=/api/v2/auth/refresh
+```
+
+- `accessToken`은 응답 body로만 반환한다.
+- `refreshToken`은 `HttpOnly` cookie로만 반환하며 응답 body에는 포함하지 않는다.
+- 닉네임 또는 비밀번호가 틀리면 `401`과 `invalid_credentials`를 반환한다.
+- 요청 body가 없거나 유효하지 않으면 `400`과 `validation_error`를 반환한다.
+
+`POST /api/v2/auth/refresh`는 `refreshToken` cookie를 읽고 새 `accessToken`을
+반환한다.
+
+요청:
+
+```text
+Cookie: refreshToken=jwt-refresh-token
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "accessToken": "new-jwt-access-token"
+  }
+}
+```
+
+- refresh token이 없거나, 만료되었거나, 형식이 잘못되었거나, token type이
+  다르면 `401`과 `invalid_refresh_token`을 반환한다.
+- bearer access token 검증 실패는 `401`과 `invalid_access_token`을 반환한다.
+- refresh token 저장, token rotation, logout, revoke list는 현재 contract에
+  포함하지 않는다.
 
 ## User endpoints
 

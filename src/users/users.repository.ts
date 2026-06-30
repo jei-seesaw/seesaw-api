@@ -6,6 +6,8 @@ import { User } from './user.entity';
 export abstract class UsersRepository {
   abstract create(user: User): Promise<User>;
   abstract existsByNickname(nickname: string): Promise<boolean>;
+  abstract findById(id: string): Promise<User | null>;
+  abstract findByNickname(nickname: string): Promise<User | null>;
 }
 
 @Injectable()
@@ -25,5 +27,13 @@ export class MikroOrmUsersRepository implements UsersRepository {
 
   async existsByNickname(nickname: string): Promise<boolean> {
     return (await this.users.findOne({ nickname })) !== null;
+  }
+
+  findById(id: string): Promise<User | null> {
+    return this.users.findOne({ id });
+  }
+
+  findByNickname(nickname: string): Promise<User | null> {
+    return this.users.findOne({ nickname });
   }
 }

@@ -10,6 +10,8 @@ export function setupSwagger(app: INestApplication, appEnv: AppEnv): void {
   const documentConfig = new DocumentBuilder()
     .setTitle('Seesaw API')
     .setVersion('0.1.0')
+    .addBearerAuth()
+    .addCookieAuth('refreshToken')
     .build();
   const document = SwaggerModule.createDocument(app, documentConfig);
 

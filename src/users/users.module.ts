@@ -16,5 +16,6 @@ import { UsersService } from './users.service';
     UsersService,
     { provide: UsersRepository, useClass: MikroOrmUsersRepository },
   ],
+  exports: [UsersRepository],
 })
 export class UsersModule {}
