@@ -57,31 +57,41 @@ jobs:
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_TARGET: ${{ secrets.SSH_TARGET }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+          ssh-keyscan -H -p "$SSH_PORT" "$SSH_HOST" > ~/.ssh/known_hosts 2>/dev/null
+          test -s ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host $SSH_TARGET
+            HostName $SSH_HOST
+            Port $SSH_PORT
+            User $SSH_USER
+            IdentityFile ~/.ssh/id_ed25519
+            IdentitiesOnly yes
+            UserKnownHostsFile ~/.ssh/known_hosts
+            StrictHostKeyChecking yes
+          EOF
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts ~/.ssh/config
       - name: Deploy over SSH
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_USER: ${{ secrets.SSH_USER }}
           SSH_DEPLOY_PATH: ${{ secrets.SSH_DEPLOY_PATH }}
+          SSH_TARGET: ${{ secrets.SSH_TARGET }}
           DOCKERHUB_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
         run: |
           set -euo pipefail
 
-          remote="$SSH_USER@$SSH_HOST"
-          ssh_args=(-i ~/.ssh/id_ed25519 -p "$SSH_PORT" -o UserKnownHostsFile=~/.ssh/known_hosts)
+          remote="$SSH_TARGET"
 
-          ssh "${ssh_args[@]}" "$remote" "mkdir -p '$SSH_DEPLOY_PATH'"
-          scp -P "$SSH_PORT" -i ~/.ssh/id_ed25519 -o UserKnownHostsFile=~/.ssh/known_hosts \
-            deploy/docker-compose.dev.yml "$remote:$SSH_DEPLOY_PATH/docker-compose.yml"
+          ssh "$remote" "mkdir -p '$SSH_DEPLOY_PATH'"
+          scp deploy/docker-compose.dev.yml "$remote:$SSH_DEPLOY_PATH/docker-compose.yml"
 
-          ssh "${ssh_args[@]}" "$remote" "DEPLOY_PATH='$SSH_DEPLOY_PATH' IMAGE='$DOCKERHUB_REPOSITORY:main' sh -se" <<'REMOTE'
+          ssh "$remote" "DEPLOY_PATH='$SSH_DEPLOY_PATH' IMAGE='$DOCKERHUB_REPOSITORY:main' sh -se" <<'REMOTE'
           cd "$DEPLOY_PATH"
           test -f .env || { echo "$DEPLOY_PATH/.env is missing"; exit 1; }
           if grep -q '^IMAGE=' .env; then
