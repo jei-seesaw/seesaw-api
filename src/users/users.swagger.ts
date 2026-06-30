@@ -3,25 +3,21 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiExtraModels,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 
 const userResponseSchema = {
   properties: {
     data: {
-      properties: {
-        id: { format: 'uuid', type: 'string' as const },
-        email: { format: 'email', type: 'string' as const },
-        name: { type: 'string' as const },
-        createdAt: { format: 'date-time', type: 'string' as const },
-      },
-      required: ['id', 'email', 'name', 'createdAt'],
-      type: 'object' as const,
+      $ref: getSchemaPath(UserResponseDto),
     },
   },
   required: ['data'],
@@ -29,7 +25,7 @@ const userResponseSchema = {
 };
 
 export function ApiUsersController() {
-  return ApiTags('Users');
+  return applyDecorators(ApiTags('Users'), ApiExtraModels(UserResponseDto));
 }
 
 export function ApiCreateUser() {

@@ -1,10 +1,18 @@
+import { ApiProperty } from '@nestjs/swagger';
 import type { User } from '../user.entity';
 
-export interface UserResponseDto {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
+export class UserResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ format: 'email' })
+  email!: string;
+
+  @ApiProperty()
+  name!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: string;
 }
 
 export function toUserResponse(user: User): UserResponseDto {

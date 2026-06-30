@@ -41,9 +41,11 @@ test/
   Swagger setup, global API prefix, and MikroORM MariaDB configuration.
 - `APP_ENV` is `local`, `dev`, or `live`; missing value defaults to `local`.
 - `PORT` defaults to `3000` and must be an integer from 1 to 65535.
-- MariaDB env values default to the local Docker service from `docker-compose.yml`.
-  The containerized dev API uses `.env.dev` with `DB_HOST=mariadb` and
-  `DB_PORT=3306`; host tools use `127.0.0.1:3307`.
+- Local env values live in `.env.local`, using `127.0.0.1:3307` for host tools.
+  The root `docker-compose.yml` is local-only and overrides the API container
+  DB host to `mariadb:3306`.
+- Dev deployment compose lives in `deploy/docker-compose.dev.yml` with
+  `deploy/.env`.
 - `APP_ENV=live` requires an explicit `DB_PASSWORD`.
 - Swagger is skipped when `APP_ENV=live`.
 

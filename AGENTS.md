@@ -16,7 +16,7 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 로컬 DB 실행: `docker compose up -d mariadb`
 - DB migration 적용: `pnpm db:migrate`
 - 로컬 실행: `pnpm start:dev`
-- Docker 개발 서버 실행: `docker compose up -d --build`
+- 로컬 Docker 서버 실행: `docker compose up -d --build`
 - 린트: `pnpm lint`
 - 타입 검사: `pnpm typecheck`
 - 빌드: `pnpm build`
