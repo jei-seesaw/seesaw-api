@@ -16,5 +16,6 @@ export function setupSwagger(app: INestApplication, appEnv: AppEnv): void {
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'Seesaw API Docs',
     raw: ['json'],
+    useGlobalPrefix: true,
   });
 }

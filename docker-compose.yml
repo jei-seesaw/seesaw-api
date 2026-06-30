@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    env_file:
+      - .env.dev
+    ports:
+      - "127.0.0.1:9093:9093"
+
+  mariadb:
+    image: mariadb:11
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MARIADB_DATABASE: seesaw
+      MARIADB_USER: seesaw
+      MARIADB_PASSWORD: seesaw
+      MARIADB_ROOT_PASSWORD: seesaw_root
+    volumes:
+      - mariadb-data:/var/lib/mysql
+
+volumes:
+  mariadb-data:

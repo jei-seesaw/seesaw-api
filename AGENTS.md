@@ -16,6 +16,7 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 로컬 DB 실행: `docker compose up -d mariadb`
 - DB migration 적용: `pnpm db:migrate`
 - 로컬 실행: `pnpm start:dev`
+- Docker 개발 서버 실행: `docker compose up -d --build`
 - 린트: `pnpm lint`
 - 타입 검사: `pnpm typecheck`
 - 빌드: `pnpm build`
@@ -77,7 +78,7 @@ Harness CI/CD 제품을 뜻하지 않는다.
 
 - public API shape, error shape, validation boundary, Swagger 노출 조건이 바뀌면
   docs와 controller Swagger metadata가 함께 맞는지 확인한다.
-- `APP_ENV=live`에서는 `/docs`와 `/docs-json`이 노출되지 않아야 한다.
+- `APP_ENV=live`에서는 `/api/v2/docs`와 `/api/v2/docs-json`이 노출되지 않아야 한다.
 - logging, exception, response envelope 같은 cross-cutting provider 변경은
   `AppModule` wiring과 실행 순서 영향을 같이 본다.
 

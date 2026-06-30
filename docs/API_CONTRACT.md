@@ -53,12 +53,14 @@ changed first. That would double-wrap the response.
 - App-level Swagger setup lives in `src/config/swagger.ts`.
 - Controller-specific decorators live beside each controller in `*.swagger.ts`.
 - Swagger is available in `local` and `dev`.
-- Swagger is disabled when `APP_ENV=live`, so `/docs` and `/docs-json` should
-  not be exposed in live.
+- Swagger is served under `/api/v2/docs` and `/api/v2/docs-json` in `local` and
+  `dev`.
+- Swagger is disabled when `APP_ENV=live`, so Swagger endpoints should not be
+  exposed in live.
 
 ## Health endpoint
 
-`GET /health` returns the controller payload:
+`GET /api/v2/health` returns the controller payload:
 
 ```json
 {
@@ -78,7 +80,7 @@ The public response is wrapped by the global interceptor:
 
 ## User endpoints
 
-`POST /api/v1/users` creates a user and returns `201 Created`.
+`POST /api/v2/users` creates a user and returns `201 Created`.
 
 Request:
 
@@ -102,7 +104,7 @@ Public response:
 }
 ```
 
-`GET /api/v1/users/:id` returns the same public user shape. Missing users return
+`GET /api/v2/users/:id` returns the same public user shape. Missing users return
 `404` with:
 
 ```json

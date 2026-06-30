@@ -3,6 +3,8 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
+import { API_PREFIX } from '../../src/config/api-prefix';
+import { setupSwagger } from '../../src/config/swagger';
 
 describe('Health endpoint', () => {
   let app: INestApplication;
@@ -13,6 +15,8 @@ describe('Health endpoint', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
+    setupSwagger(app, 'dev');
     await app.init();
   });
 
@@ -22,8 +26,14 @@ describe('Health endpoint', () => {
 
   it('health payload를 전역 성공 응답으로 감싼다', () => {
     return request(app.getHttpServer() as Server)
-      .get('/health')
+      .get('/api/v2/health')
       .expect(200)
       .expect({ data: { status: 'ok' } });
+  });
+
+  it('Swagger JSON을 전역 prefix 아래에서 노출한다', () => {
+    return request(app.getHttpServer() as Server)
+      .get('/api/v2/docs-json')
+      .expect(200);
   });
 });

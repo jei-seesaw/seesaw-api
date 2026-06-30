@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import type { Server } from 'node:http';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
+import { API_PREFIX } from '../../src/config/api-prefix';
 
 describe('Users endpoint', () => {
   let app: INestApplication;
@@ -14,6 +15,7 @@ describe('Users endpoint', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
     server = app.getHttpServer() as Server;
   });
@@ -26,7 +28,7 @@ describe('Users endpoint', () => {
     const email = `user-${Date.now()}@example.com`;
 
     const createResponse = await request(server)
-      .post('/api/v1/users')
+      .post('/api/v2/users')
       .send({ email, name: 'Test User' })
       .expect(201);
     const createBody = createResponse.body as unknown as UserEnvelope;
@@ -38,14 +40,14 @@ describe('Users endpoint', () => {
     expect(createResponse.headers.location).toBeUndefined();
 
     await request(server)
-      .get(`/api/v1/users/${createBody.data.id}`)
+      .get(`/api/v2/users/${createBody.data.id}`)
       .expect(200)
       .expect(createBody);
   });
 
   it('잘못된 사용자 요청은 요청 경계에서 거절한다', () => {
     return request(server)
-      .post('/api/v1/users')
+      .post('/api/v2/users')
       .send({ email: 'not-an-email', name: '', extra: 'nope' })
       .expect(400)
       .expect((response: { body: unknown }) => {
@@ -57,7 +59,7 @@ describe('Users endpoint', () => {
 
   it('없는 사용자를 조회하면 사용자 없음 오류를 반환한다', () => {
     return request(server)
-      .get('/api/v1/users/00000000-0000-4000-8000-000000000000')
+      .get('/api/v2/users/00000000-0000-4000-8000-000000000000')
       .expect(404)
       .expect({
         error: {

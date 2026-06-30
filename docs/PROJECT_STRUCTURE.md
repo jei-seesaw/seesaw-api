@@ -29,7 +29,8 @@ test/
 ## Runtime entrypoints
 
 - `src/main.ts` creates the Nest app, installs `AppLogger`, reads typed env via
-  `ConfigService<EnvConfig, true>`, configures Swagger, and listens on `PORT`.
+  `ConfigService<EnvConfig, true>`, applies the global API prefix, configures
+  Swagger, and listens on `PORT`.
 - `src/app.module.ts` owns global module wiring: config validation, logging,
   request validation, MikroORM, request logging, success response wrapping, and
   exception filtering.
@@ -37,11 +38,13 @@ test/
 ## Config
 
 - `src/config/` owns env file precedence, boot-time env validation, app-level
-  Swagger setup, and MikroORM MariaDB configuration.
+  Swagger setup, global API prefix, and MikroORM MariaDB configuration.
 - `APP_ENV` is `local`, `dev`, or `live`; missing value defaults to `local`.
 - `PORT` defaults to `3000` and must be an integer from 1 to 65535.
-- MariaDB env values default to the local Docker service from `compose.yaml`;
-  `APP_ENV=live` requires an explicit `DB_PASSWORD`.
+- MariaDB env values default to the local Docker service from `docker-compose.yml`.
+  The containerized dev API uses `.env.dev` with `DB_HOST=mariadb` and
+  `DB_PORT=3306`; host tools use `127.0.0.1:3307`.
+- `APP_ENV=live` requires an explicit `DB_PASSWORD`.
 - Swagger is skipped when `APP_ENV=live`.
 
 ## Common layer
