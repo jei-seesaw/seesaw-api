@@ -89,7 +89,7 @@ jobs:
           remote="$SSH_TARGET"
 
           ssh "$remote" "mkdir -p '$SSH_DEPLOY_PATH'"
-          scp deploy/docker-compose.dev.yml "$remote:$SSH_DEPLOY_PATH/docker-compose.yml"
+          ssh "$remote" "cat > '$SSH_DEPLOY_PATH/docker-compose.yml'" < deploy/docker-compose.dev.yml
 
           ssh "$remote" "DEPLOY_PATH='$SSH_DEPLOY_PATH' IMAGE='$DOCKERHUB_REPOSITORY:main' sh -se" <<'REMOTE'
           cd "$DEPLOY_PATH"
