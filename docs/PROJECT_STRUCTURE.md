@@ -63,9 +63,10 @@ test/
 
 ## Tests
 
-- `src/**/*.spec.ts` is for focused unit tests when feature code needs them.
-- `test/**/*.e2e-spec.ts` is for request-level Nest app behavior and mirrors
-  the matching `src/` feature path when possible.
+- `test/**/*.spec.ts` is for focused unit tests when feature code needs them.
+- `test/**/*.e2e-spec.ts` is for request-level Nest app behavior.
+- Test files live under `test/` and mirror the matching `src/` feature path
+  when possible.
 - New runtime behavior should follow `.agents/skills/tdd-workflow/SKILL.md`
   unless the change is docs-only, Swagger-only, mechanical, or trivial.
 

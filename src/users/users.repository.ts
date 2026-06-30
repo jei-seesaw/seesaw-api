@@ -1,6 +1,6 @@
 import { EntityRepository } from '@mikro-orm/mariadb';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 
@@ -24,7 +24,7 @@ export class MikroOrmUsersRepository implements UsersRepository {
     const persistedUser = await this.findById(user.id);
 
     if (!persistedUser) {
-      throw new Error('Created user was not found');
+      throw new InternalServerErrorException('Created user was not found');
     }
 
     return persistedUser;

@@ -65,7 +65,7 @@ Use semantic status codes:
 
 ```text
 200 OK                    GET, PUT, PATCH with response body
-201 Created               POST that creates a resource; include Location
+201 Created               POST that creates a resource
 202 Accepted              Job queued or async processing started
 204 No Content            DELETE or update with no response body
 400 Bad Request           Malformed JSON or invalid query syntax
@@ -81,7 +81,8 @@ Use semantic status codes:
 
 - Do not return `200` with `{ success: false }` for failures.
 - Do not return `500` for validation, auth, or authorization failures.
-- Return `201` plus `Location` when a create endpoint exposes the new resource URL.
+- Return `201` for successful create endpoints. Add `Location` only when the
+  current API contract explicitly requires it.
 
 ## Response Format
 
@@ -220,13 +221,9 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(
-    @Body() dto: CreateUserDto,
-    @Res({ passthrough: true }) response: Response,
-  ): Promise<UserResponseDto> {
+  @HttpCode(HttpStatus.CREATED)
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
     const user = await this.usersService.create(dto);
-    response.status(HttpStatus.CREATED);
-    response.setHeader('Location', `/api/v1/users/${user.id}`);
 
     return UserResponseDto.from(user);
   }
@@ -303,7 +300,7 @@ Prefer URL path versioning for APIs that clients call directly:
 
 - Resource URL is plural, kebab-case, and avoids verbs except action routes.
 - Method and status code match HTTP semantics.
-- Create endpoint returns `201` and `Location` when the new resource is addressable.
+- Create endpoint returns `201`; `Location` is included only if the contract says so.
 - List endpoint has bounded pagination.
 - Filters and sort fields are allowlisted.
 - Error response uses a stable `code` and human-readable `message`.

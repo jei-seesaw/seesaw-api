@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
-import { User } from './user.entity';
-import { UsersRepository } from './users.repository';
-import { UsersService } from './users.service';
+import { User } from '../../src/users/user.entity';
+import { UserNotFoundException } from '../../src/users/users.exception';
+import { UsersRepository } from '../../src/users/users.repository';
+import { UsersService } from '../../src/users/users.service';
 
 describe('UsersService', () => {
   let repository: FakeUsersRepository;
@@ -12,7 +12,7 @@ describe('UsersService', () => {
     service = new UsersService(repository);
   });
 
-  it('creates users through the repository', async () => {
+  it('repository를 통해 사용자를 생성한다', async () => {
     const user = new User('alice@example.com', 'Alice');
     repository.createdUser = user;
 
@@ -31,9 +31,9 @@ describe('UsersService', () => {
     });
   });
 
-  it('throws not found when the repository has no user', async () => {
+  it('repository에 사용자가 없으면 사용자 없음 예외를 던진다', async () => {
     await expect(service.findOne('missing-id')).rejects.toBeInstanceOf(
-      NotFoundException,
+      UserNotFoundException,
     );
   });
 });

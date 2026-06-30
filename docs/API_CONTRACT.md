@@ -38,9 +38,13 @@ changed first. That would double-wrap the response.
 ```
 
 - Expected Nest `HttpException` values keep their HTTP status.
+- Expected domain 4xx errors use Nest `HttpException` subclasses when they need
+  stable public codes, for example `UserNotFoundException`.
+- Domain exception response objects with `code`, `message`, and optional
+  `details` are mapped into the public error envelope.
 - validation-style bad requests use `validation_error`.
-- server errors and non-HTTP exceptions return `internal_server_error` with
-  `Internal server error`.
+- server errors, 5xx `HttpException` values, and non-HTTP exceptions return
+  `internal_server_error` with `Internal server error`.
 - stack traces, SQL errors, secrets, tokens, and internal audit fields must not
   appear in API responses.
 
@@ -74,7 +78,7 @@ The public response is wrapped by the global interceptor:
 
 ## User endpoints
 
-`POST /api/v1/users` creates a user and returns `201 Created` with `Location`.
+`POST /api/v1/users` creates a user and returns `201 Created`.
 
 Request:
 
@@ -98,5 +102,14 @@ Public response:
 }
 ```
 
-`GET /api/v1/users/:id` returns the same public user shape or `404` when the
-user does not exist.
+`GET /api/v1/users/:id` returns the same public user shape. Missing users return
+`404` with:
+
+```json
+{
+  "error": {
+    "code": "user_not_found",
+    "message": "User not found"
+  }
+}
+```

@@ -20,7 +20,7 @@ describe('Health endpoint', () => {
     await app.close();
   });
 
-  it('wraps the health payload in the global success envelope', () => {
+  it('health payload를 전역 성공 응답으로 감싼다', () => {
     return request(app.getHttpServer() as Server)
       .get('/health')
       .expect(200)

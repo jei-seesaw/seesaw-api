@@ -109,6 +109,10 @@ function getErrorCode(status: HttpStatus, response: string | object): string {
     return 'validation_error';
   }
 
+  if (isRecord(response) && typeof response.code === 'string') {
+    return response.code;
+  }
+
   return (
     ERROR_CODES[status] ??
     (status >= HttpStatus.INTERNAL_SERVER_ERROR

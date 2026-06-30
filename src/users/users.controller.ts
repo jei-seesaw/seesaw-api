@@ -7,7 +7,6 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import type { UserResponseDto } from './dto/user-response.dto';
@@ -24,17 +23,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiCreateUser()
-  async create(
-    @Body() dto: CreateUserDto,
-    @Res({ passthrough: true }) response: HeaderResponse,
-  ): Promise<UserResponseDto> {
-    const user = await this.usersService.create(dto);
-
-    response.status(HttpStatus.CREATED);
-    response.setHeader('Location', `/api/v1/users/${user.id}`);
-
-    return user;
+  create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+    return this.usersService.create(dto);
   }
 
   @Get(':id')
@@ -43,9 +35,4 @@ export class UsersController {
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
     return this.usersService.findOne(id);
   }
-}
-
-interface HeaderResponse {
-  status(code: number): unknown;
-  setHeader(name: string, value: string): unknown;
 }

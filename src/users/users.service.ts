@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import {
   toUserResponse,
   UserResponseDto,
 } from './dto/user-response.dto';
+import { UserNotFoundException } from './users.exception';
 import { UsersRepository } from './users.repository';
 
 @Injectable()
@@ -20,7 +21,7 @@ export class UsersService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UserNotFoundException();
     }
 
     return toUserResponse(user);

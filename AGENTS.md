@@ -36,6 +36,9 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 기능 구현, 버그 수정, 비즈니스 규칙, DTO validation, guard/filter/interceptor
   같은 런타임 동작 변경은 먼저 실패 테스트를 작성하고 `red -> green ->
   refactor` 순서로 진행한다.
+- 테스트 파일은 모두 `test/` 아래에 둔다. unit spec과 e2e spec 모두 source
+  feature 경로를 가능한 한 mirror한다.
+- Jest `it()` 설명은 한국어 문장으로 작성한다.
 - 문서-only, Swagger metadata-only, 기계적 rename, 단순 문자열/상수 변경처럼
   typecheck/lint로 충분한 변경에는 테스트를 억지로 만들지 않는다.
 
@@ -64,6 +67,9 @@ Harness CI/CD 제품을 뜻하지 않는다.
   Controller에서 직접 `{ data: ... }`를 반환하지 않는다.
 - 예외 응답은 전역 `GlobalExceptionFilter`의 `{ error: { code, message,
   details? } }` 형태를 유지한다.
+- 예상 가능한 도메인 4xx 오류는 Nest `HttpException` 계열 커스텀 예외로
+  표현한다. 현재 규모에서는 오류 code 상수를 별도 registry 파일에 모으지 않는다.
+- 내부 장애나 5xx 오류는 generic `internal_server_error`로 숨긴다.
 - Swagger bootstrap은 `src/config/swagger.ts`에 두고, controller별 Swagger
   decorator는 controller 옆 `*.swagger.ts`에 둔다.
 

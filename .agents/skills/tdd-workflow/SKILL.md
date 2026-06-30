@@ -15,13 +15,14 @@ one behavior, one failing test, the minimum code, then cleanup.
 - Use provider/unit tests for service business rules and branching logic.
 - Use request-level e2e tests for validation pipes, guards, filters,
   interceptors, response envelopes, and Nest wiring.
-- Mirror `src/` feature paths under `test/` for e2e tests, for example
-  `src/health/` -> `test/health/health.e2e-spec.ts`.
+- Keep all test files under `test/` and mirror `src/` feature paths when
+  possible, for example `src/health/` -> `test/health/health.e2e-spec.ts`.
+- Write Jest `it()` descriptions in Korean.
 - For bugs, start with a regression test that reproduces the bug.
 - Run the targeted test first, for example:
 
 ```bash
-pnpm test -- --runTestsByPath src/example/example.service.spec.ts
+pnpm test -- --runTestsByPath test/example/example.service.spec.ts
 pnpm test:e2e -- --runTestsByPath test/health/health.e2e-spec.ts
 ```
 
