@@ -8,6 +8,9 @@ export class NicknameAvailabilityQueryDto {
 }
 
 export class NicknameAvailabilityResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: '닉네임 사용 가능 여부',
+    example: true,
+  })
   available!: boolean;
 }

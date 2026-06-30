@@ -76,6 +76,8 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - 내부 장애나 5xx 오류는 generic `internal_server_error`로 숨긴다.
 - Swagger bootstrap은 `src/config/swagger.ts`에 두고, controller별 Swagger
   decorator는 controller 옆 `*.swagger.ts`에 둔다.
+- Swagger summary, description, example은 한국어로 작성하고 API마다 실제 사용
+  흐름에 맞는 예시를 둔다.
 - 다른 feature의 entity나 table을 조회해야 하면 caller repository에 임시 query를
   넣지 않는다. owning feature가 repository/provider를 소유하고 module에서 export한
   뒤 caller module이 import해서 사용한다.

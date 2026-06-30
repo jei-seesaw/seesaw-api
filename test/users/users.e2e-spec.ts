@@ -78,7 +78,7 @@ describe('Users endpoint', () => {
     const nickname = `signup-${Date.now()}`;
 
     await request(server)
-      .post('/api/v2/users')
+      .post('/api/v2/register')
       .send({
         affiliationCode: 'teacher',
         nickname,
@@ -110,7 +110,7 @@ describe('Users endpoint', () => {
     const nickname = `duplicate-${Date.now()}`;
 
     await request(server)
-      .post('/api/v2/users')
+      .post('/api/v2/register')
       .send({
         affiliationCode: 'teacher',
         nickname,
@@ -119,7 +119,7 @@ describe('Users endpoint', () => {
       .expect(201);
 
     return request(server)
-      .post('/api/v2/users')
+      .post('/api/v2/register')
       .send({
         affiliationCode: 'teacher',
         nickname,
@@ -135,7 +135,7 @@ describe('Users endpoint', () => {
 
   it('없는 소속 code로 회원가입하면 validation error로 거절한다', () => {
     return request(server)
-      .post('/api/v2/users')
+      .post('/api/v2/register')
       .send({
         affiliationCode: 'missing',
         nickname: `invalid-affiliation-${Date.now()}`,
@@ -151,7 +151,7 @@ describe('Users endpoint', () => {
 
   it('회원가입 요청 body가 유효하지 않으면 요청 경계에서 거절한다', () => {
     return request(server)
-      .post('/api/v2/users')
+      .post('/api/v2/register')
       .send({
         affiliationCode: 'teacher',
         nickname: '',
@@ -163,6 +163,17 @@ describe('Users endpoint', () => {
           'validation_error',
         );
       });
+  });
+
+  it('회원가입은 users 생성 라우트로 노출하지 않는다', () => {
+    return request(server)
+      .post('/api/v2/users')
+      .send({
+        affiliationCode: 'teacher',
+        nickname: `legacy-${Date.now()}`,
+        password: 'password123',
+      })
+      .expect(404);
   });
 });
 

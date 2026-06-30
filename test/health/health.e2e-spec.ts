@@ -34,6 +34,33 @@ describe('Health endpoint', () => {
   it('Swagger JSON을 전역 prefix 아래에서 노출한다', () => {
     return request(app.getHttpServer() as Server)
       .get('/api/v2/docs-json')
-      .expect(200);
+      .expect(200)
+      .expect((response: { body: unknown }) => {
+        const body = response.body as SwaggerDocument;
+
+        expect(body.paths['/api/v2/health']?.get).toMatchObject({
+          summary: 'API 상태 확인',
+          responses: {
+            '200': {
+              description: 'API가 정상 동작 중입니다.',
+              content: {
+                'application/json': {
+                  schema: {
+                    example: { data: { status: 'ok' } },
+                  },
+                },
+              },
+            },
+          },
+        });
+      });
   });
 });
+
+interface SwaggerDocument {
+  paths: {
+    [path: string]: {
+      get?: unknown;
+    };
+  };
+}

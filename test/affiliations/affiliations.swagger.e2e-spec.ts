@@ -45,10 +45,16 @@ describe('Affiliations Swagger', () => {
 
     expect(affiliationSchema).toMatchObject({
       properties: {
-        code: { type: 'string' },
-        name: { type: 'string' },
+        code: { description: '소속 코드', example: 'teacher', type: 'string' },
+        name: { description: '소속 이름', example: '선생님', type: 'string' },
       },
       type: 'object',
+    });
+    expect(document.paths['/api/v2/affiliations']?.get).toMatchObject({
+      summary: '소속 목록 조회',
+      responses: {
+        '200': { description: '소속 목록을 반환합니다.' },
+      },
     });
     expect(
       document.paths['/api/v2/affiliations']?.get?.responses['200'],
@@ -56,6 +62,12 @@ describe('Affiliations Swagger', () => {
       content: {
         'application/json': {
           schema: {
+            example: {
+              data: [
+                { code: 'headquarters', name: '본사' },
+                { code: 'teacher', name: '선생님' },
+              ],
+            },
             properties: {
               data: {
                 items: { $ref: '#/components/schemas/AffiliationResponseDto' },

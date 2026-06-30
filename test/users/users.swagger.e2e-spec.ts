@@ -46,7 +46,7 @@ describe('Users Swagger', () => {
 
     expect(nicknameAvailabilitySchema).toMatchObject({
       properties: {
-        available: { type: 'boolean' },
+        available: { example: true, type: 'boolean' },
       },
       type: 'object',
     });
@@ -60,10 +60,21 @@ describe('Users Swagger', () => {
       in: 'query',
       name: 'nickname',
       required: true,
+      description: '확인할 닉네임',
       schema: {
+        example: 'seesaw-user',
         maxLength: 120,
         minLength: 1,
         type: 'string',
+      },
+    });
+    expect(
+      document.paths['/api/v2/users/nickname-availability']?.get,
+    ).toMatchObject({
+      summary: '닉네임 사용 가능 여부 확인',
+      responses: {
+        '200': { description: '닉네임 사용 가능 여부를 반환합니다.' },
+        '400': { description: '닉네임 query가 유효하지 않습니다.' },
       },
     });
     expect(
@@ -88,21 +99,48 @@ describe('Users Swagger', () => {
   it('회원가입 계약을 Swagger JSON에 노출한다', () => {
     expect(document.components?.schemas?.CreateUserRequestDto).toMatchObject({
       properties: {
-        affiliationCode: { maxLength: 50, minLength: 1, type: 'string' },
-        nickname: { maxLength: 120, minLength: 1, type: 'string' },
-        password: { maxLength: 128, minLength: 8, type: 'string' },
+        affiliationCode: {
+          description: '소속 코드',
+          example: 'teacher',
+          maxLength: 50,
+          minLength: 1,
+          type: 'string',
+        },
+        nickname: {
+          description: '사용자 닉네임',
+          example: 'seesaw-user',
+          maxLength: 120,
+          minLength: 1,
+          type: 'string',
+        },
+        password: {
+          description: '사용자 비밀번호',
+          example: 'password123',
+          maxLength: 128,
+          minLength: 8,
+          type: 'string',
+        },
       },
       required: ['nickname', 'password', 'affiliationCode'],
       type: 'object',
     });
     expect(document.components?.schemas?.CreateUserResponseDto).toMatchObject({
       properties: {
-        id: { type: 'string' },
+        id: { example: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90', type: 'string' },
       },
       required: ['id'],
       type: 'object',
     });
-    expect(document.paths['/api/v2/users']?.post?.requestBody).toMatchObject({
+    expect(document.paths['/api/v2/register']?.post).toMatchObject({
+      summary: '회원가입',
+      responses: {
+        '201': { description: '회원가입이 완료되었습니다.' },
+        '400': { description: '회원가입 요청 body가 유효하지 않습니다.' },
+        '409': { description: '이미 사용 중인 닉네임입니다.' },
+        '422': { description: '존재하지 않는 소속 코드입니다.' },
+      },
+    });
+    expect(document.paths['/api/v2/register']?.post?.requestBody).toMatchObject({
       content: {
         'application/json': {
           schema: {
@@ -112,21 +150,24 @@ describe('Users Swagger', () => {
       },
       required: true,
     });
-    expect(document.paths['/api/v2/users']?.post?.responses['201']).toMatchObject({
+    expect(
+      document.paths['/api/v2/register']?.post?.responses['201'],
+    ).toMatchObject({
       content: {
         'application/json': {
           schema: {
-            properties: {
+            example: {
               data: {
-                $ref: '#/components/schemas/CreateUserResponseDto',
+                id: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
               },
+            },
+            properties: {
+              data: { $ref: '#/components/schemas/CreateUserResponseDto' },
             },
           },
         },
       },
     });
-    expect(document.paths['/api/v2/users']?.post?.responses['400']).toBeDefined();
-    expect(document.paths['/api/v2/users']?.post?.responses['409']).toBeDefined();
-    expect(document.paths['/api/v2/users']?.post?.responses['422']).toBeDefined();
+    expect(document.paths['/api/v2/users']?.post).toBeUndefined();
   });
 });

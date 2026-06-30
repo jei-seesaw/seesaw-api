@@ -53,6 +53,7 @@ export class UsersService {
 
       return { id: createdUser.id };
     } catch (error) {
+      // The DB unique index closes the existsByNickname/insert race.
       if (isDuplicateKeyError(error)) {
         throw new NicknameAlreadyExistsException();
       }

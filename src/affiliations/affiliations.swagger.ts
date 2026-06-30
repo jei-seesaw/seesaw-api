@@ -9,6 +9,12 @@ import {
 import { AffiliationResponseDto } from './dto/affiliation.dto';
 
 const affiliationListResponseSchema = {
+  example: {
+    data: [
+      { code: 'headquarters', name: '본사' },
+      { code: 'teacher', name: '선생님' },
+    ],
+  },
   properties: {
     data: {
       items: { $ref: getSchemaPath(AffiliationResponseDto) },
@@ -21,16 +27,16 @@ const affiliationListResponseSchema = {
 
 export function ApiAffiliationsController() {
   return applyDecorators(
-    ApiTags('Affiliations'),
+    ApiTags('소속'),
     ApiExtraModels(AffiliationResponseDto),
   );
 }
 
 export function ApiListAffiliations() {
   return applyDecorators(
-    ApiOperation({ summary: 'List affiliations' }),
+    ApiOperation({ summary: '소속 목록 조회' }),
     ApiOkResponse({
-      description: 'Affiliations listed',
+      description: '소속 목록을 반환합니다.',
       schema: affiliationListResponseSchema,
     }),
   );

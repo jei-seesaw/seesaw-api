@@ -57,6 +57,8 @@ changed first. That would double-wrap the response.
   `dev`.
 - Swagger is disabled when `APP_ENV=live`, so Swagger endpoints should not be
   exposed in live.
+- Swagger summary, description, example은 한국어로 작성하고 API마다 실제 사용
+  흐름에 맞는 예시를 둔다.
 
 ## Health endpoint
 
@@ -80,7 +82,7 @@ The public response is wrapped by the global interceptor:
 
 ## User endpoints
 
-`POST /api/v2/users` creates a user. It does not issue auth tokens.
+`POST /api/v2/register`는 사용자를 생성한다. 인증 토큰은 발급하지 않는다.
 
 Request:
 

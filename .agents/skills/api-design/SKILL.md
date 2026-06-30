@@ -314,3 +314,5 @@ Prefer URL path versioning for APIs that clients call directly:
 - Rate limit headers and `429` body are consistent.
 - Response fields do not leak internal data.
 - OpenAPI/Swagger docs match the implemented contract.
+- Swagger summaries, descriptions, and examples are written in Korean with
+  realistic values for each API.

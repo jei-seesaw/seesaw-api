@@ -1,9 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AffiliationResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: '소속 코드',
+    example: 'teacher',
+  })
   code!: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '소속 이름',
+    example: '선생님',
+  })
   name!: string;
 }

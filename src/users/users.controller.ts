@@ -23,18 +23,18 @@ import {
 } from './users.swagger';
 
 @ApiUsersController()
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateUser()
   create(@Body() dto: CreateUserRequestDto): Promise<CreateUserResponseDto> {
     return this.usersService.create(dto);
   }
 
-  @Get('nickname-availability')
+  @Get('users/nickname-availability')
   @HttpCode(HttpStatus.OK)
   @ApiCheckNicknameAvailability()
   checkNicknameAvailability(
