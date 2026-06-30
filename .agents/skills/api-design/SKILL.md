@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: REST API contract design patterns for TypeScript NestJS APIs, including resource naming, HTTP methods, status codes, response envelopes, pagination, filtering, sorting, versioning, rate-limit headers, and OpenAPI readiness.
+description: Use for Seesaw API HTTP contract work: routes, methods, status codes, success/error envelopes, pagination, filtering, sorting, and Swagger/OpenAPI metadata. Do not use for Nest module wiring or persistence internals.
 metadata:
   origin: ECC
 ---
@@ -10,6 +10,11 @@ metadata:
 Use this skill for the HTTP contract only. Use `nestjs-patterns` for Nest
 module/controller/provider mechanics and `backend-patterns` for persistence,
 caching, jobs, logging, and other server internals.
+
+In this repo, current response behavior is documented in
+`docs/API_CONTRACT.md`: controllers return payloads directly, successful
+responses are wrapped globally as `{ data: ... }`, and errors use
+`{ error: { code, message, details? } }`.
 
 ## Resource Design
 
@@ -80,7 +85,10 @@ Use semantic status codes:
 
 ## Response Format
 
-Choose one shape per API surface and keep it consistent.
+Choose one shape per API surface and keep it consistent. Seesaw API currently
+uses a global success wrapper that exposes `{ data: payload }`. Do not introduce
+top-level `meta` or `links` without changing `ApiResponseInterceptor` and
+`docs/API_CONTRACT.md` in the same work.
 
 ### Public API Envelope
 
@@ -94,6 +102,8 @@ Choose one shape per API surface and keep it consistent.
   }
 }
 ```
+
+Future paginated APIs may need a wider envelope:
 
 ```json
 {
@@ -205,12 +215,6 @@ export class ListUsersQueryDto {
 ## NestJS Endpoint Contract Example
 
 ```ts
-interface ApiResponse<T> {
-  data: T;
-  meta?: Record<string, unknown>;
-  links?: Record<string, string>;
-}
-
 @Controller('api/v1/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -219,12 +223,12 @@ export class UsersController {
   async create(
     @Body() dto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponse<UserResponseDto>> {
+  ): Promise<UserResponseDto> {
     const user = await this.usersService.create(dto);
     response.status(HttpStatus.CREATED);
     response.setHeader('Location', `/api/v1/users/${user.id}`);
 
-    return { data: UserResponseDto.from(user) };
+    return UserResponseDto.from(user);
   }
 
   @Get()
@@ -242,7 +246,8 @@ export class UsersController {
 
 - Set status with `@HttpCode()` when it is static.
 - Use passthrough response only when headers or dynamic status are needed.
-- Keep DTO validation in Nest pipes; keep response shape explicit in controller or serializer.
+- Keep DTO validation in Nest pipes; return response DTOs directly and let the
+  global interceptor apply the success envelope.
 
 ## Authentication and Authorization Contract
 

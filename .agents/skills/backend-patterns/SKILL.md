@@ -1,13 +1,13 @@
 ---
 name: backend-patterns
-description: Backend architecture patterns for database access, transactions, caching, retry boundaries, background jobs, rate limiter integration, logging, and server-side best practices for TypeScript NestJS backends.
+description: Use for Seesaw API backend internals: persistence, transactions, caching, retries, background jobs, rate limiting, logging, and server-side provider boundaries. Do not use for HTTP contract-only work.
 metadata:
   origin: ECC
 ---
 
 # Backend Development Patterns
 
-Use these patterns for scalable NestJS server-side applications. Prefer the
+Use these patterns only when backend internals are part of the task. Prefer the
 project's existing modules, providers, DTO style, and dependencies before adding
 new infrastructure.
 
@@ -18,6 +18,14 @@ new infrastructure.
 - Adding caching with a shared store or HTTP cache headers
 - Setting up background jobs or async processing
 - Adding retry boundaries, logging, request correlation, or rate limiter integration
+
+## Repo Defaults
+
+- Keep cross-cutting logging under `src/common/logging/`.
+- Add persistence, queues, cache, or rate limiting only when a real feature
+  needs it.
+- Do not add repository abstractions for one trivial query.
+- Do not add production dependencies without explicit approval.
 
 ## Provider and Data Access Patterns
 

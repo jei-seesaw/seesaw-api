@@ -7,6 +7,9 @@ Seesaw API는 NestJS 11, TypeScript strict mode, `pnpm@11.5.0` 기반의 API
 지속 instruction, 가벼운 정책 문서, 재사용 가능한 repo skill을 포함하며,
 Harness CI/CD 제품을 뜻하지 않는다.
 
+이 파일은 coding agent가 모든 작업 전에 읽는 repo guide다. 짧고 실행 가능한
+규칙만 둔다. 자세한 구조나 API 계약은 `docs/`에 둔다.
+
 ## 명령어
 
 - 의존성 설치: `pnpm install`
@@ -45,6 +48,20 @@ Harness CI/CD 제품을 뜻하지 않는다.
 - API 응답에 stack trace, SQL error, secret, token, 내부 audit field를 노출하지
   않는다.
 - 초기 health endpoint 수준을 넘어서면 feature code는 feature module에 둔다.
+- 성공 응답은 전역 `ApiResponseInterceptor`가 `{ data: ... }`로 감싼다.
+  Controller에서 직접 `{ data: ... }`를 반환하지 않는다.
+- 예외 응답은 전역 `GlobalExceptionFilter`의 `{ error: { code, message,
+  details? } }` 형태를 유지한다.
+- Swagger bootstrap은 `src/config/swagger.ts`에 두고, controller별 Swagger
+  decorator는 controller 옆 `*.swagger.ts`에 둔다.
+
+## Review guidelines
+
+- public API shape, error shape, validation boundary, Swagger 노출 조건이 바뀌면
+  docs와 controller Swagger metadata가 함께 맞는지 확인한다.
+- `APP_ENV=live`에서는 `/docs`와 `/docs-json`이 노출되지 않아야 한다.
+- logging, exception, response envelope 같은 cross-cutting provider 변경은
+  `AppModule` wiring과 실행 순서 영향을 같이 본다.
 
 ## Repo Skills
 
@@ -57,9 +74,13 @@ Harness CI/CD 제품을 뜻하지 않는다.
 
 ## Harness 관리
 
-- 이 파일은 작고 실행 가능한 규칙만 담는다. 자세한 정책은 `docs/`에 둔다.
+- Harness 문서의 entrypoint는 `docs/README.md`다.
+- 현재 구조 설명은 `docs/PROJECT_STRUCTURE.md`, API 계약은
+  `docs/API_CONTRACT.md`를 따른다.
 - 반복되는 규약, 명령어, 검증 규칙, API contract, review expectation이 생기면
   같은 변경에서 `AGENTS.md`, `docs/`, `.agents/skills/` 중 맞는 문서를 갱신한다.
 - 특정 subtree에만 적용되는 규칙은 루트 파일을 키우지 말고 해당 subtree의
   nested `AGENTS.md`로 둔다.
+- approval-heavy spec/status process, hook, CI gate, plugin, MCP 설정은 실제로
+  필요해질 때만 추가한다.
 - 커밋을 요청받으면 `.gitmessage.txt`를 따른다.

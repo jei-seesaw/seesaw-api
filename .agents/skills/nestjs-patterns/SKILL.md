@@ -1,13 +1,14 @@
 ---
 name: nestjs-patterns
-description: NestJS architecture patterns for modules, controllers, providers, DTO validation, guards, interceptors, config, and production-grade TypeScript backends.
+description: Use for Seesaw API NestJS structure work: modules, controllers, providers, DTO validation, guards, interceptors, filters, config, and Swagger wiring. Do not use for HTTP contract-only design or persistence internals.
 metadata:
   origin: ECC
 ---
 
 # NestJS Development Patterns
 
-Production-grade NestJS patterns for modular TypeScript backends.
+NestJS patterns for Seesaw API. Prefer the current source layout and
+`docs/PROJECT_STRUCTURE.md` before introducing new folders or abstractions.
 
 ## When to Activate
 
@@ -16,6 +17,16 @@ Production-grade NestJS patterns for modular TypeScript backends.
 - Adding DTO validation, guards, interceptors, or exception filters
 - Configuring environment-aware settings and database integrations
 - Testing NestJS units or HTTP endpoints
+
+## Repo Defaults
+
+- Keep `main.ts` focused on bootstrap and app-level setup.
+- Keep global provider wiring in `AppModule`.
+- Put app-level Swagger setup in `src/config/swagger.ts`.
+- Put controller-specific Swagger decorators beside the controller in
+  `*.swagger.ts`.
+- Do not create a `modules/`, `database/`, or `auth/` tree until real feature
+  code needs it.
 
 ## Project Structure
 
