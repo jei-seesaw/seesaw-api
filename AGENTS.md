@@ -13,6 +13,8 @@ Harness CI/CD 제품을 뜻하지 않는다.
 ## 명령어
 
 - 의존성 설치: `pnpm install`
+- 로컬 DB 실행: `docker compose up -d mariadb`
+- DB migration 적용: `pnpm db:migrate`
 - 로컬 실행: `pnpm start:dev`
 - 린트: `pnpm lint`
 - 타입 검사: `pnpm typecheck`

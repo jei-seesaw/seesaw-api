@@ -1,0 +1,22 @@
+import { Migrator } from '@mikro-orm/migrations';
+import { defineConfig } from '@mikro-orm/mariadb';
+import { User } from '../users/user.entity';
+import { loadEnvFiles, validateEnv } from './env';
+
+loadEnvFiles();
+
+const env = validateEnv(process.env);
+
+export default defineConfig({
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
+  dbName: env.DB_NAME,
+  entities: [User],
+  extensions: [Migrator],
+  migrations: {
+    path: 'dist/migrations',
+    pathTs: 'src/migrations',
+  },
+});

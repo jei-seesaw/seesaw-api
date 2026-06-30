@@ -7,7 +7,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
-import { ApiErrorResponse } from './api-response';
+import type { ApiErrorResponse } from './api-response';
 import { AppLogger } from './logging/app-logger.service';
 
 const ERROR_CODES: Record<number, string> = {

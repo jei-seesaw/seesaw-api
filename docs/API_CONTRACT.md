@@ -71,3 +71,32 @@ The public response is wrapped by the global interceptor:
   }
 }
 ```
+
+## User endpoints
+
+`POST /api/v1/users` creates a user and returns `201 Created` with `Location`.
+
+Request:
+
+```json
+{
+  "email": "alice@example.com",
+  "name": "Alice"
+}
+```
+
+Public response:
+
+```json
+{
+  "data": {
+    "id": "3a7d8f5d-5c0e-41d6-b0f5-226fcbdca7da",
+    "email": "alice@example.com",
+    "name": "Alice",
+    "createdAt": "2026-06-30T02:45:19.000Z"
+  }
+}
+```
+
+`GET /api/v1/users/:id` returns the same public user shape or `404` when the
+user does not exist.

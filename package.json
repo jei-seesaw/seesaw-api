@@ -9,21 +9,31 @@
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "test": "jest --config ./jest.config.js",
-    "test:watch": "jest --config ./jest.config.js --watch",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./jest.config.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./jest.config.js --watch",
+    "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json",
+    "db:migrate": "mikro-orm migration:up",
+    "db:migration:create": "mikro-orm migration:create"
   },
   "dependencies": {
+    "@mikro-orm/core": "^7.1.5",
+    "@mikro-orm/decorators": "^7.1.5",
+    "@mikro-orm/mariadb": "^7.1.5",
+    "@mikro-orm/migrations": "^7.1.5",
+    "@mikro-orm/nestjs": "^7.0.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.4.4",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@mikro-orm/cli": "^7.1.5",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/testing": "^11.1.27",
     "@types/jest": "^30.0.0",
@@ -31,9 +41,18 @@
     "@types/supertest": "^7.2.0",
     "eslint": "^10.6.0",
     "jest": "^30.4.2",
+    "jiti": "^2.7.0",
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.11",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.62.0"
+  },
+  "mikro-orm": {
+    "preferTs": true,
+    "tsLoader": "jiti",
+    "configPaths": [
+      "./src/config/mikro-orm.config.ts",
+      "./dist/config/mikro-orm.config.js"
+    ]
   }
 }
