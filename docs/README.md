@@ -19,7 +19,7 @@ AI와 함께 개발하기 위한 작업 합의다.
 
 - `PROJECT_STRUCTURE.md`: 현재 소스 트리와 각 디렉터리의 책임.
 - `API_CONTRACT.md`: 공통 success/error envelope, Swagger 배치, health/User
-  endpoint 응답 규칙.
+  endpoint 계약.
 - `.agents/skills/api-design/SKILL.md`: HTTP contract 설계 작업.
 - `.agents/skills/nestjs-patterns/SKILL.md`: Nest module/controller/provider 작업.
 - `.agents/skills/backend-patterns/SKILL.md`: persistence, logging, jobs, server

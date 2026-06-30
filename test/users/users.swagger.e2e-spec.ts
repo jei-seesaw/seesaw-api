@@ -20,8 +20,7 @@ describe('Users Swagger', () => {
         {
           provide: UsersService,
           useValue: {
-            create: () => Promise.resolve(undefined),
-            findOne: () => Promise.resolve(undefined),
+            checkNicknameAvailability: () => Promise.resolve(undefined),
           },
         },
       ],
@@ -40,41 +39,44 @@ describe('Users Swagger', () => {
     await app?.close();
   });
 
-  it('DTO 스키마를 Swagger JSON에 노출한다', () => {
-    const createUserSchema = document.components?.schemas?.CreateUserDto;
-    const userResponseSchema = document.components?.schemas?.UserResponseDto;
+  it('닉네임 중복 검사 계약을 Swagger JSON에 노출한다', () => {
+    const nicknameAvailabilitySchema =
+      document.components?.schemas?.NicknameAvailabilityResponseDto;
 
-    expect(createUserSchema).toMatchObject({
+    expect(nicknameAvailabilitySchema).toMatchObject({
       properties: {
-        email: { format: 'email', type: 'string' },
-        name: { maxLength: 120, minLength: 1, type: 'string' },
+        available: { type: 'boolean' },
       },
       type: 'object',
     });
-    expect(createUserSchema).toHaveProperty('required', ['email', 'name']);
-    expect(userResponseSchema).toMatchObject({
-      properties: {
-        id: { format: 'uuid', type: 'string' },
-        email: { format: 'email', type: 'string' },
-        name: { type: 'string' },
-        createdAt: { format: 'date-time', type: 'string' },
+    const nicknameParameter = document.paths[
+      '/api/v2/users/nickname-availability'
+    ]?.get?.parameters?.find(
+      (parameter) => 'name' in parameter && parameter.name === 'nickname',
+    );
+
+    expect(nicknameParameter).toMatchObject({
+      in: 'query',
+      name: 'nickname',
+      required: true,
+      schema: {
+        maxLength: 120,
+        minLength: 1,
+        type: 'string',
       },
-      type: 'object',
     });
-    expect(userResponseSchema).toHaveProperty('required', [
-      'id',
-      'email',
-      'name',
-      'createdAt',
-    ]);
     expect(
-      document.paths['/api/v2/users']?.post?.responses['201'],
+      document.paths['/api/v2/users/nickname-availability']?.get?.responses[
+        '200'
+      ],
     ).toMatchObject({
       content: {
         'application/json': {
           schema: {
             properties: {
-              data: { $ref: '#/components/schemas/UserResponseDto' },
+              data: {
+                $ref: '#/components/schemas/NicknameAvailabilityResponseDto',
+              },
             },
           },
         },

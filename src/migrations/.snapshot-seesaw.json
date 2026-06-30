@@ -2,8 +2,25 @@
   "namespaces": [],
   "tables": [
     {
-      "name": "users",
+      "name": "affiliations",
       "columns": {
+        "code": {
+          "name": "code",
+          "type": "varchar(50)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": 50,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
@@ -21,15 +38,15 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 255,
+          "length": 50,
           "precision": null,
           "scale": null,
           "default": null,
@@ -37,6 +54,61 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "string"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "code"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "users",
+      "columns": {
+        "affiliation_code": {
+          "name": "affiliation_code",
+          "type": "varchar(50)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 50,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "id": {
           "name": "id",
@@ -55,14 +127,14 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "name": {
-          "name": "name",
+        "nickname": {
+          "name": "nickname",
           "type": "varchar(120)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": false,
+          "unique": true,
           "length": 120,
           "precision": null,
           "scale": null,
@@ -71,6 +143,40 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "string"
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "vote_token": {
+          "name": "vote_token",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "indexes": [
@@ -83,11 +189,44 @@
           "keyName": "PRIMARY",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "affiliation_code"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "users_affiliation_code_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "nickname"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "users_nickname_unique",
+          "primary": false,
+          "unique": true
         }
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_affiliation_code_foreign": {
+          "columnNames": [
+            "affiliation_code"
+          ],
+          "constraintName": "users_affiliation_code_foreign",
+          "localTableName": "users",
+          "referencedColumnNames": [
+            "code"
+          ],
+          "referencedTableName": "affiliations",
+          "deleteRule": "set null"
+        }
+      },
       "comment": null
     }
   ],

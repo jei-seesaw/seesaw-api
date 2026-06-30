@@ -1,19 +1,17 @@
 import {
-  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
-  Param,
-  ParseUUIDPipe,
-  Post,
+  Query,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import type { UserResponseDto } from './dto/user-response.dto';
+import {
+  NicknameAvailabilityQueryDto,
+  NicknameAvailabilityResponseDto,
+} from './dto/nickname-availability.dto';
 import { UsersService } from './users.service';
 import {
-  ApiCreateUser,
-  ApiGetUser,
+  ApiCheckNicknameAvailability,
   ApiUsersController,
 } from './users.swagger';
 
@@ -22,17 +20,12 @@ import {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiCreateUser()
-  create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
-    return this.usersService.create(dto);
-  }
-
-  @Get(':id')
+  @Get('nickname-availability')
   @HttpCode(HttpStatus.OK)
-  @ApiGetUser()
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<UserResponseDto> {
-    return this.usersService.findOne(id);
+  @ApiCheckNicknameAvailability()
+  checkNicknameAvailability(
+    @Query() query: NicknameAvailabilityQueryDto,
+  ): Promise<NicknameAvailabilityResponseDto> {
+    return this.usersService.checkNicknameAvailability(query.nickname);
   }
 }

@@ -10,11 +10,14 @@ src/
   config/
   common/
     logging/
+  affiliations/
+    dto/
   health/
   migrations/
   users/
     dto/
 test/
+  affiliations/
   health/
   users/
 
@@ -59,9 +62,11 @@ test/
 
 ## Feature code
 
+- `src/affiliations/` owns Affiliation metadata storage and the affiliation
+  list API.
 - `src/health/` owns the health check.
-- `src/users/` owns the minimal DB smoke-test User API and keeps MikroORM data
-  access behind a repository provider.
+- `src/users/` owns User storage and the nickname availability API, with
+  MikroORM user data access behind a repository provider.
 - Controller Swagger metadata stays beside the controller in `*.swagger.ts`.
 - New feature code should live in its own feature directory once it grows beyond
   the initial health endpoint.

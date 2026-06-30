@@ -1,23 +1,19 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
-  ApiBody,
-  ApiCreatedResponse,
   ApiExtraModels,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiParam,
+  ApiQuery,
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
+import { NicknameAvailabilityResponseDto } from './dto/nickname-availability.dto';
 
-const userResponseSchema = {
+const nicknameAvailabilityResponseSchema = {
   properties: {
     data: {
-      $ref: getSchemaPath(UserResponseDto),
+      $ref: getSchemaPath(NicknameAvailabilityResponseDto),
     },
   },
   required: ['data'],
@@ -25,29 +21,24 @@ const userResponseSchema = {
 };
 
 export function ApiUsersController() {
-  return applyDecorators(ApiTags('Users'), ApiExtraModels(UserResponseDto));
-}
-
-export function ApiCreateUser() {
   return applyDecorators(
-    ApiOperation({ summary: 'Create a user' }),
-    ApiBody({ type: CreateUserDto }),
-    ApiCreatedResponse({
-      description: 'User created',
-      schema: userResponseSchema,
-    }),
-    ApiBadRequestResponse({ description: 'Invalid user payload' }),
+    ApiTags('Users'),
+    ApiExtraModels(NicknameAvailabilityResponseDto),
   );
 }
 
-export function ApiGetUser() {
+export function ApiCheckNicknameAvailability() {
   return applyDecorators(
-    ApiOperation({ summary: 'Get a user by id' }),
-    ApiParam({ format: 'uuid', name: 'id' }),
-    ApiOkResponse({
-      description: 'User found',
-      schema: userResponseSchema,
+    ApiOperation({ summary: 'Check nickname availability' }),
+    ApiQuery({
+      name: 'nickname',
+      required: true,
+      schema: { maxLength: 120, minLength: 1, type: 'string' },
     }),
-    ApiNotFoundResponse({ description: 'User not found' }),
+    ApiOkResponse({
+      description: 'Nickname availability checked',
+      schema: nicknameAvailabilityResponseSchema,
+    }),
+    ApiBadRequestResponse({ description: 'Invalid nickname query' }),
   );
 }

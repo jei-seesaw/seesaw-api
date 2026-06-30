@@ -1,5 +1,3 @@
-import { User } from '../../src/users/user.entity';
-import { UserNotFoundException } from '../../src/users/users.exception';
 import { UsersRepository } from '../../src/users/users.repository';
 import { UsersService } from '../../src/users/users.service';
 
@@ -12,45 +10,37 @@ describe('UsersService', () => {
     service = new UsersService(repository);
   });
 
-  it('repository를 통해 사용자를 생성한다', async () => {
-    const user = new User('alice@example.com', 'Alice');
-    repository.createdUser = user;
+  it('닉네임이 없으면 사용 가능하다고 응답한다', async () => {
+    repository.nicknameExists = false;
 
     await expect(
-      service.create({ email: 'alice@example.com', name: 'Alice' }),
+      service.checkNicknameAvailability('available-nickname'),
     ).resolves.toEqual({
-      id: user.id,
-      email: 'alice@example.com',
-      name: 'Alice',
-      createdAt: user.createdAt.toISOString(),
+      available: true,
     });
 
-    expect(repository.createdWith).toEqual({
-      email: 'alice@example.com',
-      name: 'Alice',
+    expect(repository.checkedNickname).toBe('available-nickname');
+  });
+
+  it('닉네임이 있으면 사용 불가하다고 응답한다', async () => {
+    repository.nicknameExists = true;
+
+    await expect(
+      service.checkNicknameAvailability('taken-nickname'),
+    ).resolves.toEqual({
+      available: false,
     });
   });
 
-  it('repository에 사용자가 없으면 사용자 없음 예외를 던진다', async () => {
-    await expect(service.findOne('missing-id')).rejects.toBeInstanceOf(
-      UserNotFoundException,
-    );
-  });
 });
 
 class FakeUsersRepository implements UsersRepository {
-  createdUser?: User;
-  createdWith?: unknown;
+  checkedNickname?: string;
+  nicknameExists = false;
 
-  create(dto: unknown): Promise<User> {
-    this.createdWith = dto;
+  existsByNickname(nickname: string): Promise<boolean> {
+    this.checkedNickname = nickname;
 
-    return Promise.resolve(
-      this.createdUser ?? new User('created@example.com', 'Created'),
-    );
-  }
-
-  findById(): Promise<User | null> {
-    return Promise.resolve(null);
+    return Promise.resolve(this.nicknameExists);
   }
 }

@@ -1,12 +1,10 @@
 import { EntityRepository } from '@mikro-orm/mariadb';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Injectable } from '@nestjs/common';
 import { User } from './user.entity';
 
 export abstract class UsersRepository {
-  abstract create(dto: CreateUserDto): Promise<User>;
-  abstract findById(id: string): Promise<User | null>;
+  abstract existsByNickname(nickname: string): Promise<boolean>;
 }
 
 @Injectable()
@@ -16,21 +14,7 @@ export class MikroOrmUsersRepository implements UsersRepository {
     private readonly users: EntityRepository<User>,
   ) {}
 
-  async create(dto: CreateUserDto): Promise<User> {
-    const user = new User(dto.email, dto.name);
-
-    await this.users.insert(user);
-
-    const persistedUser = await this.findById(user.id);
-
-    if (!persistedUser) {
-      throw new InternalServerErrorException('Created user was not found');
-    }
-
-    return persistedUser;
-  }
-
-  findById(id: string): Promise<User | null> {
-    return this.users.findOne({ id });
+  async existsByNickname(nickname: string): Promise<boolean> {
+    return (await this.users.findOne({ nickname })) !== null;
   }
 }

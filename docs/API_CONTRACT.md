@@ -39,7 +39,7 @@ changed first. That would double-wrap the response.
 
 - Expected Nest `HttpException` values keep their HTTP status.
 - Expected domain 4xx errors use Nest `HttpException` subclasses when they need
-  stable public codes, for example `UserNotFoundException`.
+  stable public codes.
 - Domain exception response objects with `code`, `message`, and optional
   `details` are mapped into the public error envelope.
 - validation-style bad requests use `validation_error`.
@@ -80,15 +80,13 @@ The public response is wrapped by the global interceptor:
 
 ## User endpoints
 
-`POST /api/v2/users` creates a user and returns `201 Created`.
+`GET /api/v2/users/nickname-availability` checks whether a nickname is already
+used.
 
 Request:
 
-```json
-{
-  "email": "alice@example.com",
-  "name": "Alice"
-}
+```text
+GET /api/v2/users/nickname-availability?nickname=someName
 ```
 
 Public response:
@@ -96,22 +94,44 @@ Public response:
 ```json
 {
   "data": {
-    "id": "3a7d8f5d-5c0e-41d6-b0f5-226fcbdca7da",
-    "email": "alice@example.com",
-    "name": "Alice",
-    "createdAt": "2026-06-30T02:45:19.000Z"
+    "available": true
   }
 }
 ```
 
-`GET /api/v2/users/:id` returns the same public user shape. Missing users return
-`404` with:
+Missing or invalid `nickname` query values return `400` with:
 
 ```json
 {
   "error": {
-    "code": "user_not_found",
-    "message": "User not found"
+    "code": "validation_error",
+    "message": "Request validation failed",
+    "details": []
   }
 }
 ```
+
+## Affiliation endpoints
+
+`GET /api/v2/affiliations` lists affiliation metadata. `code` is the stable
+public identifier.
+
+Public response:
+
+```json
+{
+  "data": [
+    {
+      "code": "headquarters",
+      "name": "본사"
+    },
+    {
+      "code": "teacher",
+      "name": "선생님"
+    }
+  ]
+}
+```
+
+Rows are sorted by `name` ascending. Internal fields such as `createdAt` are not
+returned.
