@@ -348,6 +348,61 @@ Authorization: Bearer jwt-access-token
   `invalid_access_token`을 반환한다.
 - `cursor`가 유효하지 않으면 `400`과 `invalid_cursor`를 반환한다.
 
+`GET /api/v2/completed-vote-events`는 완료된 투표 이벤트를 무한 스크롤용
+cursor pagination으로 조회한다. 로그인하지 않아도 접근할 수 있다.
+
+요청:
+
+```text
+GET /api/v2/completed-vote-events?limit=20
+```
+
+다음 페이지 요청:
+
+```text
+GET /api/v2/completed-vote-events?limit=20&cursor=opaque-next-cursor
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "voteEvents": [
+      {
+        "id": "generated-vote-event-id",
+        "categoryName": "배팅",
+        "remainingTime": "00:00:00",
+        "title": "점심 메뉴는?",
+        "optionA": "김치찌개",
+        "optionB": "돈까스",
+        "optionAImageUrl": null,
+        "optionBImageUrl": "https://example.com/b.jpg",
+        "optionARatio": 25,
+        "optionBRatio": 75,
+        "totalParticipantCount": 120,
+        "totalTokenAmount": 1000,
+        "isParticipated": false
+      }
+    ],
+    "pageInfo": {
+      "hasNext": false,
+      "nextCursor": null
+    }
+  }
+}
+```
+
+- `voteEvents`는 완료된 투표이며 최근 완료순으로 정렬한다.
+- `deadlineAt`이 서버 기준 현재 시각보다 같거나 앞선 투표만 반환한다.
+- 완료된 투표는 결과가 공개되므로 로그인 여부나 참여 여부와 무관하게
+  `optionARatio`, `optionBRatio`를 항상 반환한다.
+- 유효한 bearer `accessToken`을 함께 보내면 `isParticipated`에 현재 사용자의
+  참여 여부를 반환한다. 미로그인 요청에서는 `false`다.
+- `remainingTime`은 완료된 투표이므로 `00:00:00`이다.
+- `limit`, `cursor`, 비율 계산, `totalTokenAmount`, 인증 오류, cursor 오류
+  규칙은 진행중인 투표 목록과 같다.
+
 `POST /api/v2/vote-events` creates a vote event. It requires a bearer
 `accessToken`, but does not store a creator.
 

@@ -16,7 +16,7 @@ export interface VoteEventsListCursor {
   mainVoteId: string | null;
 }
 
-export interface ListOngoingVoteEventsOptions {
+export interface ListVoteEventsOptions {
   cursor?: VoteEventsListCursor;
   limit: number;
   now: Date;
@@ -48,12 +48,20 @@ export interface OngoingVoteEventsPage {
   mainVote: OngoingVoteEventRecord | null;
 }
 
+export interface CompletedVoteEventsPage {
+  hasNext: boolean;
+  items: OngoingVoteEventRecord[];
+}
+
 export abstract class VoteEventsRepository {
   abstract create(voteEvent: VoteEvent): Promise<VoteEvent>;
   abstract getSummary(): Promise<VoteEventsSummary>;
   abstract listOngoing(
-    options: ListOngoingVoteEventsOptions,
+    options: ListVoteEventsOptions,
   ): Promise<OngoingVoteEventsPage>;
+  abstract listCompleted(
+    options: ListVoteEventsOptions,
+  ): Promise<CompletedVoteEventsPage>;
 }
 
 @Injectable()
@@ -92,7 +100,7 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
   }
 
   async listOngoing(
-    options: ListOngoingVoteEventsOptions,
+    options: ListVoteEventsOptions,
   ): Promise<OngoingVoteEventsPage> {
     const mainVote = options.cursor
       ? null
@@ -111,7 +119,7 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
   }
 
   private async findMainOngoingVoteEvent(
-    options: ListOngoingVoteEventsOptions,
+    options: ListVoteEventsOptions,
   ): Promise<OngoingVoteEventRecord | null> {
     const rows = await this.voteEvents
       .getEntityManager()
@@ -125,7 +133,7 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
   }
 
   private async findOngoingVoteEventPage(
-    options: ListOngoingVoteEventsOptions,
+    options: ListVoteEventsOptions,
     excludedMainVoteId: string | null,
   ): Promise<OngoingVoteEventRecord[]> {
     const params = voteEventListParams(options.userId, options.now);
@@ -154,6 +162,47 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
       .getConnection()
       .execute<OngoingVoteEventRow[]>(
         `select ${voteEventListSelect(options.userId)} from \`vote_events\` ve where ${conditions.join(' and ')} order by ve.\`deadline_at\` asc, ve.\`id\` asc limit ?`,
+        params,
+      );
+
+    return rows.map(toOngoingVoteEventRecord);
+  }
+
+  async listCompleted(
+    options: ListVoteEventsOptions,
+  ): Promise<CompletedVoteEventsPage> {
+    const items = await this.findCompletedVoteEventPage(options);
+
+    return {
+      hasNext: items.length > options.limit,
+      items: items.slice(0, options.limit),
+    };
+  }
+
+  private async findCompletedVoteEventPage(
+    options: ListVoteEventsOptions,
+  ): Promise<OngoingVoteEventRecord[]> {
+    const params = voteEventListParams(options.userId, options.now);
+    const conditions = ['ve.`deadline_at` <= ?'];
+
+    if (options.cursor) {
+      conditions.push(
+        '(ve.`deadline_at` < ? or (ve.`deadline_at` = ? and ve.`id` > ?))',
+      );
+      params.push(
+        options.cursor.deadlineAt,
+        options.cursor.deadlineAt,
+        options.cursor.id,
+      );
+    }
+
+    params.push(options.limit + 1);
+
+    const rows = await this.voteEvents
+      .getEntityManager()
+      .getConnection()
+      .execute<OngoingVoteEventRow[]>(
+        `select ${voteEventListSelect(options.userId)} from \`vote_events\` ve where ${conditions.join(' and ')} order by ve.\`deadline_at\` desc, ve.\`id\` asc limit ?`,
         params,
       );
 

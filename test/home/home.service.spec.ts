@@ -71,6 +71,10 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
   listOngoing(): never {
     throw new Error('not used');
   }
+
+  listCompleted(): never {
+    throw new Error('not used');
+  }
 }
 
 class FakeUsersRepository implements UsersRepository {

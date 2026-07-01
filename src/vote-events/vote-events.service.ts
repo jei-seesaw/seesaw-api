@@ -6,6 +6,7 @@ import {
   VoteEventCategory,
 } from './dto/create-vote-event.dto';
 import {
+  ListCompletedVoteEventsResponseDto,
   ListVoteEventsQueryDto,
   ListVoteEventsResponseDto,
   VoteEventListItemDto,
@@ -13,7 +14,7 @@ import {
 import { VoteEvent } from './vote-event.entity';
 import { InvalidCursorException } from './vote-events.exceptions';
 import {
-  ListOngoingVoteEventsOptions,
+  ListVoteEventsOptions,
   OngoingVoteEventRecord,
   VoteEventsListCursor,
   VoteEventsRepository,
@@ -56,7 +57,7 @@ export class VoteEventsService {
   ): Promise<ListVoteEventsResponseDto> {
     const now = new Date();
     const cursor = decodeCursor(query.cursor);
-    const options: ListOngoingVoteEventsOptions = {
+    const options: ListVoteEventsOptions = {
       limit: query.limit,
       now,
     };
@@ -75,7 +76,7 @@ export class VoteEventsService {
 
     return {
       mainVote: cursor ? null : mapVoteEvent(page.mainVote),
-      otherVoteEvents: page.items.map(mapVoteEventItem),
+      otherVoteEvents: page.items.map((item) => mapVoteEventItem(item)),
       pageInfo: {
         hasNext: page.hasNext,
         nextCursor:
@@ -89,16 +90,59 @@ export class VoteEventsService {
       },
     };
   }
+
+  async listCompleted(
+    query: ListVoteEventsQueryDto,
+    user?: AuthenticatedUser,
+  ): Promise<ListCompletedVoteEventsResponseDto> {
+    const now = new Date();
+    const cursor = decodeCursor(query.cursor);
+    const options: ListVoteEventsOptions = {
+      limit: query.limit,
+      now,
+    };
+
+    if (cursor) {
+      options.cursor = cursor;
+    }
+
+    if (user) {
+      options.userId = user.id;
+    }
+
+    const page = await this.voteEvents.listCompleted(options);
+    const lastItem = page.items.at(-1);
+
+    return {
+      voteEvents: page.items.map((item) =>
+        mapVoteEventItem(item, { revealRatios: true }),
+      ),
+      pageInfo: {
+        hasNext: page.hasNext,
+        nextCursor:
+          page.hasNext && lastItem
+            ? encodeCursor({
+                deadlineAt: lastItem.cursorDeadlineAt,
+                id: lastItem.id,
+                mainVoteId: null,
+              })
+            : null,
+      },
+    };
+  }
 }
 
 function mapVoteEvent(
   voteEvent: OngoingVoteEventRecord | null,
+  options: { revealRatios?: boolean } = {},
 ): VoteEventListItemDto | null {
   if (!voteEvent) {
     return null;
   }
 
-  const [optionARatio, optionBRatio] = voteEvent.isParticipated
+  const [optionARatio, optionBRatio] = (
+    options.revealRatios || voteEvent.isParticipated
+  )
     ? calculateRatios(voteEvent)
     : [null, null];
 
@@ -122,8 +166,9 @@ function mapVoteEvent(
 
 function mapVoteEventItem(
   voteEvent: OngoingVoteEventRecord,
+  options?: { revealRatios?: boolean },
 ): VoteEventListItemDto {
-  return mapVoteEvent(voteEvent)!;
+  return mapVoteEvent(voteEvent, options)!;
 }
 
 function calculateRatios(

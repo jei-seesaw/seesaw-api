@@ -1,5 +1,6 @@
 import { VoteEvent } from '../../src/vote-events/vote-event.entity';
 import {
+  CompletedVoteEventsPage,
   OngoingVoteEventsPage,
   VoteEventsRepository,
 } from '../../src/vote-events/vote-events.repository';
@@ -144,10 +145,79 @@ describe('VoteEventsService', () => {
       }),
     ]);
   });
+
+  it('완료된 투표는 참여 여부와 상관없이 선택지 비율을 반환한다', async () => {
+    repository.completedListResult = {
+      hasNext: false,
+      items: [
+        {
+          category: 'daily',
+          cursorDeadlineAt: '2026-07-01 12:00:00',
+          id: 'daily-id',
+          isParticipated: false,
+          optionA: 'A',
+          optionAImageUrl: null,
+          optionAParticipantCount: 1,
+          optionATokenAmount: 0,
+          optionB: 'B',
+          optionBImageUrl: null,
+          optionBParticipantCount: 3,
+          optionBTokenAmount: 0,
+          remainingSeconds: 0,
+          title: '일상 투표',
+          totalParticipantCount: 4,
+          totalTokenAmount: 0,
+        },
+        {
+          category: 'betting',
+          cursorDeadlineAt: '2026-07-01 12:00:00',
+          id: 'betting-id',
+          isParticipated: false,
+          optionA: 'A',
+          optionAImageUrl: null,
+          optionAParticipantCount: 0,
+          optionATokenAmount: 25,
+          optionB: 'B',
+          optionBImageUrl: null,
+          optionBParticipantCount: 0,
+          optionBTokenAmount: 75,
+          remainingSeconds: 0,
+          title: '배팅 투표',
+          totalParticipantCount: 2,
+          totalTokenAmount: 100,
+        },
+      ],
+    };
+
+    const result = await service.listCompleted({ limit: 10 });
+
+    expect(result.voteEvents).toEqual([
+      expect.objectContaining({
+        id: 'daily-id',
+        isParticipated: false,
+        optionARatio: 25,
+        optionBRatio: 75,
+        remainingTime: '00:00:00',
+        totalTokenAmount: null,
+      }),
+      expect.objectContaining({
+        id: 'betting-id',
+        isParticipated: false,
+        optionARatio: 25,
+        optionBRatio: 75,
+        remainingTime: '00:00:00',
+        totalTokenAmount: 100,
+      }),
+    ]);
+  });
 });
 
 class FakeVoteEventsRepository implements VoteEventsRepository {
   createdVoteEvent?: VoteEvent;
+  completedListResult: CompletedVoteEventsPage = {
+    hasNext: false,
+    items: [],
+  };
   listResult: OngoingVoteEventsPage = {
     hasNext: false,
     items: [],
@@ -166,5 +236,9 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
 
   listOngoing(): Promise<OngoingVoteEventsPage> {
     return Promise.resolve(this.listResult);
+  }
+
+  listCompleted(): Promise<CompletedVoteEventsPage> {
+    return Promise.resolve(this.completedListResult);
   }
 }

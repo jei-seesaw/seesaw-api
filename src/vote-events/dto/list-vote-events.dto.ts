@@ -116,3 +116,11 @@ export class ListVoteEventsResponseDto {
   @ApiProperty({ type: () => ListVoteEventsPageInfoDto })
   pageInfo!: ListVoteEventsPageInfoDto;
 }
+
+export class ListCompletedVoteEventsResponseDto {
+  @ApiProperty({ type: () => [VoteEventListItemDto] })
+  voteEvents!: VoteEventListItemDto[];
+
+  @ApiProperty({ type: () => ListVoteEventsPageInfoDto })
+  pageInfo!: ListVoteEventsPageInfoDto;
+}

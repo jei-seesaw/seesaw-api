@@ -18,6 +18,7 @@ import {
   CreateVoteEventResponseDto,
 } from './dto/create-vote-event.dto';
 import {
+  ListCompletedVoteEventsResponseDto,
   ListVoteEventsPageInfoDto,
   ListVoteEventsResponseDto,
   VoteEventListItemDto,
@@ -72,12 +73,48 @@ const listVoteEventsResponseSchema = {
   type: 'object' as const,
 };
 
+const listCompletedVoteEventsResponseSchema = {
+  example: {
+    data: {
+      pageInfo: {
+        hasNext: false,
+        nextCursor: null,
+      },
+      voteEvents: [
+        {
+          categoryName: '배팅',
+          id: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
+          isParticipated: false,
+          optionA: '김치찌개',
+          optionAImageUrl: null,
+          optionARatio: 25,
+          optionB: '돈까스',
+          optionBImageUrl: 'https://example.com/b.jpg',
+          optionBRatio: 75,
+          remainingTime: '00:00:00',
+          title: '점심 메뉴는?',
+          totalParticipantCount: 120,
+          totalTokenAmount: 1000,
+        },
+      ],
+    },
+  },
+  properties: {
+    data: {
+      $ref: getSchemaPath(ListCompletedVoteEventsResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
 export function ApiVoteEventsController() {
   return applyDecorators(
     ApiTags('투표 이벤트'),
     ApiExtraModels(
       CreateVoteEventRequestDto,
       CreateVoteEventResponseDto,
+      ListCompletedVoteEventsResponseDto,
       ListVoteEventsPageInfoDto,
       ListVoteEventsResponseDto,
       VoteEventListItemDto,
@@ -109,6 +146,40 @@ export function ApiListVoteEvents() {
     ApiOkResponse({
       description: '진행중인 투표 이벤트 목록을 반환합니다.',
       schema: listVoteEventsResponseSchema,
+    }),
+    ApiBadRequestResponse({
+      description: 'cursor 또는 query가 유효하지 않습니다.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 유효하지 않습니다.',
+    }),
+  );
+}
+
+export function ApiListCompletedVoteEvents() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '완료된 투표 이벤트를 최근 완료순으로 조회합니다. 완료된 투표는 로그인 또는 참여 여부와 무관하게 선택지 비율을 반환합니다.',
+      summary: '완료된 투표 이벤트 목록 조회',
+    }),
+    ApiBearerAuth(),
+    ApiSecurity({}),
+    ApiQuery({
+      description: '한 번에 조회할 투표 이벤트 수',
+      name: 'limit',
+      required: false,
+      schema: { default: 20, maximum: 50, minimum: 1, type: 'integer' },
+    }),
+    ApiQuery({
+      description: '다음 페이지 조회용 opaque cursor',
+      name: 'cursor',
+      required: false,
+      schema: { type: 'string' },
+    }),
+    ApiOkResponse({
+      description: '완료된 투표 이벤트 목록을 반환합니다.',
+      schema: listCompletedVoteEventsResponseSchema,
     }),
     ApiBadRequestResponse({
       description: 'cursor 또는 query가 유효하지 않습니다.',
