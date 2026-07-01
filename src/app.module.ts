@@ -12,6 +12,7 @@ import { getEnvFilePaths, validateEnv } from './config/env';
 import mikroOrmConfig from './config/mikro-orm.config';
 import { HealthController } from './health/health.controller';
 import { UsersModule } from './users/users.module';
+import { VoteEventsModule } from './vote-events/vote-events.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     AffiliationsModule,
     UsersModule,
     AuthModule,
+    VoteEventsModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -226,3 +226,45 @@ Public response:
 
 Rows are sorted by `name` ascending. Internal fields such as `createdAt` are not
 returned.
+
+## Vote event endpoints
+
+`POST /api/v2/vote-events` creates a vote event. It requires a bearer
+`accessToken`, but does not store a creator.
+
+Request:
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+```json
+{
+  "category": "betting",
+  "title": "점심 메뉴는?",
+  "optionA": "김치찌개",
+  "optionB": "돈까스",
+  "optionAImageUrl": null,
+  "optionBImageUrl": "https://example.com/b.jpg"
+}
+```
+
+Public response:
+
+```json
+{
+  "data": {
+    "id": "generated-vote-event-id"
+  }
+}
+```
+
+- `category` must be one of `betting`, `daily`, `balance`, or `work`.
+- `title`, `optionA`, and `optionB` must be 1 to 120 characters.
+- `optionAImageUrl` and `optionBImageUrl` may be omitted or `null`. If present,
+  they must be http/https URLs up to 2048 characters.
+- Missing or invalid bearer access tokens return `401` with
+  `invalid_access_token`.
+- `deadlineAt` is set to 24 hours after creation.
+- Participant count and token totals start at `0`.
+- Actual voting/participation is reserved for a later `/api/v2/vote` API.

@@ -2,6 +2,7 @@ import { Migrator } from '@mikro-orm/migrations';
 import { defineConfig } from '@mikro-orm/mariadb';
 import { Affiliation } from '../affiliations/affiliation.entity';
 import { User } from '../users/user.entity';
+import { VoteEvent } from '../vote-events/vote-event.entity';
 import { loadEnvFiles, validateEnv } from './env';
 
 loadEnvFiles();
@@ -14,7 +15,7 @@ export default defineConfig({
   user: env.DB_USER,
   password: env.DB_PASSWORD,
   dbName: env.DB_NAME,
-  entities: [Affiliation, User],
+  entities: [Affiliation, User, VoteEvent],
   extensions: [Migrator],
   migrations: {
     path: 'dist/migrations',
