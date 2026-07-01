@@ -231,6 +231,143 @@
       "comment": null
     },
     {
+      "name": "vote_event_participations",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar(36)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": 36,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar(36)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 36,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "vote_event_id": {
+          "name": "vote_event_id",
+          "type": "varchar(36)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 36,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "PRIMARY",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "user_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "vote_event_participations_user_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "vote_event_id",
+            "user_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "vote_event_participations_vote_event_user_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "triggers": [],
+      "foreignKeys": {
+        "vote_event_participations_user_id_foreign": {
+          "columnNames": [
+            "user_id"
+          ],
+          "constraintName": "vote_event_participations_user_id_foreign",
+          "localTableName": "vote_event_participations",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "users",
+          "updateRule": "restrict",
+          "deleteRule": "cascade"
+        },
+        "vote_event_participations_vote_event_id_foreign": {
+          "columnNames": [
+            "vote_event_id"
+          ],
+          "constraintName": "vote_event_participations_vote_event_id_foreign",
+          "localTableName": "vote_event_participations",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "vote_events",
+          "updateRule": "restrict",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
       "name": "vote_events",
       "columns": {
         "category": {
@@ -335,6 +472,23 @@
           "enumItems": [],
           "mappedType": "string"
         },
+        "option_a_participant_count": {
+          "name": "option_a_participant_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
         "option_a_token_amount": {
           "name": "option_a_token_amount",
           "type": "int",
@@ -385,6 +539,23 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "string"
+        },
+        "option_b_participant_count": {
+          "name": "option_b_participant_count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "integer"
         },
         "option_b_token_amount": {
           "name": "option_b_token_amount",
@@ -465,6 +636,29 @@
           "keyName": "PRIMARY",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "deadline_at",
+            "id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "vote_events_ongoing_deadline_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "deadline_at",
+            "total_participant_count",
+            "id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "vote_events_ongoing_main_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [],

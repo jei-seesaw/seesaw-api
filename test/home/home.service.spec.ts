@@ -67,6 +67,10 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
   }> {
     return Promise.resolve(this.summary);
   }
+
+  listOngoing(): never {
+    throw new Error('not used');
+  }
 }
 
 class FakeUsersRepository implements UsersRepository {

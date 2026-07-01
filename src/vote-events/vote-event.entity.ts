@@ -67,6 +67,22 @@ export class VoteEvent {
   })
   optionBTokenAmount: number = 0;
 
+  @Property({
+    columnType: 'int',
+    default: 0,
+    fieldName: 'option_a_participant_count',
+    type: 'number',
+  })
+  optionAParticipantCount: number = 0;
+
+  @Property({
+    columnType: 'int',
+    default: 0,
+    fieldName: 'option_b_participant_count',
+    type: 'number',
+  })
+  optionBParticipantCount: number = 0;
+
   @Property({ type: Date, fieldName: 'deadline_at' })
   deadlineAt: Date;
 

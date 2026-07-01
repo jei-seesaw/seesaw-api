@@ -280,6 +280,74 @@ returned.
 
 ## Vote event endpoints
 
+`GET /api/v2/ongoing-vote-events`는 진행중인 투표 이벤트를 무한 스크롤용 cursor
+pagination으로 조회한다. 로그인하지 않아도 접근할 수 있다.
+
+요청:
+
+```text
+GET /api/v2/ongoing-vote-events?limit=20
+```
+
+다음 페이지 요청:
+
+```text
+GET /api/v2/ongoing-vote-events?limit=20&cursor=opaque-next-cursor
+```
+
+유효한 bearer `accessToken`을 함께 보내면 현재 사용자의 참여 여부와 참여한
+투표의 선택지 비율을 함께 반환한다.
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "mainVote": {
+      "id": "generated-vote-event-id",
+      "categoryName": "배팅",
+      "remainingTime": "12:34:56",
+      "title": "점심 메뉴는?",
+      "optionA": "김치찌개",
+      "optionB": "돈까스",
+      "optionAImageUrl": null,
+      "optionBImageUrl": "https://example.com/b.jpg",
+      "optionARatio": 25,
+      "optionBRatio": 75,
+      "totalParticipantCount": 120,
+      "totalTokenAmount": 1000,
+      "isParticipated": true
+    },
+    "otherVoteEvents": [],
+    "pageInfo": {
+      "hasNext": false,
+      "nextCursor": null
+    }
+  }
+}
+```
+
+- `mainVote`는 첫 페이지에서만 반환하며, 진행중인 투표 중
+  `totalParticipantCount`가 가장 큰 투표다. 다음 페이지에서는 `null`이다.
+- `otherVoteEvents`는 `mainVote`를 제외한 진행중인 투표이며 마감임박순으로
+  정렬한다.
+- `limit` 기본값은 `20`, 최댓값은 `50`이다.
+- `cursor`는 opaque 문자열이며 클라이언트가 해석하지 않는다.
+- `remainingTime`은 서버 기준 남은 시간 `HH:mm:ss`다.
+- 미로그인 요청 또는 참여하지 않은 투표의 `optionARatio`, `optionBRatio`는
+  `null`이다.
+- `optionARatio`, `optionBRatio`는 소수 퍼센트 숫자다.
+- `betting` 투표의 비율은 선택지별 token amount 기준이다.
+- non-betting 투표의 비율은 선택지별 participant count 기준이다.
+- non-betting 투표의 `totalTokenAmount`는 `null`이다.
+- Authorization header가 있지만 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- `cursor`가 유효하지 않으면 `400`과 `invalid_cursor`를 반환한다.
+
 `POST /api/v2/vote-events` creates a vote event. It requires a bearer
 `accessToken`, but does not store a creator.
 
