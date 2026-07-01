@@ -15,6 +15,8 @@ src/
     dto/
     guards/
   health/
+  home/
+    dto/
   migrations/
   users/
     dto/
@@ -25,6 +27,7 @@ test/
   auth/
   config/
   health/
+  home/
   users/
   vote-events/
 
@@ -74,9 +77,12 @@ test/
 
 - `src/affiliations/` owns Affiliation metadata storage and the affiliation
   list API.
-- `src/auth/`는 login, refresh, JWT signing/verification, bearer token guard를
-  소유한다. Refresh token persistence와 logout/revoke storage는 아직 없다.
+- `src/auth/`는 login, refresh, JWT signing/verification, bearer token guard와
+  optional bearer token guard를 소유한다. Refresh token persistence와
+  logout/revoke storage는 아직 없다.
 - `src/health/` owns the health check.
+- `src/home/` owns the main-page summary API. It reads vote event aggregate
+  counters and, when an access token is present, the current user's vote token.
 - `src/users/`는 User storage, password hashing/verification, nickname
   availability API를 소유하며 MikroORM user data access는 repository provider
   뒤에 둔다.

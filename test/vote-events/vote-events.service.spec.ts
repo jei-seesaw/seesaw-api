@@ -62,4 +62,8 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
 
     return Promise.resolve(voteEvent);
   }
+
+  getSummary(): never {
+    throw new Error('not used');
+  }
 }

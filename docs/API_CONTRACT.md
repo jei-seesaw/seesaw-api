@@ -81,6 +81,57 @@ The public response is wrapped by the global interceptor:
 }
 ```
 
+## Home endpoint
+
+`GET /api/v2/home`은 메인페이지에 필요한 공개 집계를 반환한다. 로그인하지
+않아도 접근할 수 있다.
+
+요청:
+
+```text
+GET /api/v2/home
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "ongoingVoteEventCount": 8,
+    "completedVoteEventCount": 4,
+    "participantCount": 128,
+    "isLoggedIn": false
+  }
+}
+```
+
+유효한 bearer `accessToken`을 함께 보내면 현재 사용자의 `voteToken`도 반환한다.
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+```json
+{
+  "data": {
+    "ongoingVoteEventCount": 8,
+    "completedVoteEventCount": 4,
+    "participantCount": 128,
+    "isLoggedIn": true,
+    "voteToken": 1000
+  }
+}
+```
+
+- `ongoingVoteEventCount`는 `deadlineAt`이 현재 시각보다 뒤인 vote event 수다.
+- `completedVoteEventCount`는 `deadlineAt`이 현재 시각보다 같거나 앞선 vote
+  event 수다.
+- `participantCount`는 `vote_events.total_participant_count` 합계다.
+- `isLoggedIn`은 현재 요청의 로그인 여부다.
+- Authorization header가 없으면 익명 요청으로 처리한다.
+- Authorization header가 있지만 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+
 ## Auth endpoints
 
 `POST /api/v2/auth/login`은 닉네임과 비밀번호로 로그인한다.

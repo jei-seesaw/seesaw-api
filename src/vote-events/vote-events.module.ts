@@ -16,5 +16,6 @@ import { VoteEventsService } from './vote-events.service';
     VoteEventsService,
     { provide: VoteEventsRepository, useClass: MikroOrmVoteEventsRepository },
   ],
+  exports: [VoteEventsRepository],
 })
 export class VoteEventsModule {}
