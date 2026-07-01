@@ -3,6 +3,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiNotFoundResponse,
@@ -13,8 +14,10 @@ import {
   ApiSecurity,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiUnprocessableEntityResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
@@ -39,6 +42,20 @@ const createVoteEventResponseSchema = {
   properties: {
     data: {
       $ref: getSchemaPath(CreateVoteEventResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
+const castVoteResponseSchema = {
+  example: {
+    data: null,
+  },
+  properties: {
+    data: {
+      nullable: true,
+      type: 'object' as const,
     },
   },
   required: ['data'],
@@ -155,6 +172,7 @@ export function ApiVoteEventsController() {
   return applyDecorators(
     ApiTags('투표 이벤트'),
     ApiExtraModels(
+      CastVoteRequestDto,
       CreateVoteEventRequestDto,
       CreateVoteEventResponseDto,
       ListCompletedVoteEventsResponseDto,
@@ -264,6 +282,57 @@ export function ApiCreateVoteEvent() {
     }),
     ApiUnauthorizedResponse({
       description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+  );
+}
+
+export function ApiVote() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '로그인한 사용자가 진행중인 투표 이벤트에서 A 또는 B 선택지를 선택합니다. 배팅 투표는 tokenAmount가 필요하고, 일반 투표는 tokenAmount를 보내지 않습니다.',
+      summary: '투표 진행',
+    }),
+    ApiBearerAuth(),
+    ApiBody({
+      examples: {
+        betting: {
+          summary: '배팅 투표 요청',
+          value: {
+            selectedOption: 'A',
+            tokenAmount: 25,
+            voteEventId: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
+          },
+        },
+        default: {
+          summary: '일반 투표 요청',
+          value: {
+            selectedOption: 'B',
+            voteEventId: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
+          },
+        },
+      },
+      type: CastVoteRequestDto,
+    }),
+    ApiOkResponse({
+      description: '투표가 기록되었습니다.',
+      schema: castVoteResponseSchema,
+    }),
+    ApiBadRequestResponse({
+      description: '투표 진행 요청 body가 유효하지 않습니다.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+    ApiNotFoundResponse({
+      description: '투표 이벤트를 찾을 수 없습니다.',
+    }),
+    ApiConflictResponse({
+      description:
+        '마감, 중복 참여, 또는 보유 토큰 부족으로 투표할 수 없습니다.',
+    }),
+    ApiUnprocessableEntityResponse({
+      description: '투표 카테고리와 토큰 요청이 맞지 않습니다.',
     }),
   );
 }

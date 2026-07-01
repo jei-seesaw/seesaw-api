@@ -83,6 +83,10 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
   listCompleted(): never {
     throw new Error('not used');
   }
+
+  participate(): never {
+    throw new Error('not used');
+  }
 }
 
 class FakeUsersRepository implements UsersRepository {

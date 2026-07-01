@@ -9,6 +9,7 @@ import {
   CreateVoteEventResponseDto,
   VoteEventCategory,
 } from './dto/create-vote-event.dto';
+import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import {
   VoteEventAffiliationStatDto,
   VoteEventDetailResponseDto,
@@ -22,6 +23,10 @@ import {
 import { VoteEvent } from './vote-event.entity';
 import {
   InvalidCursorException,
+  TokenAmountNotAllowedException,
+  TokenAmountRequiredException,
+  VoteEventAlreadyParticipatedException,
+  VoteEventClosedException,
   VoteEventNotFoundException,
 } from './vote-events.exceptions';
 import {
@@ -170,6 +175,39 @@ export class VoteEventsService {
     return this.mapVoteEventDetail(voteEvent);
   }
 
+  async vote(
+    dto: CastVoteRequestDto,
+    user: AuthenticatedUser,
+  ): Promise<null> {
+    const voteEvent = await this.voteEvents.findDetail({
+      id: dto.voteEventId,
+      now: new Date(),
+      userId: user.id,
+    });
+
+    if (!voteEvent) {
+      throw new VoteEventNotFoundException();
+    }
+
+    if (voteEvent.isCompleted) {
+      throw new VoteEventClosedException();
+    }
+
+    if (voteEvent.isParticipated) {
+      throw new VoteEventAlreadyParticipatedException();
+    }
+
+    await this.voteEvents.participate({
+      category: voteEvent.category,
+      selectedOption: dto.selectedOption,
+      tokenAmount: voteTokenAmount(voteEvent.category, dto.tokenAmount),
+      userId: user.id,
+      voteEventId: voteEvent.id,
+    });
+
+    return null;
+  }
+
   private async mapVoteEventDetail(
     voteEvent: VoteEventDetailRecord,
   ): Promise<VoteEventDetailResponseDto> {
@@ -255,6 +293,25 @@ function mapVoteEventItem(
   options?: { revealRatios?: boolean },
 ): VoteEventListItemDto {
   return mapVoteEvent(voteEvent, options)!;
+}
+
+function voteTokenAmount(
+  category: VoteEventCategory,
+  tokenAmount: number | null | undefined,
+): number {
+  if (category === 'betting') {
+    if (tokenAmount === null || tokenAmount === undefined) {
+      throw new TokenAmountRequiredException();
+    }
+
+    return tokenAmount;
+  }
+
+  if (tokenAmount !== null && tokenAmount !== undefined) {
+    throw new TokenAmountNotAllowedException();
+  }
+
+  return 0;
 }
 
 function calculateRatios(

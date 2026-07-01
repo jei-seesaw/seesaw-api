@@ -1,9 +1,17 @@
 import { EntityRepository } from '@mikro-orm/mariadb';
 import { InjectRepository } from '@mikro-orm/nestjs';
+import { raw } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { User } from '../users/user.entity';
 import type { VoteEventCategory } from './dto/create-vote-event.dto';
 import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
+import { VoteEventParticipation } from './vote-event-participation.entity';
 import { VoteEvent } from './vote-event.entity';
+import {
+  InsufficientVoteTokenException,
+  VoteEventAlreadyParticipatedException,
+  VoteEventClosedException,
+} from './vote-events.exceptions';
 
 export interface VoteEventsSummary {
   completedVoteEventCount: number;
@@ -28,6 +36,14 @@ export interface GetVoteEventDetailOptions {
   id: string;
   now: Date;
   userId?: string;
+}
+
+export interface ParticipateInVoteEventOptions {
+  category: VoteEventCategory;
+  selectedOption: VoteEventSelectedOption;
+  tokenAmount: number;
+  userId: string;
+  voteEventId: string;
 }
 
 export interface OngoingVoteEventRecord {
@@ -86,6 +102,7 @@ export abstract class VoteEventsRepository {
   abstract listCompleted(
     options: ListVoteEventsOptions,
   ): Promise<CompletedVoteEventsPage>;
+  abstract participate(options: ParticipateInVoteEventOptions): Promise<void>;
 }
 
 @Injectable()
@@ -134,6 +151,56 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
       tokenAmount: Number(row.tokenAmount),
       userId: row.userId,
     }));
+  }
+
+  async participate(options: ParticipateInVoteEventOptions): Promise<void> {
+    const em = this.voteEvents.getEntityManager();
+
+    await em.transactional(async (tx) => {
+      const tokenAmount = options.category === 'betting' ? options.tokenAmount : 0;
+
+      if (tokenAmount > 0) {
+        const updatedUserCount = await tx.nativeUpdate(
+          User,
+          { id: options.userId, voteToken: { $gte: tokenAmount } },
+          { voteToken: raw<number>('`vote_token` - ?', [tokenAmount]) },
+        );
+
+        if (updatedUserCount !== 1) {
+          throw new InsufficientVoteTokenException();
+        }
+      }
+
+      try {
+        tx.persist(
+          new VoteEventParticipation(
+            tx.getReference(VoteEvent, options.voteEventId),
+            tx.getReference(User, options.userId),
+            {
+              selectedOption: options.selectedOption,
+              tokenAmount,
+            },
+          ),
+        );
+        await tx.flush();
+      } catch (error) {
+        if (isDuplicateKeyError(error)) {
+          throw new VoteEventAlreadyParticipatedException();
+        }
+
+        throw error;
+      }
+
+      const updatedVoteEventCount = await tx.nativeUpdate(
+        VoteEvent,
+        { deadlineAt: { $gt: new Date() }, id: options.voteEventId },
+        voteEventAggregateUpdate(options.selectedOption, tokenAmount),
+      );
+
+      if (updatedVoteEventCount !== 1) {
+        throw new VoteEventClosedException();
+      }
+    });
   }
 
   async getSummary(): Promise<VoteEventsSummary> {
@@ -398,4 +465,53 @@ function toVoteEventDetailRecord(
     isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
     selectedOption: row.selectedOption,
   };
+}
+
+function voteEventAggregateUpdate(
+  selectedOption: VoteEventSelectedOption,
+  tokenAmount: number,
+) {
+  const common = {
+    totalParticipantCount: raw('`total_participant_count` + 1'),
+    totalTokenAmount: raw<number>('`total_token_amount` + ?', [tokenAmount]),
+  };
+
+  return selectedOption === 'A'
+    ? {
+        ...common,
+        optionAParticipantCount: raw<number>(
+          '`option_a_participant_count` + 1',
+        ),
+        optionATokenAmount: raw<number>(
+          '`option_a_token_amount` + ?',
+          [tokenAmount],
+        ),
+      }
+    : {
+        ...common,
+        optionBParticipantCount: raw<number>(
+          '`option_b_participant_count` + 1',
+        ),
+        optionBTokenAmount: raw<number>(
+          '`option_b_token_amount` + ?',
+          [tokenAmount],
+        ),
+      };
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  if (!isRecord(error)) {
+    return false;
+  }
+
+  return (
+    error.code === 'ER_DUP_ENTRY' ||
+    error.errno === 1062 ||
+    isDuplicateKeyError(error.cause) ||
+    isDuplicateKeyError(error.driverError)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

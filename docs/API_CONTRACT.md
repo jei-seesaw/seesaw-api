@@ -469,10 +469,10 @@ Authorization: Bearer jwt-access-token
 - Authorization header가 있지만 유효하지 않으면 `401`과
   `invalid_access_token`을 반환한다.
 
-`POST /api/v2/vote-events` creates a vote event. It requires a bearer
-`accessToken`, but does not store a creator.
+`POST /api/v2/vote-events`는 투표 이벤트를 생성한다. bearer `accessToken`이
+필요하지만 생성자를 저장하지는 않는다.
 
-Request:
+요청:
 
 ```text
 Authorization: Bearer jwt-access-token
@@ -489,7 +489,7 @@ Authorization: Bearer jwt-access-token
 }
 ```
 
-Public response:
+공개 응답:
 
 ```json
 {
@@ -499,12 +499,62 @@ Public response:
 }
 ```
 
-- `category` must be one of `betting`, `daily`, `balance`, or `work`.
-- `title`, `optionA`, and `optionB` must be 1 to 120 characters.
-- `optionAImageUrl` and `optionBImageUrl` may be omitted or `null`. If present,
-  they must be http/https URLs up to 2048 characters.
-- Missing or invalid bearer access tokens return `401` with
-  `invalid_access_token`.
-- `deadlineAt` is set to 24 hours after creation.
-- Participant count and token totals start at `0`.
-- Actual voting/participation is reserved for a later `/api/v2/vote` API.
+- `category`는 `betting`, `daily`, `balance`, `work` 중 하나여야 한다.
+- `title`, `optionA`, `optionB`는 1자 이상 120자 이하여야 한다.
+- `optionAImageUrl`, `optionBImageUrl`은 생략하거나 `null`일 수 있다. 값이
+  있으면 2048자 이하의 http/https URL이어야 한다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- `deadlineAt`은 생성 시각으로부터 24시간 뒤로 설정한다.
+- 참여자 수와 토큰 집계는 `0`에서 시작한다.
+
+`POST /api/v2/vote`는 로그인한 사용자의 투표 참여를 기록한다.
+
+일반 투표 요청:
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+```json
+{
+  "voteEventId": "generated-vote-event-id",
+  "selectedOption": "A"
+}
+```
+
+배팅 투표 요청:
+
+```json
+{
+  "voteEventId": "generated-vote-event-id",
+  "selectedOption": "B",
+  "tokenAmount": 25
+}
+```
+
+공개 응답:
+
+```json
+{
+  "data": null
+}
+```
+
+- `selectedOption`은 `A` 또는 `B`만 허용한다.
+- 사용자는 같은 투표 이벤트에 한 번만 참여할 수 있다. 이미 참여했다면
+  `409`와 `vote_event_already_participated`를 반환한다.
+- 마감된 투표 이벤트에는 참여할 수 없다. 마감된 이벤트면 `409`와
+  `vote_event_closed`를 반환한다.
+- 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
+- `betting` 투표는 `tokenAmount`가 필수다. 없으면 `422`와
+  `token_amount_required`를 반환한다.
+- non-betting 투표는 `tokenAmount`를 보내면 안 된다. 보내면 `422`와
+  `token_amount_not_allowed`를 반환한다.
+- `tokenAmount`는 1 이상의 정수여야 한다.
+- 배팅 투표에서 보유 `voteToken`이 부족하면 `409`와
+  `insufficient_vote_token`을 반환한다.
+- 성공하면 참여 기록을 저장하고 `totalParticipantCount`,
+  선택지별 participant count를 증가시킨다.
+- 배팅 투표는 추가로 `totalTokenAmount`, 선택지별 token amount를 증가시키고,
+  사용자 `voteToken`을 `tokenAmount`만큼 차감한다.

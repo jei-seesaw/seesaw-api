@@ -19,6 +19,7 @@ import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
 } from './dto/create-vote-event.dto';
+import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import { VoteEventDetailResponseDto } from './dto/vote-event-detail.dto';
 import {
   ListCompletedVoteEventsResponseDto,
@@ -31,6 +32,7 @@ import {
   ApiGetVoteEventDetail,
   ApiListCompletedVoteEvents,
   ApiListVoteEvents,
+  ApiVote,
   ApiVoteEventsController,
 } from './vote-events.swagger';
 
@@ -80,5 +82,16 @@ export class VoteEventsController {
     @Body() dto: CreateVoteEventRequestDto,
   ): Promise<CreateVoteEventResponseDto> {
     return this.voteEventsService.create(dto);
+  }
+
+  @Post('vote')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiVote()
+  vote(
+    @Body() dto: CastVoteRequestDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<null> {
+    return this.voteEventsService.vote(dto, request.user!);
   }
 }

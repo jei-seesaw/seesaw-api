@@ -63,6 +63,142 @@ describe('VoteEventsService', () => {
     );
   });
 
+  it('일반 투표를 진행하면 참여 기록과 참여자 집계를 요청한다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'daily',
+      id: 'daily-id',
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'A', voteEventId: 'daily-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).resolves.toBeNull();
+
+    expect(repository.participation).toEqual({
+      category: 'daily',
+      selectedOption: 'A',
+      tokenAmount: 0,
+      userId: 'user-id',
+      voteEventId: 'daily-id',
+    });
+  });
+
+  it('배팅 투표를 진행하면 토큰 집계와 차감을 요청한다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'betting',
+      id: 'betting-id',
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'B', tokenAmount: 25, voteEventId: 'betting-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).resolves.toBeNull();
+
+    expect(repository.participation).toEqual({
+      category: 'betting',
+      selectedOption: 'B',
+      tokenAmount: 25,
+      userId: 'user-id',
+      voteEventId: 'betting-id',
+    });
+  });
+
+  it('없는 투표 이벤트에는 투표할 수 없다', async () => {
+    repository.detail = null;
+
+    await expect(
+      service.vote(
+        { selectedOption: 'A', voteEventId: 'missing-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_not_found',
+      },
+      status: 404,
+    });
+  });
+
+  it('마감된 투표 이벤트에는 투표할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      id: 'closed-id',
+      isCompleted: true,
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'A', voteEventId: 'closed-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_closed',
+      },
+      status: 409,
+    });
+  });
+
+  it('이미 참여한 투표 이벤트에는 다시 투표할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      id: 'participated-id',
+      isParticipated: true,
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'B', voteEventId: 'participated-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_already_participated',
+      },
+      status: 409,
+    });
+  });
+
+  it('배팅 투표에는 사용 토큰 수가 필요하다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'betting',
+      id: 'betting-id',
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'A', voteEventId: 'betting-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'token_amount_required',
+      },
+      status: 422,
+    });
+  });
+
+  it('일반 투표에는 사용 토큰 수를 보낼 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'balance',
+      id: 'balance-id',
+    });
+
+    await expect(
+      service.vote(
+        { selectedOption: 'A', tokenAmount: 10, voteEventId: 'balance-id' },
+        { id: 'user-id', nickname: 'user' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'token_amount_not_allowed',
+      },
+      status: 422,
+    });
+  });
+
   it('참여한 진행중인 투표만 선택지 비율을 반환한다', async () => {
     repository.listResult = {
       hasNext: false,
@@ -411,6 +547,14 @@ describe('VoteEventsService', () => {
   });
 });
 
+type FakeParticipation = {
+  category: 'betting' | 'daily' | 'balance' | 'work';
+  selectedOption: 'A' | 'B';
+  tokenAmount: number;
+  userId: string;
+  voteEventId: string;
+};
+
 class FakeVoteEventsRepository implements VoteEventsRepository {
   createdVoteEvent?: VoteEvent;
   completedListResult: CompletedVoteEventsPage = {
@@ -447,6 +591,7 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
     tokenAmount: number;
     userId: string;
   }> = [];
+  participation?: FakeParticipation;
 
   create(voteEvent: VoteEvent): Promise<VoteEvent> {
     this.createdVoteEvent = voteEvent;
@@ -473,6 +618,12 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
   findParticipationChoices(): Promise<typeof this.participationChoices> {
     return Promise.resolve(this.participationChoices);
   }
+
+  participate(args: FakeParticipation): Promise<void> {
+    this.participation = args;
+
+    return Promise.resolve();
+  }
 }
 
 class FakeUsersRepository implements UsersRepository {
@@ -497,4 +648,30 @@ class FakeUsersRepository implements UsersRepository {
   findAffiliationsByIds(): Promise<UserAffiliationSummary[]> {
     return Promise.resolve(this.affiliations);
   }
+}
+
+function voteEventDetail(
+  overrides: Partial<FakeVoteEventsRepository['detail']> = {},
+): NonNullable<FakeVoteEventsRepository['detail']> {
+  return {
+    category: 'daily',
+    cursorDeadlineAt: '2026-07-01 12:00:00',
+    id: 'vote-event-id',
+    isCompleted: false,
+    isParticipated: false,
+    optionA: 'A',
+    optionAImageUrl: null,
+    optionAParticipantCount: 0,
+    optionATokenAmount: 0,
+    optionB: 'B',
+    optionBImageUrl: null,
+    optionBParticipantCount: 0,
+    optionBTokenAmount: 0,
+    remainingSeconds: 10,
+    selectedOption: null,
+    title: '투표',
+    totalParticipantCount: 0,
+    totalTokenAmount: 0,
+    ...overrides,
+  };
 }

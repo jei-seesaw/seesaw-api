@@ -116,6 +116,206 @@ describe('Vote events endpoint', () => {
       });
   });
 
+  it('일반 투표를 진행하면 참여 기록과 참여자 집계를 저장한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-api-${Date.now()}`;
+    const { accessToken, userId } = await createUser(`${prefix}-daily-user`);
+    const voteEventId = await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: minutesFrom(new Date(), 10),
+      title: `${prefix}-daily`,
+      totalParticipantCount: 0,
+    });
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        selectedOption: 'A',
+        voteEventId,
+      })
+      .expect(200)
+      .expect((response: { body: unknown }) => {
+        expect(response.body).toEqual({ data: null });
+      });
+
+    await expectVoteEventAggregate(voteEventId, {
+      optionAParticipantCount: 1,
+      optionATokenAmount: 0,
+      optionBParticipantCount: 0,
+      optionBTokenAmount: 0,
+      totalParticipantCount: 1,
+      totalTokenAmount: 0,
+    });
+    await expectParticipation(voteEventId, userId, 'A', 0);
+    await expectUserVoteToken(userId, 1000);
+  });
+
+  it('배팅 투표를 진행하면 토큰 집계와 사용자 토큰 차감을 저장한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-api-${Date.now()}`;
+    const { accessToken, userId } = await createUser(`${prefix}-betting-user`);
+    const voteEventId = await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: minutesFrom(new Date(), 10),
+      title: `${prefix}-betting`,
+      totalParticipantCount: 0,
+    });
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        selectedOption: 'B',
+        tokenAmount: 25,
+        voteEventId,
+      })
+      .expect(200)
+      .expect((response: { body: unknown }) => {
+        expect(response.body).toEqual({ data: null });
+      });
+
+    await expectVoteEventAggregate(voteEventId, {
+      optionAParticipantCount: 0,
+      optionATokenAmount: 0,
+      optionBParticipantCount: 1,
+      optionBTokenAmount: 25,
+      totalParticipantCount: 1,
+      totalTokenAmount: 25,
+    });
+    await expectParticipation(voteEventId, userId, 'B', 25);
+    await expectUserVoteToken(userId, 975);
+  });
+
+  it('accessToken이 없으면 투표 진행을 거절한다', () => {
+    return request(server)
+      .post('/api/v2/vote')
+      .send({
+        selectedOption: 'A',
+        voteEventId: randomUUID(),
+      })
+      .expect(401)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'invalid_access_token',
+        );
+      });
+  });
+
+  it('투표 진행 요청 body가 유효하지 않으면 요청 경계에서 거절한다', async () => {
+    const accessToken = await issueAccessToken(`invalid-vote-${Date.now()}`);
+
+    return request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({
+        selectedOption: 'C',
+        tokenAmount: 0,
+        voteEventId: '',
+      })
+      .expect(400)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'validation_error',
+        );
+      });
+  });
+
+  it('이미 참여한 투표 이벤트에는 다시 투표할 수 없다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-api-${Date.now()}`;
+    const { accessToken } = await createUser(`${prefix}-duplicate-user`);
+    const voteEventId = await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: minutesFrom(new Date(), 10),
+      title: `${prefix}-duplicate`,
+      totalParticipantCount: 0,
+    });
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ selectedOption: 'A', voteEventId })
+      .expect(200);
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ selectedOption: 'B', voteEventId })
+      .expect(409)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'vote_event_already_participated',
+        );
+      });
+  });
+
+  it('마감된 투표 이벤트에는 투표할 수 없다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-api-${Date.now()}`;
+    const { accessToken } = await createUser(`${prefix}-closed-user`);
+    const voteEventId = await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: secondsFrom(new Date(), -5),
+      title: `${prefix}-closed`,
+      totalParticipantCount: 0,
+    });
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ selectedOption: 'A', voteEventId })
+      .expect(409)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'vote_event_closed',
+        );
+      });
+  });
+
+  it('배팅 투표에서 보유 토큰이 부족하면 참여 기록을 남기지 않는다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-api-${Date.now()}`;
+    const { accessToken, userId } = await createUser(`${prefix}-token-user`);
+    await orm.em.getConnection().execute(
+      'update `users` set `vote_token` = ? where `id` = ?',
+      [10, userId],
+    );
+    const voteEventId = await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: minutesFrom(new Date(), 10),
+      title: `${prefix}-insufficient`,
+      totalParticipantCount: 0,
+    });
+
+    await request(server)
+      .post('/api/v2/vote')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ selectedOption: 'A', tokenAmount: 20, voteEventId })
+      .expect(409)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'insufficient_vote_token',
+        );
+      });
+
+    await expectVoteEventAggregate(voteEventId, {
+      optionAParticipantCount: 0,
+      optionATokenAmount: 0,
+      optionBParticipantCount: 0,
+      optionBTokenAmount: 0,
+      totalParticipantCount: 0,
+      totalTokenAmount: 0,
+    });
+    await expectNoParticipation(voteEventId, userId);
+    await expectUserVoteToken(userId, 10);
+  });
+
   it('진행중인 투표 목록을 메인 투표와 마감임박순 목록으로 조회한다', async () => {
     await deleteListTestVoteEvents();
 
@@ -711,13 +911,88 @@ describe('Vote events endpoint', () => {
 
   async function deleteListTestVoteEvents(): Promise<void> {
     await orm.em.getConnection().execute(
-      'delete vep from `vote_event_participations` vep join `vote_events` ve on ve.`id` = vep.`vote_event_id` where ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ?',
-      ['vote-list-%', 'vote-ratio-%', 'vote-cursor-%', 'vote-detail-%'],
+      'delete vep from `vote_event_participations` vep join `vote_events` ve on ve.`id` = vep.`vote_event_id` where ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ?',
+      [
+        'vote-api-%',
+        'vote-list-%',
+        'vote-ratio-%',
+        'vote-cursor-%',
+        'vote-detail-%',
+      ],
     );
     await orm.em.getConnection().execute(
-      'delete from `vote_events` where `title` like ? or `title` like ? or `title` like ? or `title` like ?',
-      ['vote-list-%', 'vote-ratio-%', 'vote-cursor-%', 'vote-detail-%'],
+      'delete from `vote_events` where `title` like ? or `title` like ? or `title` like ? or `title` like ? or `title` like ?',
+      [
+        'vote-api-%',
+        'vote-list-%',
+        'vote-ratio-%',
+        'vote-cursor-%',
+        'vote-detail-%',
+      ],
     );
+  }
+
+  async function expectVoteEventAggregate(
+    voteEventId: string,
+    expected: VoteEventAggregate,
+  ): Promise<void> {
+    const rows = await orm.em.getConnection().execute<VoteEventAggregateRow[]>(
+      'select `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count` from `vote_events` where `id` = ?',
+      [voteEventId],
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      option_a_participant_count: expected.optionAParticipantCount,
+      option_a_token_amount: expected.optionATokenAmount,
+      option_b_participant_count: expected.optionBParticipantCount,
+      option_b_token_amount: expected.optionBTokenAmount,
+      total_participant_count: expected.totalParticipantCount,
+      total_token_amount: expected.totalTokenAmount,
+    });
+  }
+
+  async function expectParticipation(
+    voteEventId: string,
+    userId: string,
+    selectedOption: 'A' | 'B',
+    tokenAmount: number,
+  ): Promise<void> {
+    const rows = await orm.em.getConnection().execute<ParticipationRow[]>(
+      'select `selected_option`, `token_amount` from `vote_event_participations` where `vote_event_id` = ? and `user_id` = ?',
+      [voteEventId, userId],
+    );
+
+    expect(rows).toEqual([
+      {
+        selected_option: selectedOption,
+        token_amount: tokenAmount,
+      },
+    ]);
+  }
+
+  async function expectNoParticipation(
+    voteEventId: string,
+    userId: string,
+  ): Promise<void> {
+    const rows = await orm.em.getConnection().execute<ParticipationRow[]>(
+      'select `selected_option`, `token_amount` from `vote_event_participations` where `vote_event_id` = ? and `user_id` = ?',
+      [voteEventId, userId],
+    );
+
+    expect(rows).toHaveLength(0);
+  }
+
+  async function expectUserVoteToken(
+    userId: string,
+    voteToken: number,
+  ): Promise<void> {
+    const rows = await orm.em.getConnection().execute<UserVoteTokenRow[]>(
+      'select `vote_token` from `users` where `id` = ?',
+      [userId],
+    );
+
+    expect(rows).toEqual([{ vote_token: voteToken }]);
   }
 });
 
@@ -750,6 +1025,33 @@ interface VoteEventRow {
   title: string;
   total_participant_count: number;
   total_token_amount: number;
+}
+
+interface VoteEventAggregate {
+  optionAParticipantCount: number;
+  optionATokenAmount: number;
+  optionBParticipantCount: number;
+  optionBTokenAmount: number;
+  totalParticipantCount: number;
+  totalTokenAmount: number;
+}
+
+interface VoteEventAggregateRow {
+  option_a_participant_count: number;
+  option_a_token_amount: number;
+  option_b_participant_count: number;
+  option_b_token_amount: number;
+  total_participant_count: number;
+  total_token_amount: number;
+}
+
+interface ParticipationRow {
+  selected_option: 'A' | 'B';
+  token_amount: number;
+}
+
+interface UserVoteTokenRow {
+  vote_token: number;
 }
 
 interface LoginEnvelope {

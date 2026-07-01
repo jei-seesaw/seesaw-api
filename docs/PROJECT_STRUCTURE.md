@@ -86,9 +86,9 @@ test/
 - `src/users/`는 User storage, password hashing/verification, nickname
   availability API를 소유하며 MikroORM user data access는 repository provider
   뒤에 둔다.
-- `src/vote-events/` owns vote event creation, ongoing vote event list reads,
-  participation visibility, initial aggregate counters, and vote event
-  persistence. Actual voting writes are a later API.
+- `src/vote-events/` owns vote event creation, vote participation writes,
+  ongoing/completed vote event reads, result visibility, aggregate counters,
+  and vote event persistence.
 - Controller Swagger metadata stays beside the controller in `*.swagger.ts`.
 - New feature code should live in its own feature directory once it grows beyond
   the initial health endpoint.
