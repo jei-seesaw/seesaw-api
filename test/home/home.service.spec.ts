@@ -60,6 +60,14 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
     throw new Error('not used');
   }
 
+  findDetail(): never {
+    throw new Error('not used');
+  }
+
+  findParticipationChoices(): never {
+    throw new Error('not used');
+  }
+
   getSummary(): Promise<{
     completedVoteEventCount: number;
     ongoingVoteEventCount: number;
@@ -85,6 +93,10 @@ class FakeUsersRepository implements UsersRepository {
   }
 
   existsByNickname(): never {
+    throw new Error('not used');
+  }
+
+  findAffiliationsByIds(): never {
     throw new Error('not used');
   }
 

@@ -1,10 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/auth.service';
 import {
+  UserAffiliationSummary,
+  UsersRepository,
+} from '../users/users.repository';
+import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
   VoteEventCategory,
 } from './dto/create-vote-event.dto';
+import {
+  VoteEventAffiliationStatDto,
+  VoteEventDetailResponseDto,
+} from './dto/vote-event-detail.dto';
 import {
   ListCompletedVoteEventsResponseDto,
   ListVoteEventsQueryDto,
@@ -12,10 +20,16 @@ import {
   VoteEventListItemDto,
 } from './dto/list-vote-events.dto';
 import { VoteEvent } from './vote-event.entity';
-import { InvalidCursorException } from './vote-events.exceptions';
 import {
+  InvalidCursorException,
+  VoteEventNotFoundException,
+} from './vote-events.exceptions';
+import {
+  GetVoteEventDetailOptions,
   ListVoteEventsOptions,
   OngoingVoteEventRecord,
+  VoteEventDetailRecord,
+  VoteEventParticipationChoiceRecord,
   VoteEventsListCursor,
   VoteEventsRepository,
 } from './vote-events.repository';
@@ -30,7 +44,10 @@ const CATEGORY_NAMES: Record<VoteEventCategory, string> = {
 
 @Injectable()
 export class VoteEventsService {
-  constructor(private readonly voteEvents: VoteEventsRepository) {}
+  constructor(
+    private readonly voteEvents: VoteEventsRepository,
+    private readonly users: UsersRepository,
+  ) {}
 
   async create(
     dto: CreateVoteEventRequestDto,
@@ -130,6 +147,75 @@ export class VoteEventsService {
       },
     };
   }
+
+  async getDetail(
+    id: string,
+    user?: AuthenticatedUser,
+  ): Promise<VoteEventDetailResponseDto> {
+    const options: GetVoteEventDetailOptions = {
+      id,
+      now: new Date(),
+    };
+
+    if (user) {
+      options.userId = user.id;
+    }
+
+    const voteEvent = await this.voteEvents.findDetail(options);
+
+    if (!voteEvent) {
+      throw new VoteEventNotFoundException();
+    }
+
+    return this.mapVoteEventDetail(voteEvent);
+  }
+
+  private async mapVoteEventDetail(
+    voteEvent: VoteEventDetailRecord,
+  ): Promise<VoteEventDetailResponseDto> {
+    const revealResults = voteEvent.isCompleted || voteEvent.isParticipated;
+    const [optionARatio, optionBRatio] = revealResults
+      ? calculateRatios(voteEvent)
+      : [null, null];
+    const [optionAResultAmount, optionBResultAmount] = revealResults
+      ? calculateResultAmounts(voteEvent)
+      : [null, null];
+    const affiliationStats = revealResults
+      ? await this.getAffiliationStats(voteEvent)
+      : null;
+
+    return {
+      affiliationStats,
+      categoryName: CATEGORY_NAMES[voteEvent.category],
+      isParticipated: voteEvent.isParticipated,
+      optionA: voteEvent.optionA,
+      optionAImageUrl: voteEvent.optionAImageUrl,
+      optionAResultAmount,
+      optionARatio,
+      optionB: voteEvent.optionB,
+      optionBImageUrl: voteEvent.optionBImageUrl,
+      optionBResultAmount,
+      optionBRatio,
+      remainingTime: voteEvent.isCompleted
+        ? null
+        : formatRemainingTime(voteEvent.remainingSeconds),
+      selectedOption: voteEvent.selectedOption,
+      title: voteEvent.title,
+      totalParticipantCount: voteEvent.totalParticipantCount,
+      totalTokenAmount:
+        voteEvent.category === 'betting' ? voteEvent.totalTokenAmount : null,
+    };
+  }
+
+  private async getAffiliationStats(
+    voteEvent: VoteEventDetailRecord,
+  ): Promise<VoteEventAffiliationStatDto[]> {
+    const choices = await this.voteEvents.findParticipationChoices(voteEvent.id);
+    const userIds = [...new Set(choices.map((choice) => choice.userId))];
+    const affiliations = await this.users.findAffiliationsByIds(userIds);
+
+    return buildAffiliationStats(voteEvent, choices, affiliations);
+  }
 }
 
 function mapVoteEvent(
@@ -185,6 +271,79 @@ function calculateRatios(
     percentage(voteEvent.optionAParticipantCount, voteEvent.totalParticipantCount),
     percentage(voteEvent.optionBParticipantCount, voteEvent.totalParticipantCount),
   ];
+}
+
+function calculateResultAmounts(
+  voteEvent: OngoingVoteEventRecord,
+): [number, number] {
+  if (voteEvent.category === 'betting') {
+    return [voteEvent.optionATokenAmount, voteEvent.optionBTokenAmount];
+  }
+
+  return [
+    voteEvent.optionAParticipantCount,
+    voteEvent.optionBParticipantCount,
+  ];
+}
+
+function buildAffiliationStats(
+  voteEvent: VoteEventDetailRecord,
+  choices: VoteEventParticipationChoiceRecord[],
+  affiliations: UserAffiliationSummary[],
+): VoteEventAffiliationStatDto[] {
+  const affiliationByUserId = new Map(
+    affiliations.map((affiliation) => [affiliation.userId, affiliation]),
+  );
+  const statsByAffiliation = new Map<
+    string,
+    {
+      affiliationCode: string;
+      affiliationName: string;
+      optionAAmount: number;
+      optionBAmount: number;
+    }
+  >();
+
+  for (const choice of choices) {
+    const affiliation = affiliationByUserId.get(choice.userId);
+
+    if (!affiliation) {
+      continue;
+    }
+
+    const stat = statsByAffiliation.get(affiliation.affiliationCode) ?? {
+      affiliationCode: affiliation.affiliationCode,
+      affiliationName: affiliation.affiliationName,
+      optionAAmount: 0,
+      optionBAmount: 0,
+    };
+    const amount = voteEvent.category === 'betting' ? choice.tokenAmount : 1;
+
+    if (choice.selectedOption === 'A') {
+      stat.optionAAmount += amount;
+    } else {
+      stat.optionBAmount += amount;
+    }
+
+    statsByAffiliation.set(affiliation.affiliationCode, stat);
+  }
+
+  return [...statsByAffiliation.values()]
+    .map((stat) => {
+      const total = stat.optionAAmount + stat.optionBAmount;
+
+      return {
+        affiliationCode: stat.affiliationCode,
+        affiliationName: stat.affiliationName,
+        optionARatio: percentage(stat.optionAAmount, total),
+        optionBRatio: percentage(stat.optionBAmount, total),
+      };
+    })
+    .sort((a, b) =>
+      a.affiliationName === b.affiliationName
+        ? a.affiliationCode.localeCompare(b.affiliationCode)
+        : a.affiliationName.localeCompare(b.affiliationName),
+    );
 }
 
 function percentage(value: number, total: number): number {

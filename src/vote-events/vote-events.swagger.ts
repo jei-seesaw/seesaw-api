@@ -5,8 +5,10 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiExtraModels,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiSecurity,
   ApiTags,
@@ -17,6 +19,10 @@ import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
 } from './dto/create-vote-event.dto';
+import {
+  VoteEventAffiliationStatDto,
+  VoteEventDetailResponseDto,
+} from './dto/vote-event-detail.dto';
 import {
   ListCompletedVoteEventsResponseDto,
   ListVoteEventsPageInfoDto,
@@ -108,6 +114,43 @@ const listCompletedVoteEventsResponseSchema = {
   type: 'object' as const,
 };
 
+const voteEventDetailResponseSchema = {
+  example: {
+    data: {
+      affiliationStats: [
+        {
+          affiliationCode: 'teacher',
+          affiliationName: '선생님',
+          optionARatio: 75,
+          optionBRatio: 25,
+        },
+      ],
+      categoryName: '배팅',
+      isParticipated: true,
+      optionA: '김치찌개',
+      optionAImageUrl: null,
+      optionAResultAmount: 40,
+      optionARatio: 40,
+      optionB: '돈까스',
+      optionBImageUrl: 'https://example.com/b.jpg',
+      optionBResultAmount: 60,
+      optionBRatio: 60,
+      remainingTime: '12:34:56',
+      selectedOption: 'B',
+      title: '점심 메뉴는?',
+      totalParticipantCount: 3,
+      totalTokenAmount: 100,
+    },
+  },
+  properties: {
+    data: {
+      $ref: getSchemaPath(VoteEventDetailResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
 export function ApiVoteEventsController() {
   return applyDecorators(
     ApiTags('투표 이벤트'),
@@ -117,6 +160,8 @@ export function ApiVoteEventsController() {
       ListCompletedVoteEventsResponseDto,
       ListVoteEventsPageInfoDto,
       ListVoteEventsResponseDto,
+      VoteEventAffiliationStatDto,
+      VoteEventDetailResponseDto,
       VoteEventListItemDto,
     ),
   );
@@ -219,6 +264,33 @@ export function ApiCreateVoteEvent() {
     }),
     ApiUnauthorizedResponse({
       description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+  );
+}
+
+export function ApiGetVoteEventDetail() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '투표 이벤트 상세 정보를 조회합니다. 진행중인 투표의 결과 정보는 참여한 사용자에게만 공개하고, 완료된 투표는 모두에게 공개합니다.',
+      summary: '투표 이벤트 상세 조회',
+    }),
+    ApiBearerAuth(),
+    ApiSecurity({}),
+    ApiParam({
+      description: '투표 이벤트 ID',
+      name: 'id',
+      schema: { type: 'string' },
+    }),
+    ApiOkResponse({
+      description: '투표 이벤트 상세 정보를 반환합니다.',
+      schema: voteEventDetailResponseSchema,
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 유효하지 않습니다.',
+    }),
+    ApiNotFoundResponse({
+      description: '투표 이벤트를 찾을 수 없습니다.',
     }),
   );
 }

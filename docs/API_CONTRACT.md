@@ -403,6 +403,72 @@ GET /api/v2/completed-vote-events?limit=20&cursor=opaque-next-cursor
 - `limit`, `cursor`, 비율 계산, `totalTokenAmount`, 인증 오류, cursor 오류
   규칙은 진행중인 투표 목록과 같다.
 
+`GET /api/v2/vote-events/:id`는 투표 상세 페이지에 필요한 정보를 조회한다.
+로그인하지 않아도 접근할 수 있다.
+
+요청:
+
+```text
+GET /api/v2/vote-events/generated-vote-event-id
+```
+
+유효한 bearer `accessToken`을 함께 보내면 현재 사용자의 참여 여부와 선택지를
+함께 반환한다.
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "categoryName": "배팅",
+    "title": "점심 메뉴는?",
+    "totalParticipantCount": 3,
+    "remainingTime": "12:34:56",
+    "optionA": "김치찌개",
+    "optionB": "돈까스",
+    "optionAImageUrl": null,
+    "optionBImageUrl": "https://example.com/b.jpg",
+    "optionARatio": 40,
+    "optionBRatio": 60,
+    "optionAResultAmount": 40,
+    "optionBResultAmount": 60,
+    "affiliationStats": [
+      {
+        "affiliationCode": "teacher",
+        "affiliationName": "선생님",
+        "optionARatio": 75,
+        "optionBRatio": 25
+      }
+    ],
+    "isParticipated": true,
+    "selectedOption": "B",
+    "totalTokenAmount": 100
+  }
+}
+```
+
+- 진행중인 투표의 `remainingTime`은 서버 기준 남은 시간 `HH:mm:ss`다.
+- 완료된 투표의 `remainingTime`은 `null`이다.
+- 진행중인 투표에서 미로그인 요청 또는 참여하지 않은 사용자의
+  `optionARatio`, `optionBRatio`, `optionAResultAmount`,
+  `optionBResultAmount`, `affiliationStats`, `selectedOption`은 `null`이다.
+- 완료된 투표는 결과가 공개되므로 로그인 여부나 참여 여부와 무관하게 비율,
+  결과 수량, 소속별 통계를 반환한다.
+- `optionAResultAmount`, `optionBResultAmount`는 non-betting 투표에서는 선택지별
+  participant count이고, `betting` 투표에서는 선택지별 token amount다.
+- `optionARatio`, `optionBRatio`, 소속별 비율은 `betting` 투표에서는 token amount
+  기준이고 non-betting 투표에서는 participant count 기준이다.
+- `affiliationStats`는 참여자가 있는 소속만 반환한다. 결과를 공개하지 않는
+  요청에서는 `null`이다.
+- non-betting 투표의 `totalTokenAmount`는 `null`이다.
+- 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
+- Authorization header가 있지만 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+
 `POST /api/v2/vote-events` creates a vote event. It requires a bearer
 `accessToken`, but does not store a creator.
 

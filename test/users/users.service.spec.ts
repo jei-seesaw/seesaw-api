@@ -123,6 +123,10 @@ class FakeUsersRepository implements UsersRepository {
     return Promise.resolve(this.nicknameExists);
   }
 
+  findAffiliationsByIds(): Promise<never[]> {
+    return Promise.resolve([]);
+  }
+
   findById(): Promise<User | null> {
     return Promise.resolve(null);
   }

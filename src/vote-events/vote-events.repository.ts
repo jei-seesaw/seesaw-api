@@ -2,6 +2,7 @@ import { EntityRepository } from '@mikro-orm/mariadb';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable } from '@nestjs/common';
 import type { VoteEventCategory } from './dto/create-vote-event.dto';
+import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
 import { VoteEvent } from './vote-event.entity';
 
 export interface VoteEventsSummary {
@@ -19,6 +20,12 @@ export interface VoteEventsListCursor {
 export interface ListVoteEventsOptions {
   cursor?: VoteEventsListCursor;
   limit: number;
+  now: Date;
+  userId?: string;
+}
+
+export interface GetVoteEventDetailOptions {
+  id: string;
   now: Date;
   userId?: string;
 }
@@ -42,6 +49,17 @@ export interface OngoingVoteEventRecord {
   totalTokenAmount: number;
 }
 
+export interface VoteEventDetailRecord extends OngoingVoteEventRecord {
+  isCompleted: boolean;
+  selectedOption: VoteEventSelectedOption | null;
+}
+
+export interface VoteEventParticipationChoiceRecord {
+  selectedOption: VoteEventSelectedOption;
+  tokenAmount: number;
+  userId: string;
+}
+
 export interface OngoingVoteEventsPage {
   hasNext: boolean;
   items: OngoingVoteEventRecord[];
@@ -55,6 +73,12 @@ export interface CompletedVoteEventsPage {
 
 export abstract class VoteEventsRepository {
   abstract create(voteEvent: VoteEvent): Promise<VoteEvent>;
+  abstract findDetail(
+    options: GetVoteEventDetailOptions,
+  ): Promise<VoteEventDetailRecord | null>;
+  abstract findParticipationChoices(
+    voteEventId: string,
+  ): Promise<VoteEventParticipationChoiceRecord[]>;
   abstract getSummary(): Promise<VoteEventsSummary>;
   abstract listOngoing(
     options: ListVoteEventsOptions,
@@ -77,6 +101,39 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
     await em.persist(voteEvent).flush();
 
     return voteEvent;
+  }
+
+  async findDetail(
+    options: GetVoteEventDetailOptions,
+  ): Promise<VoteEventDetailRecord | null> {
+    const params = voteEventDetailParams(options);
+    const rows = await this.voteEvents
+      .getEntityManager()
+      .getConnection()
+      .execute<VoteEventDetailRow[]>(
+        `select ${voteEventDetailSelect(options.userId)} from \`vote_events\` ve ${voteEventDetailJoin(options.userId)} where ve.\`id\` = ? limit 1`,
+        params,
+      );
+
+    return rows[0] ? toVoteEventDetailRecord(rows[0]) : null;
+  }
+
+  async findParticipationChoices(
+    voteEventId: string,
+  ): Promise<VoteEventParticipationChoiceRecord[]> {
+    const rows = await this.voteEvents
+      .getEntityManager()
+      .getConnection()
+      .execute<VoteEventParticipationChoiceRow[]>(
+        "select `user_id` as `userId`, `selected_option` as `selectedOption`, `token_amount` as `tokenAmount` from `vote_event_participations` where `vote_event_id` = ? and `selected_option` in ('A', 'B') order by `created_at` asc, `id` asc",
+        [voteEventId],
+      );
+
+    return rows.map((row) => ({
+      selectedOption: row.selectedOption,
+      tokenAmount: Number(row.tokenAmount),
+      userId: row.userId,
+    }));
   }
 
   async getSummary(): Promise<VoteEventsSummary> {
@@ -235,11 +292,59 @@ interface OngoingVoteEventRow {
   totalTokenAmount: number | string;
 }
 
+interface VoteEventDetailRow extends OngoingVoteEventRow {
+  isCompleted: boolean | number | string;
+  selectedOption: VoteEventSelectedOption | null;
+}
+
+interface VoteEventParticipationChoiceRow {
+  selectedOption: VoteEventSelectedOption;
+  tokenAmount: number | string;
+  userId: string;
+}
+
+function voteEventDetailSelect(userId: string | undefined): string {
+  const isParticipated = userId
+    ? 'case when current_vep.`id` is null then 0 else 1 end'
+    : '0';
+  const selectedOption = userId ? 'current_vep.`selected_option`' : 'null';
+
+  return [
+    ...voteEventBaseSelect(),
+    'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
+    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `${isParticipated} as \`isParticipated\``,
+    `${selectedOption} as \`selectedOption\``,
+  ].join(', ');
+}
+
+function voteEventDetailJoin(userId: string | undefined): string {
+  return userId
+    ? 'left join `vote_event_participations` current_vep on current_vep.`vote_event_id` = ve.`id` and current_vep.`user_id` = ?'
+    : '';
+}
+
+function voteEventDetailParams(
+  options: GetVoteEventDetailOptions,
+): unknown[] {
+  return options.userId
+    ? [options.now, options.now, options.userId, options.id]
+    : [options.now, options.now, options.id];
+}
+
 function voteEventListSelect(userId: string | undefined): string {
   const isParticipated = userId
     ? 'case when exists (select 1 from `vote_event_participations` vep where vep.`vote_event_id` = ve.`id` and vep.`user_id` = ?) then 1 else 0 end'
     : '0';
 
+  return [
+    ...voteEventBaseSelect(),
+    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `${isParticipated} as \`isParticipated\``,
+  ].join(', ');
+}
+
+function voteEventBaseSelect(): string[] {
   return [
     've.`id` as `id`',
     've.`category` as `category`',
@@ -255,9 +360,7 @@ function voteEventListSelect(userId: string | undefined): string {
     've.`total_participant_count` as `totalParticipantCount`',
     've.`total_token_amount` as `totalTokenAmount`',
     "date_format(ve.`deadline_at`, '%Y-%m-%d %H:%i:%s') as `cursorDeadlineAt`",
-    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
-    `${isParticipated} as \`isParticipated\``,
-  ].join(', ');
+  ];
 }
 
 function voteEventListParams(userId: string | undefined, now: Date): unknown[] {
@@ -284,5 +387,15 @@ function toOngoingVoteEventRecord(
     title: row.title,
     totalParticipantCount: Number(row.totalParticipantCount),
     totalTokenAmount: Number(row.totalTokenAmount),
+  };
+}
+
+function toVoteEventDetailRecord(
+  row: VoteEventDetailRow,
+): VoteEventDetailRecord {
+  return {
+    ...toOngoingVoteEventRecord(row),
+    isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
+    selectedOption: row.selectedOption,
   };
 }

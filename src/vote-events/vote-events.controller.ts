@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Query,
   Req,
@@ -18,6 +19,7 @@ import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
 } from './dto/create-vote-event.dto';
+import { VoteEventDetailResponseDto } from './dto/vote-event-detail.dto';
 import {
   ListCompletedVoteEventsResponseDto,
   ListVoteEventsQueryDto,
@@ -26,6 +28,7 @@ import {
 import { VoteEventsService } from './vote-events.service';
 import {
   ApiCreateVoteEvent,
+  ApiGetVoteEventDetail,
   ApiListCompletedVoteEvents,
   ApiListVoteEvents,
   ApiVoteEventsController,
@@ -56,6 +59,17 @@ export class VoteEventsController {
     @Req() request: AuthenticatedRequest,
   ): Promise<ListCompletedVoteEventsResponseDto> {
     return this.voteEventsService.listCompleted(query, request.user);
+  }
+
+  @Get('vote-events/:id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiGetVoteEventDetail()
+  getDetail(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<VoteEventDetailResponseDto> {
+    return this.voteEventsService.getDetail(id, request.user);
   }
 
   @Post('vote-events')
