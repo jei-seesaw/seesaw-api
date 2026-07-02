@@ -20,12 +20,29 @@ AI와 함께 개발하기 위한 작업 합의다.
 - `PROJECT_STRUCTURE.md`: 현재 소스 트리와 각 디렉터리의 책임.
 - `API_CONTRACT.md`: 공통 success/error envelope, Swagger 배치, public endpoint
   계약.
-- `.agents/skills/api-design/SKILL.md`: HTTP contract 설계 작업.
-- `.agents/skills/nestjs-patterns/SKILL.md`: Nest module/controller/provider 작업.
-- `.agents/skills/backend-patterns/SKILL.md`: persistence, logging, jobs, server
+- `ARCHITECTURE.md`: module ownership, auth, common layer, DB/test 흐름.
+- `decisions/0001-api-boundaries-and-agent-workflow.md`: API boundary와 agent
+  workflow 결정 기록.
+- `./.agents/skills/api-design/SKILL.md`: HTTP contract 설계 작업.
+- `./.agents/skills/nestjs-patterns/SKILL.md`: Nest module/controller/provider 작업.
+- `./.agents/skills/backend-patterns/SKILL.md`: persistence, logging, jobs, server
   internals 작업.
-- `.agents/skills/tdd-workflow/SKILL.md`: 테스트 가능한 기능 구현과 버그 수정의
+- `./.agents/skills/tdd-workflow/SKILL.md`: 테스트 가능한 기능 구현과 버그 수정의
   red-green-refactor workflow.
+- `../evals/README.md`: agent task baseline과 결과 기록.
+
+## Dependency Map
+
+```mermaid
+flowchart LR
+  src --> common
+  src --> config
+  src --> auth
+  src --> users
+  src --> vote-events
+  src --> home
+  test --> src
+```
 
 ## 만들지 않는 것
 

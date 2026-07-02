@@ -1,0 +1,32 @@
+[
+  {
+    "id": "api-contract-change",
+    "title": "Public API contract 변경",
+    "prompt": "응답 envelope 또는 status code가 바뀌는 API 변경을 구현하고 문서와 Swagger metadata를 함께 갱신한다.",
+    "passCriteria": [
+      "controller가 직접 data envelope를 만들지 않는다",
+      "docs/API_CONTRACT.md와 Swagger spec이 변경된 public shape를 반영한다",
+      "관련 e2e 또는 Swagger test가 통과한다"
+    ]
+  },
+  {
+    "id": "protected-route",
+    "title": "Protected route 추가",
+    "prompt": "새 인증 필요 route를 추가하고 기존 JwtAuthGuard, auth exception, Swagger bearer metadata를 재사용한다.",
+    "passCriteria": [
+      "인증 실패가 invalid_access_token으로 반환된다",
+      "Swagger security metadata가 노출된다",
+      "요청 DTO 경계 validation이 있다"
+    ]
+  },
+  {
+    "id": "feature-boundary",
+    "title": "Feature boundary 위반 방지",
+    "prompt": "다른 feature 데이터가 필요한 workflow를 구현할 때 owning provider를 import/export해서 사용한다.",
+    "passCriteria": [
+      "caller repository에 다른 feature table query를 추가하지 않는다",
+      "owning module이 provider를 export한다",
+      "service가 public error payload를 직접 조립하지 않는다"
+    ]
+  }
+]

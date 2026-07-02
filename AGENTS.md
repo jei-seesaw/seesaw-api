@@ -1,117 +1,76 @@
 # AGENTS.md
 
-Seesaw API는 NestJS 11, TypeScript strict mode, `pnpm@11.5.0` 기반의 API
-프로젝트다.
+Seesaw API는 NestJS 11, TypeScript strict mode, `pnpm@11.5.0` 기반 API다.
+이 파일은 agent가 항상 읽는 짧은 repo guide다. 세부 구조와 계약은 `./docs/`
+문서를 따른다.
 
-이 저장소에서 "Harness"는 AI agent와 함께 개발하기 위한 협업 규약을 뜻한다.
-지속 instruction, 가벼운 정책 문서, 재사용 가능한 repo skill을 포함하며,
-Harness CI/CD 제품을 뜻하지 않는다.
+## Purpose
 
-이 파일은 coding agent가 모든 작업 전에 읽는 repo guide다. 짧고 실행 가능한
-규칙만 둔다. 자세한 구조나 API 계약은 `docs/`에 둔다.
+- HTTP API를 작고 검증 가능하게 바꾼다.
+- Public API shape, error envelope, Swagger 노출 조건은
+  `./docs/API_CONTRACT.md`가 source of truth다.
+- 구조와 feature ownership은 `./docs/PROJECT_STRUCTURE.md`와
+  `./docs/ARCHITECTURE.md`를 먼저 본다.
 
-## 명령어
+## Commands
 
-- 의존성 설치: `pnpm install`
-- 로컬 DB 실행: `docker compose up -d mariadb`
-- DB migration 적용: `pnpm db:migrate`
-- 로컬 실행: `pnpm start:dev`
-- 로컬 Docker 서버 실행: `docker compose up -d --build`
-- 린트: `pnpm lint`
-- 타입 검사: `pnpm typecheck`
-- 빌드: `pnpm build`
-- 테스트: `pnpm test`
-- E2E 테스트: `pnpm test:e2e`
+```bash
+pnpm install
+docker compose up -d mariadb
+pnpm db:migrate
+pnpm start:dev
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:e2e
+pnpm build
+```
 
-## 작업 규칙
+## Patterns
 
-- 수정 전 관련 파일을 먼저 읽는다. 구현에 영향을 주는 가정은 명시한다.
-- 저장소에서 해결할 수 없는 고영향도 모호함이 있을 때만 질문한다.
-- 변경은 요청 범위에 맞게 작게 유지한다. 관련 없는 리팩터링, 포맷팅,
-  정리는 하지 않는다.
-- 새 코드나 의존성을 만들기 전에 기존 프로젝트 패턴, NestJS 기능,
-  TypeScript, 표준 라이브러리를 먼저 쓴다.
-- 명시적 승인 없이 production dependency를 추가하지 않는다.
-- 사용자의 기존 변경을 보존한다. 관련 없는 변경을 되돌리지 않는다.
-- 모든 변경 라인은 사용자 요청과 직접 연결되어야 한다.
-- 기능 구현, 버그 수정, 비즈니스 규칙, DTO validation, guard/filter/interceptor
-  같은 런타임 동작 변경은 먼저 실패 테스트를 작성하고 `red -> green ->
-  refactor` 순서로 진행한다.
-- 테스트 파일은 모두 `test/` 아래에 둔다. unit spec과 e2e spec 모두 source
-  feature 경로를 가능한 한 mirror한다.
+- 수정 전 관련 파일을 읽고, 고영향도 모호함만 질문한다.
+- 변경은 요청 범위에 맞게 작게 유지한다. 관련 없는 리팩터링과 포맷팅은 하지
+  않는다.
+- 새 dependency는 명시적 승인 없이는 추가하지 않는다.
+- Controller는 얇게 두고, 비즈니스 규칙은 injectable service에 둔다.
+- 성공 응답은 전역 interceptor가 `{ data: ... }`로 감싼다. Controller에서 직접
+  `{ data: ... }`를 반환하지 않는다.
+- 예상 가능한 도메인 4xx는 feature-local custom exception이 HTTP status,
+  public code, message를 소유한다.
+- Swagger bootstrap은 `src/config/swagger.ts`, controller별 decorator는
+  controller 옆 `*.swagger.ts`에 둔다.
+- Swagger summary, description, example은 한국어로 작성한다.
+- 다른 feature 데이터가 필요하면 owning feature provider를 export/import한다.
+
+## Testing
+
+- 런타임 동작 변경은 먼저 실패 테스트를 만들고 `red -> green -> refactor`로
+  진행한다.
+- 테스트 파일은 `test/` 아래에 두고 source feature 경로를 가능한 한 mirror한다.
 - Jest `it()` 설명은 한국어 문장으로 작성한다.
-- 문서-only, Swagger metadata-only, 기계적 rename, 단순 문자열/상수 변경처럼
-  typecheck/lint로 충분한 변경에는 테스트를 억지로 만들지 않는다.
+- 문서-only, Swagger metadata-only, 기계적 rename, 단순 문자열/상수 변경에는
+  테스트를 억지로 만들지 않는다.
 
-## 검증
+## Verification
 
-- TypeScript 파일을 수정했다면 `pnpm typecheck`를 실행한다.
-- TypeScript 파일이나 lint 설정을 수정했다면 `pnpm lint`를 실행한다.
-- Nest module, provider, bootstrap, decorator wiring을 수정했다면
-  `pnpm build`를 실행한다.
-- 기능/버그 코드를 수정했다면 관련 targeted test가 먼저 실패했는지 확인한 뒤
-  통과시킨다. 마지막에는 영향 범위에 맞게 `pnpm test` 또는 `pnpm test:e2e`를
-  실행한다.
-- 테스트 스크립트가 추가되면 같은 변경에서 이 섹션을 갱신한다.
+- TypeScript 파일 수정: `pnpm typecheck`, `pnpm lint`.
+- Nest module/provider/bootstrap/decorator wiring 수정: `pnpm build`.
+- 기능/버그 코드 수정: 관련 targeted test 후 영향 범위에 맞게 `pnpm test` 또는
+  `pnpm test:e2e`.
 - 실제로 실행하지 않은 검증을 실행했다고 말하지 않는다.
 
-## NestJS/API 규약
+## Dependencies
 
-- Controller는 얇게 유지한다. HTTP 입력을 받고 provider를 호출한 뒤 response
-  DTO를 반환한다.
-- 비즈니스 규칙과 여러 단계의 workflow는 injectable service에 둔다.
-- 사용자 입력을 신뢰하기 전에 request DTO 경계에서 검증한다.
-- API 응답에 stack trace, SQL error, secret, token, 내부 audit field를 노출하지
-  않는다.
-- 초기 health endpoint 수준을 넘어서면 feature code는 feature module에 둔다.
-- 성공 응답은 전역 `ApiResponseInterceptor`가 `{ data: ... }`로 감싼다.
-  Controller에서 직접 `{ data: ... }`를 반환하지 않는다.
-- 예외 응답은 전역 `GlobalExceptionFilter`의 `{ error: { code, message,
-  details? } }` 형태를 유지한다.
-- 예상 가능한 도메인 4xx 오류는 Nest `HttpException` 계열 커스텀 예외로
-  표현한다. 현재 규모에서는 오류 code 상수를 별도 registry 파일에 모으지 않는다.
-- Service method 안에서 `{ code, message }` 같은 public error payload를 직접
-  조립하지 않는다. 예상 가능한 도메인 오류는 feature-local custom exception이
-  HTTP status, public code, message를 소유하게 하고, service는 그 예외를 던진다.
-- 내부 장애나 5xx 오류는 generic `internal_server_error`로 숨긴다.
-- Swagger bootstrap은 `src/config/swagger.ts`에 두고, controller별 Swagger
-  decorator는 controller 옆 `*.swagger.ts`에 둔다.
-- Swagger summary, description, example은 한국어로 작성하고 API마다 실제 사용
-  흐름에 맞는 예시를 둔다.
-- 다른 feature의 entity나 table을 조회해야 하면 caller repository에 임시 query를
-  넣지 않는다. owning feature가 repository/provider를 소유하고 module에서 export한
-  뒤 caller module이 import해서 사용한다.
+- API contract 작업: `./.agents/skills/api-design/SKILL.md`.
+- Nest module/controller/provider 작업: `./.agents/skills/nestjs-patterns/SKILL.md`.
+- Persistence/logging/server internals 작업:
+  `./.agents/skills/backend-patterns/SKILL.md`.
+- 테스트 가능한 런타임 동작 변경: `./.agents/skills/tdd-workflow/SKILL.md`.
 
-## Review guidelines
+## Notes
 
-- public API shape, error shape, validation boundary, Swagger 노출 조건이 바뀌면
-  docs와 controller Swagger metadata가 함께 맞는지 확인한다.
-- service가 HTTP error code/message/status를 직접 만들거나, repository가 다른
-  feature 소유 데이터를 조회하면 provider boundary 위반으로 본다.
-- `APP_ENV=live`에서는 `/api/v2/docs`와 `/api/v2/docs-json`이 노출되지 않아야 한다.
-- logging, exception, response envelope 같은 cross-cutting provider 변경은
-  `AppModule` wiring과 실행 순서 영향을 같이 본다.
-
-## Repo Skills
-
-- Repo skill은 `.agents/skills/` 아래에 둔다.
-- API contract 작업은 `.agents/skills/api-design/SKILL.md`를 읽는다.
-- NestJS module/controller/provider 작업은
-  `.agents/skills/nestjs-patterns/SKILL.md`를 읽는다.
-- Persistence, caching, jobs, logging, server internals 작업은
-  `.agents/skills/backend-patterns/SKILL.md`를 읽는다.
-- 기능 구현이나 버그 수정처럼 테스트 가능한 런타임 동작 변경은
-  `.agents/skills/tdd-workflow/SKILL.md`를 읽는다.
-
-## Harness 관리
-
-- Harness 문서의 entrypoint는 `docs/README.md`다.
-- 현재 구조 설명은 `docs/PROJECT_STRUCTURE.md`, API 계약은
-  `docs/API_CONTRACT.md`를 따른다.
-- 반복되는 규약, 명령어, 검증 규칙, API contract, review expectation이 생기면
-  같은 변경에서 `AGENTS.md`, `docs/`, `.agents/skills/` 중 맞는 문서를 갱신한다.
-- 특정 subtree에만 적용되는 규칙은 루트 파일을 키우지 말고 해당 subtree의
-  nested `AGENTS.md`로 둔다.
-- approval-heavy spec/status process, hook, CI gate, plugin, MCP 설정은 실제로
-  필요해질 때만 추가한다.
+- Harness는 이 저장소에서 AI와 함께 개발하기 위한 협업 규약이며, CI/CD 제품명이
+  아니다.
+- 반복 규칙이 생기면 `AGENTS.md`, `./docs/`, `./.agents/skills/` 중 가장 작은
+  surface를 갱신한다.
 - 커밋을 요청받으면 `.gitmessage.txt`를 따른다.

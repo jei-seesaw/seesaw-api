@@ -1,0 +1,193 @@
+import { raw } from '@mikro-orm/core';
+import type { VoteEventCategory } from './dto/create-vote-event.dto';
+import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
+import type {
+  GetVoteEventDetailOptions,
+  OngoingVoteEventRecord,
+  VoteEventDetailRecord,
+} from './vote-events.repository';
+
+export interface VoteEventsSummaryRow {
+  completedVoteEventCount: number | string;
+  ongoingVoteEventCount: number | string;
+  participantCount: number | string;
+}
+
+export interface OngoingVoteEventRow {
+  category: VoteEventCategory;
+  cursorDeadlineAt: string;
+  id: string;
+  isParticipated: boolean | number | string;
+  optionA: string;
+  optionAImageUrl: string | null;
+  optionAParticipantCount: number | string;
+  optionATokenAmount: number | string;
+  optionB: string;
+  optionBImageUrl: string | null;
+  optionBParticipantCount: number | string;
+  optionBTokenAmount: number | string;
+  remainingSeconds: number | string;
+  title: string;
+  totalParticipantCount: number | string;
+  totalTokenAmount: number | string;
+}
+
+export interface VoteEventDetailRow extends OngoingVoteEventRow {
+  isCompleted: boolean | number | string;
+  selectedOption: VoteEventSelectedOption | null;
+}
+
+export interface VoteEventParticipationChoiceRow {
+  selectedOption: VoteEventSelectedOption;
+  tokenAmount: number | string;
+  userId: string;
+}
+
+export function voteEventDetailSelect(userId: string | undefined): string {
+  const isParticipated = userId
+    ? 'case when current_vep.`id` is null then 0 else 1 end'
+    : '0';
+  const selectedOption = userId ? 'current_vep.`selected_option`' : 'null';
+
+  return [
+    ...voteEventBaseSelect(),
+    'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
+    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `${isParticipated} as \`isParticipated\``,
+    `${selectedOption} as \`selectedOption\``,
+  ].join(', ');
+}
+
+export function voteEventDetailJoin(userId: string | undefined): string {
+  return userId
+    ? 'left join `vote_event_participations` current_vep on current_vep.`vote_event_id` = ve.`id` and current_vep.`user_id` = ?'
+    : '';
+}
+
+export function voteEventDetailParams(
+  options: GetVoteEventDetailOptions,
+): unknown[] {
+  return options.userId
+    ? [options.now, options.now, options.userId, options.id]
+    : [options.now, options.now, options.id];
+}
+
+export function voteEventListSelect(userId: string | undefined): string {
+  const isParticipated = userId
+    ? 'case when exists (select 1 from `vote_event_participations` vep where vep.`vote_event_id` = ve.`id` and vep.`user_id` = ?) then 1 else 0 end'
+    : '0';
+
+  return [
+    ...voteEventBaseSelect(),
+    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `${isParticipated} as \`isParticipated\``,
+  ].join(', ');
+}
+
+export function voteEventListParams(
+  userId: string | undefined,
+  now: Date,
+): unknown[] {
+  return userId ? [now, userId, now] : [now, now];
+}
+
+export function toOngoingVoteEventRecord(
+  row: OngoingVoteEventRow,
+): OngoingVoteEventRecord {
+  return {
+    category: row.category,
+    cursorDeadlineAt: row.cursorDeadlineAt,
+    id: row.id,
+    isParticipated: row.isParticipated === true || Number(row.isParticipated) === 1,
+    optionA: row.optionA,
+    optionAImageUrl: row.optionAImageUrl,
+    optionAParticipantCount: Number(row.optionAParticipantCount),
+    optionATokenAmount: Number(row.optionATokenAmount),
+    optionB: row.optionB,
+    optionBImageUrl: row.optionBImageUrl,
+    optionBParticipantCount: Number(row.optionBParticipantCount),
+    optionBTokenAmount: Number(row.optionBTokenAmount),
+    remainingSeconds: Number(row.remainingSeconds),
+    title: row.title,
+    totalParticipantCount: Number(row.totalParticipantCount),
+    totalTokenAmount: Number(row.totalTokenAmount),
+  };
+}
+
+export function toVoteEventDetailRecord(
+  row: VoteEventDetailRow,
+): VoteEventDetailRecord {
+  return {
+    ...toOngoingVoteEventRecord(row),
+    isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
+    selectedOption: row.selectedOption,
+  };
+}
+
+export function voteEventAggregateUpdate(
+  selectedOption: VoteEventSelectedOption,
+  tokenAmount: number,
+) {
+  const common = {
+    totalParticipantCount: raw('`total_participant_count` + 1'),
+    totalTokenAmount: raw<number>('`total_token_amount` + ?', [tokenAmount]),
+  };
+
+  return selectedOption === 'A'
+    ? {
+        ...common,
+        optionAParticipantCount: raw<number>(
+          '`option_a_participant_count` + 1',
+        ),
+        optionATokenAmount: raw<number>(
+          '`option_a_token_amount` + ?',
+          [tokenAmount],
+        ),
+      }
+    : {
+        ...common,
+        optionBParticipantCount: raw<number>(
+          '`option_b_participant_count` + 1',
+        ),
+        optionBTokenAmount: raw<number>(
+          '`option_b_token_amount` + ?',
+          [tokenAmount],
+        ),
+      };
+}
+
+export function isDuplicateKeyError(error: unknown): boolean {
+  if (!isRecord(error)) {
+    return false;
+  }
+
+  return (
+    error.code === 'ER_DUP_ENTRY' ||
+    error.errno === 1062 ||
+    isDuplicateKeyError(error.cause) ||
+    isDuplicateKeyError(error.driverError)
+  );
+}
+
+function voteEventBaseSelect(): string[] {
+  return [
+    've.`id` as `id`',
+    've.`category` as `category`',
+    've.`title` as `title`',
+    've.`option_a` as `optionA`',
+    've.`option_b` as `optionB`',
+    've.`option_a_image_url` as `optionAImageUrl`',
+    've.`option_b_image_url` as `optionBImageUrl`',
+    've.`option_a_participant_count` as `optionAParticipantCount`',
+    've.`option_b_participant_count` as `optionBParticipantCount`',
+    've.`option_a_token_amount` as `optionATokenAmount`',
+    've.`option_b_token_amount` as `optionBTokenAmount`',
+    've.`total_participant_count` as `totalParticipantCount`',
+    've.`total_token_amount` as `totalTokenAmount`',
+    "date_format(ve.`deadline_at`, '%Y-%m-%d %H:%i:%s') as `cursorDeadlineAt`",
+  ];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

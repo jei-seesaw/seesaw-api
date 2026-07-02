@@ -1,0 +1,20 @@
+{
+  "scoredAt": "2026-07-02",
+  "results": [
+    {
+      "id": "api-contract-change",
+      "status": "baseline",
+      "notes": "Manual pass criteria documented; no automated run yet."
+    },
+    {
+      "id": "protected-route",
+      "status": "baseline",
+      "notes": "Manual pass criteria documented; no automated run yet."
+    },
+    {
+      "id": "feature-boundary",
+      "status": "baseline",
+      "notes": "Manual pass criteria documented; no automated run yet."
+    }
+  ]
+}
