@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>seesaw-api · AI-Readiness Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #0f172a;
+        --text-2: #475569;
+        --text-3: #94a3b8;
+        --accent: #2563eb;
+        --accent-soft: #eff6ff;
+        --green: #16a34a;
+        --green-soft: #dcfce7;
+        --amber: #d97706;
+        --amber-soft: #fef3c7;
+        --red: #dc2626;
+        --red-soft: #fee2e2;
+        --grid: #f1f5f9;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          "Inter",
+          -apple-system,
+          system-ui,
+          "Segoe UI",
+          sans-serif;
+        font-feature-settings: "cv11", "ss01";
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .page {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 48px 40px 64px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 32px;
+      }
+
+      .eyebrow,
+      .header-meta,
+      .mini-stat .k,
+      .tag,
+      .score,
+      .node-meta,
+      .node-kpi,
+      footer {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-3);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      h1 {
+        font-size: 30px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .header .sub {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-top: 4px;
+      }
+
+      .header-meta {
+        text-align: right;
+        font-size: 11px;
+        color: var(--text-3);
+        line-height: 1.7;
+      }
+
+      .header-meta strong {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .score-strip {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      .score-hero,
+      .rules,
+      .map-section,
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+
+      .score-hero {
+        padding: 28px 28px 24px;
+      }
+
+      .label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .value {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .num {
+        font-size: 64px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .denom {
+        font-size: 20px;
+        color: var(--text-3);
+        font-weight: 500;
+      }
+
+      .grade-row {
+        display: flex;
+        margin-top: 14px;
+      }
+
+      .grade-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--green-soft);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 600;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .grade-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--green);
+      }
+
+      .desc {
+        font-size: 13px;
+        color: var(--text-2);
+        line-height: 1.5;
+        margin-top: 10px;
+      }
+
+      hr {
+        border: 0;
+        border-top: 1px solid var(--border);
+        margin: 18px 0 14px;
+      }
+
+      .mini-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .mini-stat .k {
+        font-size: 11px;
+        color: var(--text-3);
+        margin-bottom: 2px;
+      }
+
+      .mini-stat .v {
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .rules {
+        padding: 20px 24px 24px;
+      }
+
+      .rules-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      h2,
+      h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .legend-inline {
+        display: flex;
+        gap: 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-2);
+      }
+
+      .legend-inline span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .legend-inline i {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+      }
+
+      .rule-row {
+        display: grid;
+        grid-template-columns: 28px 1fr 220px 56px;
+        gap: 12px;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 13px;
+      }
+
+      .rule-row + .rule-row {
+        border-top: 1px dashed var(--border);
+      }
+
+      .idx {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-3);
+        font-weight: 500;
+      }
+
+      .title {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .sub {
+        font-size: 11.5px;
+        color: var(--text-3);
+        margin-top: 1px;
+      }
+
+      .bar {
+        height: 8px;
+        border-radius: 3px;
+        background: var(--grid);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+      }
+
+      .bar-good > span {
+        background: var(--green);
+      }
+
+      .bar-warn > span {
+        background: var(--amber);
+      }
+
+      .score {
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .subscores {
+        grid-column: 2 / 5;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 2px 0 4px;
+      }
+
+      .subscore {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10.5px;
+        padding: 3px 7px;
+        border-radius: 3px;
+        background: var(--grid);
+        color: var(--text-2);
+      }
+
+      .map-section {
+        margin-bottom: 32px;
+        overflow: hidden;
+      }
+
+      .map-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .map-head .sub {
+        font-size: 12px;
+        color: var(--text-2);
+        margin-top: 2px;
+      }
+
+      .map-legend {
+        display: flex;
+        gap: 18px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-2);
+      }
+
+      .map-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+      }
+
+      .legend-line {
+        width: 24px;
+        height: 0;
+        border-top: 1.5px solid;
+      }
+
+      .map-body {
+        padding: 28px 24px 32px;
+      }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .grid-bg {
+        stroke: var(--grid);
+        stroke-width: 1;
+      }
+
+      .node-card {
+        fill: var(--surface);
+        stroke: var(--border-strong);
+        stroke-width: 1.2;
+      }
+
+      .node-card.accent {
+        stroke: var(--accent);
+      }
+
+      .node-title {
+        font-family: "Inter", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        fill: var(--text);
+      }
+
+      .node-meta {
+        font-size: 10px;
+        fill: var(--text-3);
+      }
+
+      .node-kpi {
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .edge {
+        fill: none;
+        stroke: var(--border-strong);
+        stroke-width: 1.3;
+      }
+
+      .edge-type {
+        stroke: var(--accent);
+        stroke-width: 1.5;
+      }
+
+      .agents-ring {
+        fill: var(--accent-soft);
+      }
+
+      .agents-dot {
+        fill: var(--accent);
+      }
+
+      .test-dot {
+        fill: var(--green);
+      }
+
+      .warm {
+        fill: var(--amber-soft);
+        stroke: var(--amber);
+        stroke-width: 1;
+      }
+
+      .findings {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .panel {
+        overflow: hidden;
+      }
+
+      .panel-head {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .panel-head h3 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .panel-head .count {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-3);
+        margin-left: auto;
+      }
+
+      .panel-strength .panel-head {
+        background: var(--green-soft);
+      }
+
+      .panel-strength h3 {
+        color: var(--green);
+      }
+
+      .panel-action .panel-head {
+        background: var(--amber-soft);
+      }
+
+      .panel-action h3 {
+        color: var(--amber);
+      }
+
+      .panel-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .panel-list li {
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .panel-list li:first-child {
+        border-top: 0;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+      }
+
+      .tag {
+        font-size: 10.5px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-weight: 500;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+
+      .note {
+        margin-top: 4px;
+        color: var(--text-2);
+        font-size: 12.5px;
+      }
+
+      footer {
+        margin-top: 48px;
+        font-size: 11px;
+        color: var(--text-3);
+        text-align: center;
+      }
+
+      @media (max-width: 960px) {
+        .header,
+        .map-head {
+          display: block;
+        }
+
+        .header-meta {
+          text-align: left;
+          margin-top: 16px;
+        }
+
+        .score-strip,
+        .findings {
+          grid-template-columns: 1fr;
+        }
+
+        .rule-row {
+          grid-template-columns: 24px 1fr 120px 42px;
+        }
+
+        .legend-inline,
+        .map-legend {
+          flex-wrap: wrap;
+          margin-top: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div>
+          <div class="eyebrow">레포지토리 감사 · AI 준비도 · v2 루브릭</div>
+          <h1>seesaw-api - AI 준비도 지도</h1>
+          <div class="sub">
+            7개 카테고리 채점 · 구조 지도 · ROI 우선순위 액션
+          </div>
+        </div>
+        <div class="header-meta">
+          <div>점수 측정 <strong>2026-07-02</strong></div>
+          <div>브랜치 <strong>main</strong></div>
+          <div>모듈 <strong>3</strong> · 컨텍스트 파일 <strong>6</strong></div>
+        </div>
+      </header>
+
+      <section class="score-strip">
+        <div class="score-hero">
+          <div class="label">AI 준비도 지수</div>
+          <div class="value">
+            <span class="num">92</span><span class="denom">/ 100</span>
+          </div>
+          <div class="grade-row">
+            <span class="grade-badge">
+              <span class="grade-dot"></span> AI-Native
+            </span>
+          </div>
+          <div class="desc">
+            context cross-link와 CI path 검증이 보강되어 agent가 탐색, 수정,
+            검증을 안정적으로 수행할 수 있다. 남은 약점은
+            <strong>E 검증 게이트 12/15</strong>와
+            <strong>F self-maintenance 8/10</strong>이다.
+          </div>
+          <hr />
+          <div class="mini-stats">
+            <div class="mini-stat">
+              <div class="k">컨텍스트 보유 모듈</div>
+              <div class="v">3 / 3</div>
+            </div>
+            <div class="mini-stat">
+              <div class="k">잘못된 경로</div>
+              <div class="v" style="color: var(--green)">0</div>
+            </div>
+            <div class="mini-stat">
+              <div class="k">300줄 초과 파일</div>
+              <div class="v">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rules">
+          <div class="rules-head">
+            <h2>7개 카테고리 - 카테고리별 점수</h2>
+            <div class="legend-inline">
+              <span><i style="background: var(--green)"></i> 75% 이상</span>
+              <span><i style="background: var(--amber)"></i> 50-74%</span>
+              <span><i style="background: var(--red)"></i> 50% 미만</span>
+            </div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">A</div>
+            <div>
+              <div class="title">AI Navigation & Coverage</div>
+              <div class="sub">src/test 핵심 모듈 2개 모두 AGENTS.md 보유</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 100%"></span></div>
+            <div class="score">15/15</div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">B</div>
+            <div>
+              <div class="title">Context Document Quality</div>
+              <div class="sub">6개 context 파일 · max 80 lines · cross-link 보강 완료</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 90%"></span></div>
+            <div class="score">18/20</div>
+            <div class="subscores">
+              <span class="subscore">B1 4/4</span>
+              <span class="subscore">B2 3/4</span>
+              <span class="subscore">B3 3/4</span>
+              <span class="subscore">B4 4/4</span>
+              <span class="subscore">B5 4/4</span>
+            </div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">C</div>
+            <div>
+              <div class="title">Tribal Knowledge Externalization</div>
+              <div class="sub">ADR와 module guides가 ownership, patterns, dependency를 설명</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 100%"></span></div>
+            <div class="score">20/20</div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">D</div>
+            <div>
+              <div class="title">Cross-Module Dependency Mapping</div>
+              <div class="sub">ARCHITECTURE.md · mermaid · dependency sections 확인</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 100%"></span></div>
+            <div class="score">15/15</div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">E</div>
+            <div>
+              <div class="title">Verification & Quality Gates</div>
+              <div class="sub">35개 path ref 중 broken 0 · PR template/evals 있음</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 80%"></span></div>
+            <div class="score">12/15</div>
+            <div class="subscores">
+              <span class="subscore">E1 5/5</span>
+              <span class="subscore">E2 2/4</span>
+              <span class="subscore">E3 3/4</span>
+              <span class="subscore">E4 2/2</span>
+            </div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">F</div>
+            <div>
+              <div class="title">Freshness & Self-Maintenance</div>
+              <div class="sub">context drift 0% · CI-only validation 있음 · hook 의도적으로 제외</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 80%"></span></div>
+            <div class="score">8/10</div>
+          </div>
+
+          <div class="rule-row">
+            <div class="idx">G</div>
+            <div>
+              <div class="title">Agent Performance Outcomes</div>
+              <div class="sub">evals/와 결과 파일 있음 · telemetry 단서는 없음</div>
+            </div>
+            <div class="bar bar-good"><span style="width: 80%"></span></div>
+            <div class="score">4/5</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="map-section">
+        <div class="map-head">
+          <div>
+            <h2>구조 지도</h2>
+            <div class="sub">노드 = repo surface · 엣지 = agent가 따라갈 탐색 흐름</div>
+          </div>
+          <div class="map-legend">
+            <span><span class="legend-dot" style="background: var(--accent)"></span> AGENTS/README</span>
+            <span><span class="legend-dot" style="background: var(--green)"></span> 테스트/검증</span>
+            <span><span class="legend-line" style="border-color: var(--accent)"></span> context link</span>
+          </div>
+        </div>
+
+        <div class="map-body">
+          <svg viewBox="0 0 1180 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="seesaw-api AI readiness structural map">
+            <g class="grid-bg">
+              <path d="M0,80 H1180" />
+              <path d="M0,160 H1180" />
+              <path d="M0,240 H1180" />
+              <path d="M0,320 H1180" />
+              <path d="M0,400 H1180" />
+              <path d="M0,480 H1180" />
+              <path d="M140,0 V560" />
+              <path d="M390,0 V560" />
+              <path d="M640,0 V560" />
+              <path d="M890,0 V560" />
+              <path d="M1140,0 V560" />
+            </g>
+
+            <text x="210" y="32" text-anchor="middle" class="node-meta" style="fill: var(--text-2); font-weight: 600;">CONTEXT</text>
+            <text x="590" y="32" text-anchor="middle" class="node-meta" style="fill: var(--text-2); font-weight: 600;">RUNTIME</text>
+            <text x="970" y="32" text-anchor="middle" class="node-meta" style="fill: var(--text-2); font-weight: 600;">VERIFICATION</text>
+
+            <path class="edge edge-type" d="M390,104 C460,104 470,104 540,104" />
+            <path class="edge edge-type" d="M390,104 C460,190 470,222 540,254" />
+            <path class="edge edge-type" d="M390,296 C460,296 470,296 540,296" />
+            <path class="edge" d="M790,104 C850,136 860,176 920,208" />
+            <path class="edge" d="M790,296 C850,296 860,296 920,296" />
+            <path class="edge" d="M790,384 C850,384 860,384 920,384" />
+
+            <g transform="translate(70,68)">
+              <rect class="node-card accent" width="320" height="72" rx="8" />
+              <circle cx="22" cy="22" r="14" class="agents-ring" />
+              <circle cx="22" cy="22" r="6" class="agents-dot" />
+              <text x="44" y="26" class="node-title">AGENTS.md</text>
+              <text x="44" y="43" class="node-meta">짧은 repo guide · commands · verification</text>
+              <text x="304" y="26" text-anchor="end" class="node-kpi" style="fill: var(--accent)">80 ln</text>
+            </g>
+
+            <g transform="translate(70,212)">
+              <rect class="node-card accent" width="320" height="118" rx="8" />
+              <circle cx="22" cy="22" r="14" class="agents-ring" />
+              <circle cx="22" cy="22" r="6" class="agents-dot" />
+              <text x="44" y="26" class="node-title">docs/</text>
+              <text x="44" y="43" class="node-meta">README · PROJECT_STRUCTURE · API_CONTRACT</text>
+              <text x="44" y="60" class="node-meta">ARCHITECTURE · decisions/0001 ADR</text>
+              <g transform="translate(16,74)">
+                <rect class="warm" width="288" height="22" rx="3" />
+                <text x="8" y="15" class="node-meta" style="fill: var(--amber); font-weight: 600">reference depth: API_CONTRACT 560 ln</text>
+              </g>
+            </g>
+
+            <g transform="translate(540,68)">
+              <rect class="node-card accent" width="250" height="112" rx="8" />
+              <circle cx="22" cy="22" r="14" class="agents-ring" />
+              <circle cx="22" cy="22" r="6" class="agents-dot" />
+              <text x="44" y="26" class="node-title">src/AGENTS.md</text>
+              <text x="44" y="43" class="node-meta">runtime ownership · provider boundaries</text>
+              <text x="44" y="60" class="node-meta">Swagger/local exception conventions</text>
+              <text x="234" y="26" text-anchor="end" class="node-kpi" style="fill: var(--accent)">65 files</text>
+              <text x="16" y="88" class="node-meta" style="fill: var(--text-2)">feature modules: users · auth · vote-events · home</text>
+            </g>
+
+            <g transform="translate(540,244)">
+              <rect class="node-card accent" width="250" height="104" rx="8" />
+              <circle cx="22" cy="22" r="14" class="agents-ring" />
+              <circle cx="22" cy="22" r="6" class="agents-dot" />
+              <text x="44" y="26" class="node-title">test/AGENTS.md</text>
+              <text x="44" y="43" class="node-meta">unit/e2e/swagger mirror layout</text>
+              <circle cx="22" cy="70" r="10" fill="var(--green-soft)" />
+              <circle cx="22" cy="70" r="5" class="test-dot" />
+              <text x="44" y="74" class="node-meta" style="fill: var(--green); font-weight: 600">30 test files · 한국어 it() 규칙</text>
+            </g>
+
+            <g transform="translate(540,396)">
+              <rect class="node-card" width="250" height="86" rx="8" />
+              <text x="16" y="26" class="node-title">.agents/skills/</text>
+              <text x="16" y="43" class="node-meta">api-design · nestjs-patterns</text>
+              <text x="16" y="60" class="node-meta">backend-patterns · tdd-workflow</text>
+              <text x="234" y="26" text-anchor="end" class="node-kpi" style="fill: var(--accent)">4</text>
+            </g>
+
+            <g transform="translate(540,492)">
+              <rect class="node-card accent" width="250" height="58" rx="8" />
+              <circle cx="22" cy="22" r="14" class="agents-ring" />
+              <circle cx="22" cy="22" r="6" class="agents-dot" />
+              <text x="44" y="26" class="node-title">scripts/AGENTS.md</text>
+              <text x="16" y="44" class="node-meta">validate-context-paths.py · CI command</text>
+              <text x="234" y="26" text-anchor="end" class="node-kpi" style="fill: var(--accent)">1 file</text>
+            </g>
+
+            <g transform="translate(920,172)">
+              <rect class="node-card" width="210" height="90" rx="8" />
+              <text x="16" y="26" class="node-title">.github/</text>
+              <text x="16" y="43" class="node-meta">deploy-dev workflow</text>
+              <text x="16" y="60" class="node-meta">pull_request_template</text>
+              <text x="194" y="26" text-anchor="end" class="node-kpi" style="fill: var(--amber)">E2 2/4</text>
+            </g>
+
+            <g transform="translate(920,276)">
+              <rect class="node-card" width="210" height="90" rx="8" />
+              <circle cx="22" cy="22" r="10" fill="var(--green-soft)" />
+              <circle cx="22" cy="22" r="5" class="test-dot" />
+              <text x="44" y="26" class="node-title">evals/</text>
+              <text x="16" y="47" class="node-meta">agent-tasks.json</text>
+              <text x="16" y="64" class="node-meta">agent-results.json</text>
+              <text x="194" y="26" text-anchor="end" class="node-kpi" style="fill: var(--green)">G 4/5</text>
+            </g>
+
+            <g transform="translate(920,380)">
+              <rect class="node-card" width="210" height="78" rx="8" />
+              <text x="16" y="26" class="node-title">Path Accuracy</text>
+              <text x="16" y="43" class="node-meta">35 refs scanned · CI-only</text>
+              <text x="16" y="60" class="node-meta" style="fill: var(--green); font-weight: 600">0 broken paths</text>
+              <text x="194" y="26" text-anchor="end" class="node-kpi" style="fill: var(--green)">E1 5/5</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <section class="findings">
+        <div class="panel panel-strength">
+          <div class="panel-head">
+            <h3>Wins</h3>
+            <span class="count">5</span>
+          </div>
+          <ul class="panel-list">
+            <li>
+              <div class="head"><span class="tag">A</span> 핵심 모듈 coverage 100%</div>
+              <div class="note">src, test, scripts가 각각 AGENTS.md를 갖고 있어 탐색 시작점이 분명하다.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">B5</span> context cross-reference 4/4</div>
+              <div class="note">root, module, docs, eval context가 Markdown relative link로 연결된다.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">E1</span> hallucinated path 0건</div>
+              <div class="note">context 파일의 35개 path reference가 모두 존재하고 `pnpm context:check`로 검증된다.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">D</span> 구조와 의존성 지도가 있음</div>
+              <div class="note">ARCHITECTURE.md와 mermaid diagram으로 영향 범위를 따라갈 수 있다.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">G</span> agent eval baseline 존재</div>
+              <div class="note">agent-results.json이 durationMinutes와 toolCalls를 null 허용 metric으로 보관한다.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="panel panel-action">
+          <div class="panel-head">
+            <h3>Resolved Top ROI Actions</h3>
+            <span class="count">5</span>
+          </div>
+          <ul class="panel-list">
+            <li>
+              <div class="head"><span class="tag">B · done</span> root AGENTS.md에 src/test/evals 탐색 링크 추가</div>
+              <div class="note">root guide는 80줄 유지 · B5 cross-reference 4/4.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">B · done</span> hidden rule 문구를 주의/Note 계열로 통일</div>
+              <div class="note">새 규칙 추가 없이 기존 주의 문구만 정리 · B4 4/4.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">F · done</span> CI-only context path 검증 추가</div>
+              <div class="note">`pnpm context:check`가 deploy-dev verify job에서 실행된다. pre-push hook은 의도적으로 제외.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">E · done</span> PR template에 review evidence 체크 추가</div>
+              <div class="note">영향 범위가 큰 변경의 independent review 또는 self-review 근거를 남긴다.</div>
+            </li>
+            <li>
+              <div class="head"><span class="tag">G · done</span> eval result metric 필드 추가</div>
+              <div class="note">durationMinutes와 toolCalls는 측정 전 `null`로 유지한다. 남은 scorer action은 0건.</div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <footer>seesaw-api · AI-Readiness v2 · scored 2026-07-02</footer>
+    </div>
+  </body>
+</html>

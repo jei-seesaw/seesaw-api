@@ -4,16 +4,22 @@
     {
       "id": "api-contract-change",
       "status": "baseline",
+      "durationMinutes": null,
+      "toolCalls": null,
       "notes": "Manual pass criteria documented; no automated run yet."
     },
     {
       "id": "protected-route",
       "status": "baseline",
+      "durationMinutes": null,
+      "toolCalls": null,
       "notes": "Manual pass criteria documented; no automated run yet."
     },
     {
       "id": "feature-boundary",
       "status": "baseline",
+      "durationMinutes": null,
+      "toolCalls": null,
       "notes": "Manual pass criteria documented; no automated run yet."
     }
   ]

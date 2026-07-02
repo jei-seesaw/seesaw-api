@@ -26,6 +26,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: pnpm context:check
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test

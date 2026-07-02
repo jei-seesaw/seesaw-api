@@ -23,10 +23,10 @@
 
 ## Dependencies
 
-- Root rules: `../AGENTS.md`
-- Source rules: `../src/AGENTS.md`
-- API 계약: `../docs/API_CONTRACT.md`
-- TDD workflow: `../.agents/skills/tdd-workflow/SKILL.md`
+- Root rules: [../AGENTS.md](../AGENTS.md)
+- Source rules: [../src/AGENTS.md](../src/AGENTS.md)
+- API 계약: [../docs/API_CONTRACT.md](../docs/API_CONTRACT.md)
+- TDD workflow: [../.agents/skills/tdd-workflow/SKILL.md](../.agents/skills/tdd-workflow/SKILL.md)
 
 ## Verification
 

@@ -1,16 +1,20 @@
 # AGENTS.md
 
 Seesaw API는 NestJS 11, TypeScript strict mode, `pnpm@11.5.0` 기반 API다.
-이 파일은 agent가 항상 읽는 짧은 repo guide다. 세부 구조와 계약은 `./docs/`
-문서를 따른다.
+이 파일은 agent가 항상 읽는 짧은 repo guide다. 세부 구조와 계약은 [docs/README.md](docs/README.md)를 따른다.
 
 ## Purpose
 
 - HTTP API를 작고 검증 가능하게 바꾼다.
 - Public API shape, error envelope, Swagger 노출 조건은
-  `./docs/API_CONTRACT.md`가 source of truth다.
-- 구조와 feature ownership은 `./docs/PROJECT_STRUCTURE.md`와
-  `./docs/ARCHITECTURE.md`를 먼저 본다.
+  [docs/API_CONTRACT.md](docs/API_CONTRACT.md)가 source of truth다.
+- 구조와 feature ownership은
+  [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)와
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 먼저 본다.
+
+## Navigation
+
+- Runtime: [src/AGENTS.md](src/AGENTS.md) · Tests: [test/AGENTS.md](test/AGENTS.md) · Evals: [evals/README.md](evals/README.md)
 
 ## Commands
 
@@ -61,16 +65,16 @@ pnpm build
 
 ## Dependencies
 
-- API contract 작업: `./.agents/skills/api-design/SKILL.md`.
-- Nest module/controller/provider 작업: `./.agents/skills/nestjs-patterns/SKILL.md`.
+- API contract 작업: [api-design skill](./.agents/skills/api-design/SKILL.md).
+- Nest module/controller/provider 작업: [nestjs-patterns skill](./.agents/skills/nestjs-patterns/SKILL.md).
 - Persistence/logging/server internals 작업:
-  `./.agents/skills/backend-patterns/SKILL.md`.
-- 테스트 가능한 런타임 동작 변경: `./.agents/skills/tdd-workflow/SKILL.md`.
+  [backend-patterns skill](./.agents/skills/backend-patterns/SKILL.md).
+- 테스트 가능한 런타임 동작 변경: [tdd-workflow skill](./.agents/skills/tdd-workflow/SKILL.md).
 
-## Notes
+## 주의
 
 - Harness는 이 저장소에서 AI와 함께 개발하기 위한 협업 규약이며, CI/CD 제품명이
   아니다.
-- 반복 규칙이 생기면 `AGENTS.md`, `./docs/`, `./.agents/skills/` 중 가장 작은
-  surface를 갱신한다.
+- 반복 규칙이 생기면 [AGENTS.md](AGENTS.md), [docs/](docs/),
+  [repo skills](./.agents/skills/) 중 가장 작은 surface를 갱신한다.
 - 커밋을 요청받으면 `.gitmessage.txt`를 따른다.

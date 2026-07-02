@@ -24,13 +24,13 @@ config, entity, repository, DTO, controller, Swagger decorator를 이곳에 둔�
 
 ## Dependencies
 
-- Root rules: `../AGENTS.md`
-- 구조 설명: `../docs/PROJECT_STRUCTURE.md`
-- API 계약: `../docs/API_CONTRACT.md`
-- Architecture map: `../docs/ARCHITECTURE.md`
-- Nest patterns: `../.agents/skills/nestjs-patterns/SKILL.md`
-- Backend patterns: `../.agents/skills/backend-patterns/SKILL.md`
-- TDD workflow: `../.agents/skills/tdd-workflow/SKILL.md`
+- Root rules: [../AGENTS.md](../AGENTS.md)
+- 구조 설명: [../docs/PROJECT_STRUCTURE.md](../docs/PROJECT_STRUCTURE.md)
+- API 계약: [../docs/API_CONTRACT.md](../docs/API_CONTRACT.md)
+- Architecture map: [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+- Nest patterns: [../.agents/skills/nestjs-patterns/SKILL.md](../.agents/skills/nestjs-patterns/SKILL.md)
+- Backend patterns: [../.agents/skills/backend-patterns/SKILL.md](../.agents/skills/backend-patterns/SKILL.md)
+- TDD workflow: [../.agents/skills/tdd-workflow/SKILL.md](../.agents/skills/tdd-workflow/SKILL.md)
 
 ## Verification
 

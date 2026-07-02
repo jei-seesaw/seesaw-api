@@ -6,30 +6,30 @@ AI와 함께 개발하기 위한 작업 합의다.
 
 ## 기준
 
-- `AGENTS.md`는 agent가 항상 읽는 repo guide다. 명령어, 검증, 작업 규칙처럼
+- [../AGENTS.md](../AGENTS.md)는 agent가 항상 읽는 repo guide다. 명령어, 검증, 작업 규칙처럼
   매번 필요한 짧은 규칙만 둔다.
-- `docs/`는 agent가 필요할 때 읽는 reference다. 현재 구조, API 계약, 정책 배경처럼
+- [./](./)는 agent가 필요할 때 읽는 reference다. 현재 구조, API 계약, 정책 배경처럼
   길어질 수 있는 내용을 둔다.
-- `.agents/skills/`는 반복 workflow를 담는다. API contract, NestJS 구조,
+- [../.agents/skills/](../.agents/skills/)는 반복 workflow를 담는다. API contract, NestJS 구조,
   backend 내부 패턴처럼 작업 유형별로 재사용되는 절차를 둔다.
-- Repo skill은 `SKILL.md` frontmatter의 `name`과 `description`으로 발견되고,
+- Repo skill은 SKILL.md frontmatter의 `name`과 `description`으로 발견되고,
   필요한 작업에서만 본문을 읽는 progressive disclosure 방식을 전제로 쓴다.
 
 ## 현재 문서
 
-- `PROJECT_STRUCTURE.md`: 현재 소스 트리와 각 디렉터리의 책임.
-- `API_CONTRACT.md`: 공통 success/error envelope, Swagger 배치, public endpoint
+- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md): 현재 소스 트리와 각 디렉터리의 책임.
+- [API_CONTRACT.md](API_CONTRACT.md): 공통 success/error envelope, Swagger 배치, public endpoint
   계약.
-- `ARCHITECTURE.md`: module ownership, auth, common layer, DB/test 흐름.
-- `decisions/0001-api-boundaries-and-agent-workflow.md`: API boundary와 agent
+- [ARCHITECTURE.md](ARCHITECTURE.md): module ownership, auth, common layer, DB/test 흐름.
+- [decisions/0001-api-boundaries-and-agent-workflow.md](decisions/0001-api-boundaries-and-agent-workflow.md): API boundary와 agent
   workflow 결정 기록.
-- `./.agents/skills/api-design/SKILL.md`: HTTP contract 설계 작업.
-- `./.agents/skills/nestjs-patterns/SKILL.md`: Nest module/controller/provider 작업.
-- `./.agents/skills/backend-patterns/SKILL.md`: persistence, logging, jobs, server
+- [../.agents/skills/api-design/SKILL.md](../.agents/skills/api-design/SKILL.md): HTTP contract 설계 작업.
+- [../.agents/skills/nestjs-patterns/SKILL.md](../.agents/skills/nestjs-patterns/SKILL.md): Nest module/controller/provider 작업.
+- [../.agents/skills/backend-patterns/SKILL.md](../.agents/skills/backend-patterns/SKILL.md): persistence, logging, jobs, server
   internals 작업.
-- `./.agents/skills/tdd-workflow/SKILL.md`: 테스트 가능한 기능 구현과 버그 수정의
+- [../.agents/skills/tdd-workflow/SKILL.md](../.agents/skills/tdd-workflow/SKILL.md): 테스트 가능한 기능 구현과 버그 수정의
   red-green-refactor workflow.
-- `../evals/README.md`: agent task baseline과 결과 기록.
+- [../evals/README.md](../evals/README.md): agent task baseline과 결과 기록.
 
 ## Dependency Map
 
@@ -44,11 +44,10 @@ flowchart LR
   test --> src
 ```
 
-## 만들지 않는 것
+## 주의: 만들지 않는 것
 
 - 작은 프로젝트 단계에서는 spec/status/approval-heavy process를 두지 않는다.
-- 실제 강제 command가 생기기 전까지 hook, generated policy check, CI gate를
-  만들지 않는다.
+- hook은 만들지 않고, context path 검증은 CI command로만 둔다.
 - 실제 auth 구조나 별도 운영 절차가 생기기 전까지 관련 runbook을 만들지 않는다.
 - 특정 agent 전용 instruction file은 실제로 도입할 때만 추가한다.
 
