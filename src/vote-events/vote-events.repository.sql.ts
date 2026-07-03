@@ -4,6 +4,7 @@ import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
 import type {
   GetVoteEventDetailOptions,
   OngoingVoteEventRecord,
+  UserVoteEventRecord,
   VoteEventDetailRecord,
 } from './vote-events.repository';
 
@@ -35,6 +36,11 @@ export interface OngoingVoteEventRow {
 export interface VoteEventDetailRow extends OngoingVoteEventRow {
   isCompleted: boolean | number | string;
   selectedOption: VoteEventSelectedOption | null;
+}
+
+export interface UserVoteEventRow extends OngoingVoteEventRow {
+  cursorCreatedAt: string;
+  isCompleted: boolean | number | string;
 }
 
 export interface VoteEventParticipationChoiceRow {
@@ -91,6 +97,26 @@ export function voteEventListParams(
   return userId ? [now, userId, now] : [now, now];
 }
 
+export function userVoteEventListSelect(): string {
+  const isParticipated =
+    'case when exists (select 1 from `vote_event_participations` vep where vep.`vote_event_id` = ve.`id` and vep.`user_id` = ?) then 1 else 0 end';
+
+  return [
+    ...voteEventBaseSelect(),
+    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `${isParticipated} as \`isParticipated\``,
+    'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
+    "date_format(ve.`created_at`, '%Y-%m-%d %H:%i:%s') as `cursorCreatedAt`",
+  ].join(', ');
+}
+
+export function userVoteEventListParams(
+  userId: string,
+  now: Date,
+): unknown[] {
+  return [now, userId, now];
+}
+
 export function toOngoingVoteEventRecord(
   row: OngoingVoteEventRow,
 ): OngoingVoteEventRecord {
@@ -121,6 +147,16 @@ export function toVoteEventDetailRecord(
     ...toOngoingVoteEventRecord(row),
     isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
     selectedOption: row.selectedOption,
+  };
+}
+
+export function toUserVoteEventRecord(
+  row: UserVoteEventRow,
+): UserVoteEventRecord {
+  return {
+    ...toOngoingVoteEventRecord(row),
+    cursorCreatedAt: row.cursorCreatedAt,
+    isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
   };
 }
 

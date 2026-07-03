@@ -16,14 +16,17 @@ describe('VoteEventsService create and vote', () => {
   it('투표 이벤트를 만들면 마감시간과 초기 집계값을 설정한다', async () => {
     const startedAt = Date.now();
 
-    const result = await service.create({
-      category: 'betting',
-      optionA: '김치찌개',
-      optionAImageUrl: null,
-      optionB: '돈까스',
-      optionBImageUrl: 'https://example.com/b.jpg',
-      title: '점심 메뉴는?',
-    });
+    const result = await service.create(
+      {
+        category: 'betting',
+        optionA: '김치찌개',
+        optionAImageUrl: null,
+        optionB: '돈까스',
+        optionBImageUrl: 'https://example.com/b.jpg',
+        title: '점심 메뉴는?',
+      },
+      { id: 'organizer-user-id', nickname: 'organizer' },
+    );
     const createdVoteEvent = repository.createdVoteEvent;
 
     expect(createdVoteEvent).toBeDefined();
@@ -34,6 +37,7 @@ describe('VoteEventsService create and vote', () => {
     expect(result).toEqual({ id: createdVoteEvent.id });
     expect(createdVoteEvent).toMatchObject({
       category: 'betting',
+      organizerUserId: 'organizer-user-id',
       optionA: '김치찌개',
       optionAImageUrl: null,
       optionB: '돈까스',

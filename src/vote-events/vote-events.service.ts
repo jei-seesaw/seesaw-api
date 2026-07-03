@@ -23,7 +23,9 @@ import {
 } from './vote-events.exceptions';
 import {
   GetVoteEventDetailOptions,
+  ListUserVoteEventsOptions,
   ListVoteEventsOptions,
+  UserVoteEventsPage,
   VoteEventDetailRecord,
   VoteEventsRepository,
 } from './vote-events.repository';
@@ -51,6 +53,7 @@ export class VoteEventsService {
 
   async create(
     dto: CreateVoteEventRequestDto,
+    user: AuthenticatedUser,
   ): Promise<CreateVoteEventResponseDto> {
     const createdAt = new Date();
     const voteEvent = new VoteEvent({
@@ -61,6 +64,7 @@ export class VoteEventsService {
       optionAImageUrl: dto.optionAImageUrl ?? null,
       optionB: dto.optionB,
       optionBImageUrl: dto.optionBImageUrl ?? null,
+      organizerUserId: user.id,
       title: dto.title,
     });
     const createdVoteEvent = await this.voteEvents.create(voteEvent);
@@ -146,6 +150,28 @@ export class VoteEventsService {
             : null,
       },
     };
+  }
+
+  async listCreatedByUser(
+    query: ListVoteEventsQueryDto,
+    user: AuthenticatedUser,
+  ): Promise<ListCompletedVoteEventsResponseDto> {
+    const page = await this.voteEvents.listCreatedByUser(
+      this.buildUserVoteEventsOptions(query, user),
+    );
+
+    return this.mapUserVoteEventsPage(page);
+  }
+
+  async listParticipatedByUser(
+    query: ListVoteEventsQueryDto,
+    user: AuthenticatedUser,
+  ): Promise<ListCompletedVoteEventsResponseDto> {
+    const page = await this.voteEvents.listParticipatedByUser(
+      this.buildUserVoteEventsOptions(query, user),
+    );
+
+    return this.mapUserVoteEventsPage(page);
   }
 
   async getDetail(
@@ -248,5 +274,46 @@ export class VoteEventsService {
     const affiliations = await this.users.findAffiliationsByIds(userIds);
 
     return buildAffiliationStats(voteEvent, choices, affiliations);
+  }
+
+  private buildUserVoteEventsOptions(
+    query: ListVoteEventsQueryDto,
+    user: AuthenticatedUser,
+  ): ListUserVoteEventsOptions {
+    const cursor = decodeCursor(query.cursor);
+    const options: ListUserVoteEventsOptions = {
+      limit: query.limit,
+      now: new Date(),
+      userId: user.id,
+    };
+
+    if (cursor) {
+      options.cursor = cursor;
+    }
+
+    return options;
+  }
+
+  private mapUserVoteEventsPage(
+    page: UserVoteEventsPage,
+  ): ListCompletedVoteEventsResponseDto {
+    const lastItem = page.items.at(-1);
+
+    return {
+      voteEvents: page.items.map((item) =>
+        mapVoteEventItem(item, { revealRatios: item.isCompleted }),
+      ),
+      pageInfo: {
+        hasNext: page.hasNext,
+        nextCursor:
+          page.hasNext && lastItem
+            ? encodeCursor({
+                deadlineAt: lastItem.cursorCreatedAt,
+                id: lastItem.id,
+                mainVoteId: null,
+              })
+            : null,
+      },
+    };
   }
 }

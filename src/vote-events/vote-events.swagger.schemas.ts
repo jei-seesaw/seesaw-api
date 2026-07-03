@@ -104,6 +104,41 @@ export const listCompletedVoteEventsResponseSchema = {
   type: 'object' as const,
 };
 
+export const listMyVoteEventsResponseSchema = {
+  example: {
+    data: {
+      pageInfo: {
+        hasNext: false,
+        nextCursor: null,
+      },
+      voteEvents: [
+        {
+          categoryName: '일상',
+          id: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
+          isParticipated: false,
+          optionA: '김치찌개',
+          optionAImageUrl: null,
+          optionARatio: null,
+          optionB: '돈까스',
+          optionBImageUrl: 'https://example.com/b.jpg',
+          optionBRatio: null,
+          remainingTime: '12:34:56',
+          title: '점심 메뉴는?',
+          totalParticipantCount: 120,
+          totalTokenAmount: null,
+        },
+      ],
+    },
+  },
+  properties: {
+    data: {
+      $ref: getSchemaPath(ListCompletedVoteEventsResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
 export const voteEventDetailResponseSchema = {
   example: {
     data: {

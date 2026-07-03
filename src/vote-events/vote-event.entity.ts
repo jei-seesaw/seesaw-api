@@ -89,6 +89,14 @@ export class VoteEvent {
   @Property({ type: Date, fieldName: 'created_at' })
   createdAt: Date;
 
+  @Property({
+    type: 'string',
+    length: 36,
+    fieldName: 'organizer_user_id',
+    nullable: true,
+  })
+  organizerUserId: string | null;
+
   constructor(args: {
     category: VoteEventCategory;
     title: string;
@@ -96,6 +104,7 @@ export class VoteEvent {
     optionB: string;
     optionAImageUrl?: string | null;
     optionBImageUrl?: string | null;
+    organizerUserId?: string | null;
     createdAt: Date;
     deadlineAt: Date;
   }) {
@@ -107,5 +116,6 @@ export class VoteEvent {
     this.optionBImageUrl = args.optionBImageUrl ?? null;
     this.createdAt = args.createdAt;
     this.deadlineAt = args.deadlineAt;
+    this.organizerUserId = args.organizerUserId ?? null;
   }
 }

@@ -35,6 +35,7 @@ import {
   castVoteResponseSchema,
   createVoteEventResponseSchema,
   listCompletedVoteEventsResponseSchema,
+  listMyVoteEventsResponseSchema,
   listVoteEventsResponseSchema,
   voteEventDetailResponseSchema,
 } from './vote-events.swagger.schemas';
@@ -120,6 +121,72 @@ export function ApiListCompletedVoteEvents() {
     }),
     ApiUnauthorizedResponse({
       description: 'accessToken이 유효하지 않습니다.',
+    }),
+  );
+}
+
+export function ApiListCreatedVoteEvents() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '로그인한 사용자가 만든 투표 이벤트를 진행/완료 구분 없이 최신 생성순으로 조회합니다.',
+      summary: '내가 만든 투표 이벤트 목록 조회',
+    }),
+    ApiBearerAuth(),
+    ApiQuery({
+      description: '한 번에 조회할 투표 이벤트 수',
+      name: 'limit',
+      required: false,
+      schema: { default: 20, maximum: 50, minimum: 1, type: 'integer' },
+    }),
+    ApiQuery({
+      description: '다음 페이지 조회용 opaque cursor',
+      name: 'cursor',
+      required: false,
+      schema: { type: 'string' },
+    }),
+    ApiOkResponse({
+      description: '내가 만든 투표 이벤트 목록을 반환합니다.',
+      schema: listMyVoteEventsResponseSchema,
+    }),
+    ApiBadRequestResponse({
+      description: 'cursor 또는 query가 유효하지 않습니다.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+  );
+}
+
+export function ApiListParticipatedVoteEvents() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '로그인한 사용자가 참여한 투표 이벤트를 진행/완료 구분 없이 최신 생성순으로 조회합니다.',
+      summary: '내가 참여한 투표 이벤트 목록 조회',
+    }),
+    ApiBearerAuth(),
+    ApiQuery({
+      description: '한 번에 조회할 투표 이벤트 수',
+      name: 'limit',
+      required: false,
+      schema: { default: 20, maximum: 50, minimum: 1, type: 'integer' },
+    }),
+    ApiQuery({
+      description: '다음 페이지 조회용 opaque cursor',
+      name: 'cursor',
+      required: false,
+      schema: { type: 'string' },
+    }),
+    ApiOkResponse({
+      description: '내가 참여한 투표 이벤트 목록을 반환합니다.',
+      schema: listMyVoteEventsResponseSchema,
+    }),
+    ApiBadRequestResponse({
+      description: 'cursor 또는 query가 유효하지 않습니다.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 없거나 유효하지 않습니다.',
     }),
   );
 }

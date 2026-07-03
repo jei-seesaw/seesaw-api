@@ -16,6 +16,7 @@ export interface VoteEventRow {
   option_b_image_url: string | null;
   option_b_participant_count: number;
   option_b_token_amount: number;
+  organizer_user_id: string | null;
   title: string;
   total_participant_count: number;
   total_token_amount: number;

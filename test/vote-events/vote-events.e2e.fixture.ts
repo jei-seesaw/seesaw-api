@@ -50,6 +50,7 @@ export interface VoteEventsE2eContext {
 
 interface InsertVoteEventArgs {
   category: 'betting' | 'daily' | 'balance' | 'work';
+  createdAt?: Date;
   deadlineAt: Date;
   optionAImageUrl?: string | null;
   optionAParticipantCount?: number;
@@ -57,6 +58,7 @@ interface InsertVoteEventArgs {
   optionBImageUrl?: string | null;
   optionBParticipantCount?: number;
   optionBTokenAmount?: number;
+  organizerUserId?: string | null;
   title: string;
   totalParticipantCount: number;
   totalTokenAmount?: number;
@@ -108,9 +110,10 @@ export async function createVoteEventsE2eContext(): Promise<VoteEventsE2eContext
 
   async function insertVoteEvent(args: InsertVoteEventArgs): Promise<string> {
     const id = randomUUID();
+    const createdAt = args.createdAt ?? new Date();
 
     await orm.em.getConnection().execute(
-      'insert into `vote_events` (`id`, `category`, `title`, `option_a`, `option_b`, `option_a_image_url`, `option_b_image_url`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count`, `deadline_at`, `created_at`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'insert into `vote_events` (`id`, `category`, `title`, `option_a`, `option_b`, `option_a_image_url`, `option_b_image_url`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count`, `organizer_user_id`, `deadline_at`, `created_at`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id,
         args.category,
@@ -125,8 +128,9 @@ export async function createVoteEventsE2eContext(): Promise<VoteEventsE2eContext
         args.optionBTokenAmount ?? 0,
         args.optionAParticipantCount ?? 0,
         args.optionBParticipantCount ?? 0,
+        args.organizerUserId ?? null,
         args.deadlineAt,
-        new Date(),
+        createdAt,
       ],
     );
 
@@ -154,20 +158,22 @@ export async function createVoteEventsE2eContext(): Promise<VoteEventsE2eContext
 
   async function deleteListTestVoteEvents(): Promise<void> {
     await orm.em.getConnection().execute(
-      'delete vep from `vote_event_participations` vep join `vote_events` ve on ve.`id` = vep.`vote_event_id` where ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ?',
+      'delete vep from `vote_event_participations` vep join `vote_events` ve on ve.`id` = vep.`vote_event_id` where ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ? or ve.`title` like ?',
       [
         'vote-api-%',
         'vote-list-%',
+        'vote-me-%',
         'vote-ratio-%',
         'vote-cursor-%',
         'vote-detail-%',
       ],
     );
     await orm.em.getConnection().execute(
-      'delete from `vote_events` where `title` like ? or `title` like ? or `title` like ? or `title` like ? or `title` like ?',
+      'delete from `vote_events` where `title` like ? or `title` like ? or `title` like ? or `title` like ? or `title` like ? or `title` like ?',
       [
         'vote-api-%',
         'vote-list-%',
+        'vote-me-%',
         'vote-ratio-%',
         'vote-cursor-%',
         'vote-detail-%',

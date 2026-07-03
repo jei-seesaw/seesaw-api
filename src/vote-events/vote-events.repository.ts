@@ -14,10 +14,13 @@ import { VoteEventsRepository } from './vote-events.repository.types';
 import type {
   CompletedVoteEventsPage,
   GetVoteEventDetailOptions,
+  ListUserVoteEventsOptions,
   ListVoteEventsOptions,
   OngoingVoteEventRecord,
   OngoingVoteEventsPage,
   ParticipateInVoteEventOptions,
+  UserVoteEventRecord,
+  UserVoteEventsPage,
   VoteEventDetailRecord,
   VoteEventParticipationChoiceRecord,
   VoteEventsSummary,
@@ -25,7 +28,10 @@ import type {
 import {
   isDuplicateKeyError,
   toOngoingVoteEventRecord,
+  toUserVoteEventRecord,
   toVoteEventDetailRecord,
+  userVoteEventListParams,
+  userVoteEventListSelect,
   voteEventAggregateUpdate,
   voteEventDetailJoin,
   voteEventDetailParams,
@@ -38,6 +44,7 @@ import type {
   VoteEventDetailRow,
   VoteEventParticipationChoiceRow,
   VoteEventsSummaryRow,
+  UserVoteEventRow,
 } from './vote-events.repository.sql';
 
 export { VoteEventsRepository } from './vote-events.repository.types';
@@ -269,5 +276,66 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
       );
 
     return rows.map(toOngoingVoteEventRecord);
+  }
+
+  async listCreatedByUser(
+    options: ListUserVoteEventsOptions,
+  ): Promise<UserVoteEventsPage> {
+    const items = await this.findUserVoteEventPage(
+      options,
+      've.`organizer_user_id` = ?',
+    );
+
+    return {
+      hasNext: items.length > options.limit,
+      items: items.slice(0, options.limit),
+    };
+  }
+
+  async listParticipatedByUser(
+    options: ListUserVoteEventsOptions,
+  ): Promise<UserVoteEventsPage> {
+    const items = await this.findUserVoteEventPage(
+      options,
+      'exists (select 1 from `vote_event_participations` owner_vep where owner_vep.`vote_event_id` = ve.`id` and owner_vep.`user_id` = ?)',
+    );
+
+    return {
+      hasNext: items.length > options.limit,
+      items: items.slice(0, options.limit),
+    };
+  }
+
+  private async findUserVoteEventPage(
+    options: ListUserVoteEventsOptions,
+    userCondition: string,
+  ): Promise<UserVoteEventRecord[]> {
+    const params = userVoteEventListParams(options.userId, options.now);
+    const conditions = [userCondition];
+
+    params.push(options.userId);
+
+    if (options.cursor) {
+      conditions.push(
+        '(ve.`created_at` < ? or (ve.`created_at` = ? and ve.`id` > ?))',
+      );
+      params.push(
+        options.cursor.deadlineAt,
+        options.cursor.deadlineAt,
+        options.cursor.id,
+      );
+    }
+
+    params.push(options.limit + 1);
+
+    const rows = await this.voteEvents
+      .getEntityManager()
+      .getConnection()
+      .execute<UserVoteEventRow[]>(
+        `select ${userVoteEventListSelect()} from \`vote_events\` ve where ${conditions.join(' and ')} order by ve.\`created_at\` desc, ve.\`id\` asc limit ?`,
+        params,
+      );
+
+    return rows.map(toUserVoteEventRecord);
   }
 }

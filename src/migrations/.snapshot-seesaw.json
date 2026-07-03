@@ -608,6 +608,23 @@
           "enumItems": [],
           "mappedType": "integer"
         },
+        "organizer_user_id": {
+          "name": "organizer_user_id",
+          "type": "varchar(36)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 36,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
         "title": {
           "name": "title",
           "type": "varchar(120)",
@@ -693,11 +710,37 @@
           "keyName": "vote_events_ongoing_main_index",
           "primary": false,
           "unique": false
+        },
+        {
+          "columnNames": [
+            "organizer_user_id",
+            "created_at",
+            "id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "vote_events_organizer_created_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [],
       "triggers": [],
-      "foreignKeys": {},
+      "foreignKeys": {
+        "vote_events_organizer_user_id_foreign": {
+          "columnNames": [
+            "organizer_user_id"
+          ],
+          "constraintName": "vote_events_organizer_user_id_foreign",
+          "localTableName": "vote_events",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "referencedTableName": "users",
+          "updateRule": "restrict",
+          "deleteRule": "set null"
+        }
+      },
       "comment": null
     }
   ],

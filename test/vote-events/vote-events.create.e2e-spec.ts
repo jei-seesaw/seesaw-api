@@ -1,17 +1,21 @@
 import type { Server } from 'node:http';
 import request from 'supertest';
-import { createVoteEventsE2eContext, type VoteEventsE2eContext } from './vote-events.e2e.fixture';
+import {
+  createVoteEventsE2eContext,
+  type VoteEventsE2eContext,
+} from './vote-events.e2e.fixture';
 import type { CreateVoteEventEnvelope, ErrorEnvelope, VoteEventRow } from './vote-events.e2e.types';
 
 describe('Vote events create endpoint', () => {
   let context: VoteEventsE2eContext;
   let orm: VoteEventsE2eContext['orm'];
   let server: Server;
+  let createUser: VoteEventsE2eContext['createUser'];
   let issueAccessToken: VoteEventsE2eContext['issueAccessToken'];
 
   beforeAll(async () => {
     context = await createVoteEventsE2eContext();
-    ({ server, orm, issueAccessToken } = context);
+    ({ server, orm, createUser, issueAccessToken } = context);
   });
 
   afterAll(async () => {
@@ -20,7 +24,7 @@ describe('Vote events create endpoint', () => {
 
   it('투표 이벤트를 만들면 id만 응답하고 초기 집계값을 저장한다', async () => {
     const startedAt = Date.now();
-    const accessToken = await issueAccessToken(`vote-event-${startedAt}`);
+    const { accessToken, userId } = await createUser(`vote-event-${startedAt}`);
 
     const response = await request(server)
       .post('/api/v2/vote-events')
@@ -42,7 +46,7 @@ describe('Vote events create endpoint', () => {
 
     const { id } = (response.body as CreateVoteEventEnvelope).data;
     const rows = await orm.em.getConnection().execute<VoteEventRow[]>(
-      'select `category`, `title`, `option_a`, `option_b`, `option_a_image_url`, `option_b_image_url`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count`, `created_at`, `deadline_at` from `vote_events` where `id` = ?',
+      'select `category`, `title`, `option_a`, `option_b`, `option_a_image_url`, `option_b_image_url`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count`, `organizer_user_id`, `created_at`, `deadline_at` from `vote_events` where `id` = ?',
       [id],
     );
 
@@ -61,6 +65,7 @@ describe('Vote events create endpoint', () => {
       option_b_token_amount: 0,
       option_a_participant_count: 0,
       option_b_participant_count: 0,
+      organizer_user_id: userId,
     });
     expect(
       new Date(row.deadline_at).getTime() -

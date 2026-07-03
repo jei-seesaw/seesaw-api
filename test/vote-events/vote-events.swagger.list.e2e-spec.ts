@@ -160,4 +160,62 @@ describe('Vote events Swagger list', () => {
       },
     });
   });
+  it('내 투표 이벤트 목록 계약을 Swagger JSON에 노출한다', () => {
+    expect(document.paths['/api/v2/me/created-vote-events']?.get).toMatchObject({
+      summary: '내가 만든 투표 이벤트 목록 조회',
+      parameters: [
+        expect.objectContaining({ in: 'query', name: 'limit' }),
+        expect.objectContaining({ in: 'query', name: 'cursor' }),
+      ],
+      responses: {
+        '200': { description: '내가 만든 투표 이벤트 목록을 반환합니다.' },
+        '400': { description: 'cursor 또는 query가 유효하지 않습니다.' },
+        '401': { description: 'accessToken이 없거나 유효하지 않습니다.' },
+      },
+      security: [{ bearer: [] }],
+    });
+    expect(
+      document.paths['/api/v2/me/participated-vote-events']?.get,
+    ).toMatchObject({
+      summary: '내가 참여한 투표 이벤트 목록 조회',
+      parameters: [
+        expect.objectContaining({ in: 'query', name: 'limit' }),
+        expect.objectContaining({ in: 'query', name: 'cursor' }),
+      ],
+      responses: {
+        '200': { description: '내가 참여한 투표 이벤트 목록을 반환합니다.' },
+        '400': { description: 'cursor 또는 query가 유효하지 않습니다.' },
+        '401': { description: 'accessToken이 없거나 유효하지 않습니다.' },
+      },
+      security: [{ bearer: [] }],
+    });
+    expect(
+      document.paths['/api/v2/me/created-vote-events']?.get?.responses['200'],
+    ).toMatchObject({
+      content: {
+        'application/json': {
+          schema: {
+            example: {
+              data: {
+                pageInfo: {
+                  hasNext: false,
+                  nextCursor: null,
+                },
+                voteEvents: [
+                  expect.objectContaining({
+                    id: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
+                  }),
+                ],
+              },
+            },
+            properties: {
+              data: {
+                $ref: '#/components/schemas/ListCompletedVoteEventsResponseDto',
+              },
+            },
+          },
+        },
+      },
+    });
+  });
 });

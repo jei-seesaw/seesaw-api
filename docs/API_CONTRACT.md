@@ -403,6 +403,86 @@ GET /api/v2/completed-vote-events?limit=20&cursor=opaque-next-cursor
 - `limit`, `cursor`, 비율 계산, `totalTokenAmount`, 인증 오류, cursor 오류
   규칙은 진행중인 투표 목록과 같다.
 
+`GET /api/v2/me/created-vote-events`는 로그인한 사용자가 만든 투표 이벤트를
+진행/완료 구분 없이 cursor pagination으로 조회한다. bearer `accessToken`이
+필요하다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+GET /api/v2/me/created-vote-events?limit=20
+```
+
+다음 페이지 요청:
+
+```text
+GET /api/v2/me/created-vote-events?limit=20&cursor=opaque-next-cursor
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "voteEvents": [
+      {
+        "id": "generated-vote-event-id",
+        "categoryName": "일상",
+        "remainingTime": "12:34:56",
+        "title": "점심 메뉴는?",
+        "optionA": "김치찌개",
+        "optionB": "돈까스",
+        "optionAImageUrl": null,
+        "optionBImageUrl": "https://example.com/b.jpg",
+        "optionARatio": null,
+        "optionBRatio": null,
+        "totalParticipantCount": 120,
+        "totalTokenAmount": null,
+        "isParticipated": false
+      }
+    ],
+    "pageInfo": {
+      "hasNext": false,
+      "nextCursor": null
+    }
+  }
+}
+```
+
+`GET /api/v2/me/participated-vote-events`는 로그인한 사용자가 참여한 투표 이벤트를
+진행/완료 구분 없이 cursor pagination으로 조회한다. bearer `accessToken`이
+필요하다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+GET /api/v2/me/participated-vote-events?limit=20
+```
+
+다음 페이지 요청:
+
+```text
+GET /api/v2/me/participated-vote-events?limit=20&cursor=opaque-next-cursor
+```
+
+응답 shape은 `GET /api/v2/me/created-vote-events`와 같다.
+
+- 두 목록 모두 `mainVote` 없이 `{ voteEvents, pageInfo }`만 반환한다.
+- `voteEvents`는 `createdAt` 내림차순, 같은 시각이면 `id` 오름차순으로
+  정렬한다.
+- 내가 만든 목록은 `vote_events.organizer_user_id`가 현재 사용자 ID인 row만
+  반환한다. 기존 row처럼 `organizer_user_id`가 `null`인 row는 포함하지 않는다.
+- 내가 참여한 목록은 `vote_event_participations.user_id`가 현재 사용자 ID인
+  투표만 반환한다.
+- 진행중인 투표의 `optionARatio`, `optionBRatio`는 현재 사용자가 참여한 경우에만
+  반환하고, 완료된 투표는 로그인/참여 여부와 무관하게 항상 반환한다.
+- `limit`, `cursor`, 비율 계산, `totalTokenAmount`, cursor 오류 규칙은
+  진행중인 투표 목록과 같다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+
 `GET /api/v2/vote-events/:id`는 투표 상세 페이지에 필요한 정보를 조회한다.
 로그인하지 않아도 접근할 수 있다.
 
@@ -470,7 +550,7 @@ Authorization: Bearer jwt-access-token
   `invalid_access_token`을 반환한다.
 
 `POST /api/v2/vote-events`는 투표 이벤트를 생성한다. bearer `accessToken`이
-필요하지만 생성자를 저장하지는 않는다.
+필요하며 현재 사용자를 내부 주최자 ID로 저장한다.
 
 요청:
 
@@ -505,6 +585,8 @@ Authorization: Bearer jwt-access-token
   있으면 2048자 이하의 http/https URL이어야 한다.
 - bearer access token이 없거나 유효하지 않으면 `401`과
   `invalid_access_token`을 반환한다.
+- 요청 body에는 주최자 필드를 받지 않고, 서버가 accessToken의 사용자 ID를
+  `vote_events.organizer_user_id`에 저장한다.
 - `deadlineAt`은 생성 시각으로부터 24시간 뒤로 설정한다.
 - 참여자 수와 토큰 집계는 `0`에서 시작한다.
 

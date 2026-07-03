@@ -2,6 +2,7 @@ import { VoteEvent } from '../../src/vote-events/vote-event.entity';
 import {
   CompletedVoteEventsPage,
   OngoingVoteEventsPage,
+  UserVoteEventsPage,
   VoteEventsRepository,
 } from '../../src/vote-events/vote-events.repository';
 import { VoteEventsService } from '../../src/vote-events/vote-events.service';
@@ -87,6 +88,14 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
 
   listCompleted(): Promise<CompletedVoteEventsPage> {
     return Promise.resolve(this.completedListResult);
+  }
+
+  listCreatedByUser(): Promise<UserVoteEventsPage> {
+    return Promise.resolve({ hasNext: false, items: [] });
+  }
+
+  listParticipatedByUser(): Promise<UserVoteEventsPage> {
+    return Promise.resolve({ hasNext: false, items: [] });
   }
 
   findDetail(): Promise<typeof this.detail> {

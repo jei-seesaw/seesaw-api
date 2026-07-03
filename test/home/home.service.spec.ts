@@ -84,6 +84,14 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
     throw new Error('not used');
   }
 
+  listCreatedByUser(): never {
+    throw new Error('not used');
+  }
+
+  listParticipatedByUser(): never {
+    throw new Error('not used');
+  }
+
   participate(): never {
     throw new Error('not used');
   }

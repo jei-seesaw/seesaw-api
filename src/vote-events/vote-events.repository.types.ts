@@ -21,6 +21,10 @@ export interface ListVoteEventsOptions {
   userId?: string;
 }
 
+export interface ListUserVoteEventsOptions extends ListVoteEventsOptions {
+  userId: string;
+}
+
 export interface GetVoteEventDetailOptions {
   id: string;
   now: Date;
@@ -59,6 +63,11 @@ export interface VoteEventDetailRecord extends OngoingVoteEventRecord {
   selectedOption: VoteEventSelectedOption | null;
 }
 
+export interface UserVoteEventRecord extends OngoingVoteEventRecord {
+  cursorCreatedAt: string;
+  isCompleted: boolean;
+}
+
 export interface VoteEventParticipationChoiceRecord {
   selectedOption: VoteEventSelectedOption;
   tokenAmount: number;
@@ -76,6 +85,11 @@ export interface CompletedVoteEventsPage {
   items: OngoingVoteEventRecord[];
 }
 
+export interface UserVoteEventsPage {
+  hasNext: boolean;
+  items: UserVoteEventRecord[];
+}
+
 export abstract class VoteEventsRepository {
   abstract create(voteEvent: VoteEvent): Promise<VoteEvent>;
   abstract findDetail(
@@ -91,5 +105,11 @@ export abstract class VoteEventsRepository {
   abstract listCompleted(
     options: ListVoteEventsOptions,
   ): Promise<CompletedVoteEventsPage>;
+  abstract listCreatedByUser(
+    options: ListUserVoteEventsOptions,
+  ): Promise<UserVoteEventsPage>;
+  abstract listParticipatedByUser(
+    options: ListUserVoteEventsOptions,
+  ): Promise<UserVoteEventsPage>;
   abstract participate(options: ParticipateInVoteEventOptions): Promise<void>;
 }

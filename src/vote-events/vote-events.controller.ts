@@ -30,7 +30,9 @@ import { VoteEventsService } from './vote-events.service';
 import {
   ApiCreateVoteEvent,
   ApiGetVoteEventDetail,
+  ApiListCreatedVoteEvents,
   ApiListCompletedVoteEvents,
+  ApiListParticipatedVoteEvents,
   ApiListVoteEvents,
   ApiVote,
   ApiVoteEventsController,
@@ -63,6 +65,28 @@ export class VoteEventsController {
     return this.voteEventsService.listCompleted(query, request.user);
   }
 
+  @Get('me/created-vote-events')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiListCreatedVoteEvents()
+  listCreatedByMe(
+    @Query() query: ListVoteEventsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<ListCompletedVoteEventsResponseDto> {
+    return this.voteEventsService.listCreatedByUser(query, request.user!);
+  }
+
+  @Get('me/participated-vote-events')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiListParticipatedVoteEvents()
+  listParticipatedByMe(
+    @Query() query: ListVoteEventsQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<ListCompletedVoteEventsResponseDto> {
+    return this.voteEventsService.listParticipatedByUser(query, request.user!);
+  }
+
   @Get('vote-events/:id')
   @HttpCode(HttpStatus.OK)
   @UseGuards(OptionalJwtAuthGuard)
@@ -80,8 +104,9 @@ export class VoteEventsController {
   @ApiCreateVoteEvent()
   create(
     @Body() dto: CreateVoteEventRequestDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<CreateVoteEventResponseDto> {
-    return this.voteEventsService.create(dto);
+    return this.voteEventsService.create(dto, request.user!);
   }
 
   @Post('vote')

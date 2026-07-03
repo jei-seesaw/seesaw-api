@@ -48,8 +48,10 @@ export async function createVoteEventsSwaggerContext(): Promise<VoteEventsSwagge
         useValue: {
           create: () => Promise.resolve(undefined),
           getDetail: () => Promise.resolve(undefined),
+          listCreatedByUser: () => Promise.resolve(undefined),
           listCompleted: () => Promise.resolve(undefined),
           listOngoing: () => Promise.resolve(undefined),
+          listParticipatedByUser: () => Promise.resolve(undefined),
           vote: () => Promise.resolve(null),
         },
       },
