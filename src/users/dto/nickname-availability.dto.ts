@@ -14,3 +14,11 @@ export class NicknameAvailabilityResponseDto {
   })
   available!: boolean;
 }
+
+export class NicknameSuggestionResponseDto {
+  @ApiProperty({
+    description: '추천 닉네임',
+    example: '행복한 라이온',
+  })
+  nickname!: string;
+}

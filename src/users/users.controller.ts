@@ -14,11 +14,13 @@ import {
 import {
   NicknameAvailabilityQueryDto,
   NicknameAvailabilityResponseDto,
+  NicknameSuggestionResponseDto,
 } from './dto/nickname-availability.dto';
 import { UsersService } from './users.service';
 import {
   ApiCheckNicknameAvailability,
   ApiCreateUser,
+  ApiSuggestNickname,
   ApiUsersController,
 } from './users.swagger';
 
@@ -41,5 +43,12 @@ export class UsersController {
     @Query() query: NicknameAvailabilityQueryDto,
   ): Promise<NicknameAvailabilityResponseDto> {
     return this.usersService.checkNicknameAvailability(query.nickname);
+  }
+
+  @Get('users/nickname-suggestion')
+  @HttpCode(HttpStatus.OK)
+  @ApiSuggestNickname()
+  suggestNickname(): Promise<NicknameSuggestionResponseDto> {
+    return this.usersService.suggestNickname();
   }
 }

@@ -9,6 +9,15 @@ export class NicknameAlreadyExistsException extends ConflictException {
   }
 }
 
+export class NicknameSuggestionUnavailableException extends ConflictException {
+  constructor() {
+    super({
+      code: 'nickname_suggestion_unavailable',
+      message: 'Nickname suggestion unavailable',
+    });
+  }
+}
+
 export class InvalidAffiliationException extends UnprocessableEntityException {
   constructor() {
     super({

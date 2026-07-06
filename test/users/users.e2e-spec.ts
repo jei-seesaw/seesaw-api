@@ -36,6 +36,24 @@ describe('Users endpoint', () => {
       .expect({ data: { available: true } });
   });
 
+  it('추천 닉네임을 반환하고 해당 닉네임은 사용 가능하다', async () => {
+    const suggestionResponse = await request(server)
+      .get('/api/v2/users/nickname-suggestion')
+      .expect(200);
+
+    const nickname = (suggestionResponse.body as NicknameSuggestionEnvelope).data
+      .nickname;
+
+    expect(typeof nickname).toBe('string');
+    expect(nickname.length).toBeGreaterThan(0);
+
+    return request(server)
+      .get('/api/v2/users/nickname-availability')
+      .query({ nickname })
+      .expect(200)
+      .expect({ data: { available: true } });
+  });
+
   it('이미 있는 닉네임은 사용 불가하다고 응답한다', async () => {
     const nickname = `taken-${Date.now()}`;
 
@@ -180,6 +198,12 @@ describe('Users endpoint', () => {
 interface SignupEnvelope {
   data: {
     id: string;
+  };
+}
+
+interface NicknameSuggestionEnvelope {
+  data: {
+    nickname: string;
   };
 }
 

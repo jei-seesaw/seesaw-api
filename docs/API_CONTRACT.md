@@ -253,6 +253,32 @@ Missing or invalid `nickname` query values return `400` with:
 }
 ```
 
+`GET /api/v2/users/nickname-suggestion` recommends a currently available
+nickname. The suggestion is not reserved.
+
+Request:
+
+```text
+GET /api/v2/users/nickname-suggestion
+```
+
+Public response:
+
+```json
+{
+  "data": {
+    "nickname": "행복한 라이온"
+  }
+}
+```
+
+- Suggested values use the fixed `${prefix} ${suffix}` format.
+- The API checks `users.nickname` before returning the suggestion.
+- Signup can still race with another client; the `users.nickname` unique
+  constraint and `nickname_already_exists` remain the final defense.
+- If every configured nickname combination is already used, the API returns
+  `409` with `nickname_suggestion_unavailable`.
+
 ## Affiliation endpoints
 
 `GET /api/v2/affiliations` lists affiliation metadata. `code` is the stable

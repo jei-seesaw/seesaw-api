@@ -16,7 +16,10 @@ import {
   CreateUserRequestDto,
   CreateUserResponseDto,
 } from './dto/create-user.dto';
-import { NicknameAvailabilityResponseDto } from './dto/nickname-availability.dto';
+import {
+  NicknameAvailabilityResponseDto,
+  NicknameSuggestionResponseDto,
+} from './dto/nickname-availability.dto';
 
 const createUserResponseSchema = {
   example: {
@@ -48,6 +51,21 @@ const nicknameAvailabilityResponseSchema = {
   type: 'object' as const,
 };
 
+const nicknameSuggestionResponseSchema = {
+  example: {
+    data: {
+      nickname: '행복한 라이온',
+    },
+  },
+  properties: {
+    data: {
+      $ref: getSchemaPath(NicknameSuggestionResponseDto),
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
 export function ApiUsersController() {
   return applyDecorators(
     ApiTags('회원'),
@@ -55,6 +73,7 @@ export function ApiUsersController() {
       CreateUserRequestDto,
       CreateUserResponseDto,
       NicknameAvailabilityResponseDto,
+      NicknameSuggestionResponseDto,
     ),
   );
 }
@@ -104,5 +123,18 @@ export function ApiCheckNicknameAvailability() {
       schema: nicknameAvailabilityResponseSchema,
     }),
     ApiBadRequestResponse({ description: '닉네임 query가 유효하지 않습니다.' }),
+  );
+}
+
+export function ApiSuggestNickname() {
+  return applyDecorators(
+    ApiOperation({ summary: '닉네임 추천' }),
+    ApiOkResponse({
+      description: '사용 가능한 추천 닉네임을 반환합니다.',
+      schema: nicknameSuggestionResponseSchema,
+    }),
+    ApiConflictResponse({
+      description: '사용 가능한 추천 닉네임 조합이 없습니다.',
+    }),
   );
 }

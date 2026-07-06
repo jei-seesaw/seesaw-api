@@ -6,9 +6,11 @@ import type { User } from '../../src/users/user.entity';
 import {
   InvalidAffiliationException,
   NicknameAlreadyExistsException,
+  NicknameSuggestionUnavailableException,
 } from '../../src/users/users.exceptions';
 
 describe('UsersService', () => {
+  const originalRandom = Math.random;
   let affiliations: FakeAffiliationRepository;
   let repository: FakeUsersRepository;
   let service: UsersService;
@@ -17,6 +19,10 @@ describe('UsersService', () => {
     affiliations = new FakeAffiliationRepository();
     repository = new FakeUsersRepository();
     service = new UsersService(repository, affiliations);
+  });
+
+  afterEach(() => {
+    Math.random = originalRandom;
   });
 
   it('닉네임이 없으면 사용 가능하다고 응답한다', async () => {
@@ -39,6 +45,35 @@ describe('UsersService', () => {
     ).resolves.toEqual({
       available: false,
     });
+  });
+
+  it('랜덤 후보가 비어 있으면 해당 닉네임을 추천한다', async () => {
+    Math.random = () => 0;
+
+    await expect(service.suggestNickname()).resolves.toEqual({
+      nickname: '행복한 라이온',
+    });
+
+    expect(repository.checkedNicknames).toEqual(['행복한 라이온']);
+  });
+
+  it('첫 추천 후보가 중복이면 다음 사용 가능한 닉네임을 추천한다', async () => {
+    Math.random = () => 0;
+    repository.takenNicknames.add('행복한 라이온');
+
+    await expect(service.suggestNickname()).resolves.toEqual({
+      nickname: '행복한 메타몽',
+    });
+
+    expect(repository.checkedNicknames).toEqual(['행복한 라이온', '행복한 메타몽']);
+  });
+
+  it('모든 추천 후보가 중복이면 추천 불가 예외를 던진다', async () => {
+    repository.allNicknamesTaken = true;
+
+    await expect(service.suggestNickname()).rejects.toBeInstanceOf(
+      NicknameSuggestionUnavailableException,
+    );
   });
 
   it('회원가입하면 비밀번호를 해시하고 기본 voteToken을 가진 사용자를 만든다', async () => {
@@ -113,14 +148,22 @@ class FakeAffiliationRepository implements AffiliationRepository {
 
 class FakeUsersRepository implements UsersRepository {
   checkedNickname?: string;
+  checkedNicknames: string[] = [];
   createError?: Error;
   createdUser?: User;
+  allNicknamesTaken = false;
   nicknameExists = false;
+  takenNicknames = new Set<string>();
 
   existsByNickname(nickname: string): Promise<boolean> {
     this.checkedNickname = nickname;
+    this.checkedNicknames.push(nickname);
 
-    return Promise.resolve(this.nicknameExists);
+    return Promise.resolve(
+      this.allNicknamesTaken ||
+        this.nicknameExists ||
+        this.takenNicknames.has(nickname),
+    );
   }
 
   findAffiliationsByIds(): Promise<never[]> {

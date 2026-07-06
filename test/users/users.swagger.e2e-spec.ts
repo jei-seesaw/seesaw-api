@@ -22,6 +22,7 @@ describe('Users Swagger', () => {
           useValue: {
             checkNicknameAvailability: () => Promise.resolve(undefined),
             create: () => Promise.resolve(undefined),
+            suggestNickname: () => Promise.resolve(undefined),
           },
         },
       ],
@@ -88,6 +89,40 @@ describe('Users Swagger', () => {
             properties: {
               data: {
                 $ref: '#/components/schemas/NicknameAvailabilityResponseDto',
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('닉네임 추천 계약을 Swagger JSON에 노출한다', () => {
+    expect(document.components?.schemas?.NicknameSuggestionResponseDto).toMatchObject({
+      properties: {
+        nickname: { example: '행복한 라이온', type: 'string' },
+      },
+      required: ['nickname'],
+      type: 'object',
+    });
+    expect(document.paths['/api/v2/users/nickname-suggestion']?.get).toMatchObject({
+      summary: '닉네임 추천',
+      responses: {
+        '200': { description: '사용 가능한 추천 닉네임을 반환합니다.' },
+        '409': { description: '사용 가능한 추천 닉네임 조합이 없습니다.' },
+      },
+    });
+    expect(
+      document.paths['/api/v2/users/nickname-suggestion']?.get?.responses[
+        '200'
+      ],
+    ).toMatchObject({
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              data: {
+                $ref: '#/components/schemas/NicknameSuggestionResponseDto',
               },
             },
           },
