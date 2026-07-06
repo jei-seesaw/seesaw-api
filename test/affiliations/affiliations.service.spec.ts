@@ -10,10 +10,10 @@ describe('AffiliationsService', () => {
     const repository = new FakeAffiliationRepository();
     const service = new AffiliationsService(repository);
 
-    repository.summaries = [{ code: 'teacher', name: '선생님' }];
+    repository.summaries = [{ code: 'education', name: '재능교육' }];
 
     await expect(service.list()).resolves.toEqual([
-      { code: 'teacher', name: '선생님' },
+      { code: 'education', name: '재능교육' },
     ]);
   });
 });

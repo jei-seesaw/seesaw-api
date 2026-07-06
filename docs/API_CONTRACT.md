@@ -201,7 +201,7 @@ Request:
 {
   "nickname": "someName",
   "password": "password123",
-  "affiliationCode": "teacher"
+  "affiliationCode": "education"
 }
 ```
 
@@ -264,12 +264,36 @@ Public response:
 {
   "data": [
     {
-      "code": "headquarters",
-      "name": "본사"
+      "code": "business-group",
+      "name": "사업조"
     },
     {
-      "code": "teacher",
-      "name": "선생님"
+      "code": "e-academy",
+      "name": "재능e아카데미"
+    },
+    {
+      "code": "education",
+      "name": "재능교육"
+    },
+    {
+      "code": "broadcasting",
+      "name": "재능방송"
+    },
+    {
+      "code": "self-learning",
+      "name": "재능셀프러닝"
+    },
+    {
+      "code": "retail",
+      "name": "재능유통"
+    },
+    {
+      "code": "printing",
+      "name": "재능인쇄"
+    },
+    {
+      "code": "holdings",
+      "name": "재능홀딩스"
     }
   ]
 }
@@ -538,8 +562,8 @@ Authorization: Bearer jwt-access-token
     "optionBResultAmount": 60,
     "affiliationStats": [
       {
-        "affiliationCode": "teacher",
-        "affiliationName": "선생님",
+        "affiliationCode": "education",
+        "affiliationName": "재능교육",
         "optionARatio": 75,
         "optionBRatio": 25
       }

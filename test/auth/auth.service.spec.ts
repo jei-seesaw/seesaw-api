@@ -133,6 +133,6 @@ async function makeUser(nickname: string, password: string): Promise<User> {
   return new User(
     nickname,
     await hashPassword(password),
-    new Affiliation('teacher', '선생님'),
+    new Affiliation('education', '재능교육'),
   );
 }

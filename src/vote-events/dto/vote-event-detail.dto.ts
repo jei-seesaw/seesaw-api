@@ -3,10 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 export type VoteEventSelectedOption = 'A' | 'B';
 
 export class VoteEventAffiliationStatDto {
-  @ApiProperty({ description: '소속 코드', example: 'teacher' })
+  @ApiProperty({ description: '소속 코드', example: 'education' })
   affiliationCode!: string;
 
-  @ApiProperty({ description: '소속 이름', example: '선생님' })
+  @ApiProperty({ description: '소속 이름', example: '재능교육' })
   affiliationName!: string;
 
   @ApiProperty({ description: 'A 선택지 선택 비율', example: 75 })

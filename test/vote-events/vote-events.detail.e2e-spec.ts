@@ -62,12 +62,9 @@ describe('Vote events detail endpoint', () => {
     await deleteListTestVoteEvents();
 
     const prefix = `vote-detail-${Date.now()}`;
-    const teacherA = await createUser(`${prefix}-teacher-a`);
-    const teacherB = await createUser(`${prefix}-teacher-b`);
-    const headquarters = await createUser(
-      `${prefix}-headquarters`,
-      'headquarters',
-    );
+    const educationA = await createUser(`${prefix}-education-a`);
+    const educationB = await createUser(`${prefix}-education-b`);
+    const holdings = await createUser(`${prefix}-holdings`, 'holdings');
     const id = await insertVoteEvent({
       category: 'betting',
       deadlineAt: minutesFrom(new Date(), 10),
@@ -77,13 +74,13 @@ describe('Vote events detail endpoint', () => {
       totalParticipantCount: 3,
       totalTokenAmount: 100,
     });
-    await insertParticipation(id, teacherA.userId, 'A', 30);
-    await insertParticipation(id, teacherB.userId, 'B', 10);
-    await insertParticipation(id, headquarters.userId, 'B', 60);
+    await insertParticipation(id, educationA.userId, 'A', 30);
+    await insertParticipation(id, educationB.userId, 'B', 10);
+    await insertParticipation(id, holdings.userId, 'B', 60);
 
     const response = await request(server)
       .get(`/api/v2/vote-events/${id}`)
-      .set('Authorization', `Bearer ${teacherB.accessToken}`)
+      .set('Authorization', `Bearer ${educationB.accessToken}`)
       .expect(200);
     const data = (response.body as VoteEventDetailEnvelope).data;
 
@@ -101,14 +98,14 @@ describe('Vote events detail endpoint', () => {
     expect(data.affiliationStats).toEqual(
       expect.arrayContaining([
         {
-          affiliationCode: 'teacher',
-          affiliationName: '선생님',
+          affiliationCode: 'education',
+          affiliationName: '재능교육',
           optionARatio: 75,
           optionBRatio: 25,
         },
         {
-          affiliationCode: 'headquarters',
-          affiliationName: '본사',
+          affiliationCode: 'holdings',
+          affiliationName: '재능홀딩스',
           optionARatio: 0,
           optionBRatio: 100,
         },
@@ -144,8 +141,8 @@ describe('Vote events detail endpoint', () => {
     expect(data).toMatchObject({
       affiliationStats: [
         {
-          affiliationCode: 'teacher',
-          affiliationName: '선생님',
+          affiliationCode: 'education',
+          affiliationName: '재능교육',
           optionARatio: 25,
           optionBRatio: 75,
         },

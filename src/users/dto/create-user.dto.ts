@@ -25,7 +25,7 @@ export class CreateUserRequestDto {
 
   @ApiProperty({
     description: '소속 코드',
-    example: 'teacher',
+    example: 'education',
     maxLength: 50,
     minLength: 1,
   })

@@ -45,8 +45,8 @@ describe('Affiliations Swagger', () => {
 
     expect(affiliationSchema).toMatchObject({
       properties: {
-        code: { description: '소속 코드', example: 'teacher', type: 'string' },
-        name: { description: '소속 이름', example: '선생님', type: 'string' },
+        code: { description: '소속 코드', example: 'education', type: 'string' },
+        name: { description: '소속 이름', example: '재능교육', type: 'string' },
       },
       type: 'object',
     });
@@ -64,8 +64,14 @@ describe('Affiliations Swagger', () => {
           schema: {
             example: {
               data: [
-                { code: 'headquarters', name: '본사' },
-                { code: 'teacher', name: '선생님' },
+                { code: 'business-group', name: '사업조' },
+                { code: 'e-academy', name: '재능e아카데미' },
+                { code: 'education', name: '재능교육' },
+                { code: 'broadcasting', name: '재능방송' },
+                { code: 'self-learning', name: '재능셀프러닝' },
+                { code: 'retail', name: '재능유통' },
+                { code: 'printing', name: '재능인쇄' },
+                { code: 'holdings', name: '재능홀딩스' },
               ],
             },
             properties: {

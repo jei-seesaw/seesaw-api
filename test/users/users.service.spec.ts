@@ -42,10 +42,10 @@ describe('UsersService', () => {
   });
 
   it('회원가입하면 비밀번호를 해시하고 기본 voteToken을 가진 사용자를 만든다', async () => {
-    affiliations.affiliation = { code: 'teacher' } as Affiliation;
+    affiliations.affiliation = { code: 'education' } as Affiliation;
 
     const result = await service.create({
-      affiliationCode: 'teacher',
+      affiliationCode: 'education',
       nickname: 'new-user',
       password: 'password123',
     });
@@ -65,7 +65,7 @@ describe('UsersService', () => {
 
     await expect(
       service.create({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname: 'taken-user',
         password: 'password123',
       }),
@@ -79,7 +79,7 @@ describe('UsersService', () => {
 
     await expect(
       service.create({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname: 'race-user',
         password: 'password123',
       }),
@@ -100,7 +100,7 @@ describe('UsersService', () => {
 });
 
 class FakeAffiliationRepository implements AffiliationRepository {
-  affiliation: Affiliation | null = { code: 'teacher' } as Affiliation;
+  affiliation: Affiliation | null = { code: 'education' } as Affiliation;
 
   findByCode(): Promise<Affiliation | null> {
     return Promise.resolve(this.affiliation);

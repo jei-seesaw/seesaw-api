@@ -82,7 +82,7 @@ export async function createVoteEventsE2eContext(): Promise<VoteEventsE2eContext
 
   async function createUser(
     nickname: string,
-    affiliationCode = 'teacher',
+    affiliationCode = 'education',
   ): Promise<{ accessToken: string; userId: string }> {
     await request(server)
       .post('/api/v2/register')

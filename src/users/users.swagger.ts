@@ -67,7 +67,7 @@ export function ApiCreateUser() {
         default: {
           summary: '회원가입 요청',
           value: {
-            affiliationCode: 'teacher',
+            affiliationCode: 'education',
             nickname: 'seesaw-user',
             password: 'password123',
           },

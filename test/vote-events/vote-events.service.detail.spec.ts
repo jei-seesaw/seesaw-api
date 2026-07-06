@@ -81,25 +81,25 @@ describe('VoteEventsService detail', () => {
       totalTokenAmount: 100,
     };
     repository.participationChoices = [
-      { selectedOption: 'A', tokenAmount: 30, userId: 'teacher-a' },
-      { selectedOption: 'B', tokenAmount: 10, userId: 'teacher-b' },
-      { selectedOption: 'B', tokenAmount: 60, userId: 'headquarters-a' },
+      { selectedOption: 'A', tokenAmount: 30, userId: 'education-a' },
+      { selectedOption: 'B', tokenAmount: 10, userId: 'education-b' },
+      { selectedOption: 'B', tokenAmount: 60, userId: 'holdings-a' },
     ];
     users.affiliations = [
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-a',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-a',
       },
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-b',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-b',
       },
       {
-        affiliationCode: 'headquarters',
-        affiliationName: '본사',
-        userId: 'headquarters-a',
+        affiliationCode: 'holdings',
+        affiliationName: '재능홀딩스',
+        userId: 'holdings-a',
       },
     ];
 
@@ -111,14 +111,14 @@ describe('VoteEventsService detail', () => {
     expect(result.affiliationStats).toEqual(
       expect.arrayContaining([
         {
-          affiliationCode: 'teacher',
-          affiliationName: '선생님',
+          affiliationCode: 'education',
+          affiliationName: '재능교육',
           optionARatio: 75,
           optionBRatio: 25,
         },
         {
-          affiliationCode: 'headquarters',
-          affiliationName: '본사',
+          affiliationCode: 'holdings',
+          affiliationName: '재능홀딩스',
           optionARatio: 0,
           optionBRatio: 100,
         },
@@ -159,31 +159,31 @@ describe('VoteEventsService detail', () => {
       totalTokenAmount: 0,
     };
     repository.participationChoices = [
-      { selectedOption: 'A', tokenAmount: 0, userId: 'teacher-a' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'teacher-b' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'teacher-c' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'teacher-d' },
+      { selectedOption: 'A', tokenAmount: 0, userId: 'education-a' },
+      { selectedOption: 'B', tokenAmount: 0, userId: 'education-b' },
+      { selectedOption: 'B', tokenAmount: 0, userId: 'education-c' },
+      { selectedOption: 'B', tokenAmount: 0, userId: 'education-d' },
     ];
     users.affiliations = [
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-a',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-a',
       },
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-b',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-b',
       },
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-c',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-c',
       },
       {
-        affiliationCode: 'teacher',
-        affiliationName: '선생님',
-        userId: 'teacher-d',
+        affiliationCode: 'education',
+        affiliationName: '재능교육',
+        userId: 'education-d',
       },
     ];
 
@@ -192,8 +192,8 @@ describe('VoteEventsService detail', () => {
     expect(result).toMatchObject({
       affiliationStats: [
         {
-          affiliationCode: 'teacher',
-          affiliationName: '선생님',
+          affiliationCode: 'education',
+          affiliationName: '재능교육',
           optionARatio: 25,
           optionBRatio: 75,
         },

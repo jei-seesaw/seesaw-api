@@ -79,8 +79,8 @@ describe('Vote events Swagger detail', () => {
               data: {
                 affiliationStats: [
                   {
-                    affiliationCode: 'teacher',
-                    affiliationName: '선생님',
+                    affiliationCode: 'education',
+                    affiliationName: '재능교육',
                     optionARatio: 75,
                     optionBRatio: 25,
                   },

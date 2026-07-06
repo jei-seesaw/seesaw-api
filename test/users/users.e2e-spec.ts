@@ -41,7 +41,7 @@ describe('Users endpoint', () => {
 
     await orm.em.getConnection().execute(
       'insert into `users` (`id`, `nickname`, `password_hash`, `affiliation_code`, `vote_token`, `created_at`) values (?, ?, ?, ?, ?, ?)',
-      [randomUUID(), nickname, 'hashed-password', 'teacher', 1000, new Date()],
+      [randomUUID(), nickname, 'hashed-password', 'education', 1000, new Date()],
     );
 
     return request(server)
@@ -80,7 +80,7 @@ describe('Users endpoint', () => {
     await request(server)
       .post('/api/v2/register')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname,
         password: 'password123',
       })
@@ -98,7 +98,7 @@ describe('Users endpoint', () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({
-      affiliation_code: 'teacher',
+      affiliation_code: 'education',
       nickname,
       vote_token: 1000,
     });
@@ -112,7 +112,7 @@ describe('Users endpoint', () => {
     await request(server)
       .post('/api/v2/register')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname,
         password: 'password123',
       })
@@ -121,7 +121,7 @@ describe('Users endpoint', () => {
     return request(server)
       .post('/api/v2/register')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname,
         password: 'password123',
       })
@@ -153,7 +153,7 @@ describe('Users endpoint', () => {
     return request(server)
       .post('/api/v2/register')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname: '',
         password: 'short',
       })
@@ -169,7 +169,7 @@ describe('Users endpoint', () => {
     return request(server)
       .post('/api/v2/users')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname: `legacy-${Date.now()}`,
         password: 'password123',
       })

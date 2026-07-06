@@ -93,7 +93,7 @@ describe('Home endpoint', () => {
     await request(server)
       .post('/api/v2/register')
       .send({
-        affiliationCode: 'teacher',
+        affiliationCode: 'education',
         nickname,
         password: 'password123',
       })
