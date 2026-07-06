@@ -1,4 +1,5 @@
 import type { VoteEventCategory } from './dto/create-vote-event.dto';
+import type { VoteEventListSort } from './dto/list-vote-events.dto';
 import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
 import type { VoteEvent } from './vote-event.entity';
 
@@ -9,15 +10,21 @@ export interface VoteEventsSummary {
 }
 
 export interface VoteEventsListCursor {
-  deadlineAt: string;
+  category: VoteEventCategory | null;
   id: string;
   mainVoteId: string | null;
+  orderGroup: number | null;
+  orderValue: number | string;
+  sort: VoteEventListSort;
+  version: 2;
 }
 
 export interface ListVoteEventsOptions {
+  category?: VoteEventCategory;
   cursor?: VoteEventsListCursor;
   limit: number;
   now: Date;
+  sort: VoteEventListSort;
   userId?: string;
 }
 
@@ -41,6 +48,7 @@ export interface ParticipateInVoteEventOptions {
 
 export interface OngoingVoteEventRecord {
   category: VoteEventCategory;
+  cursorCreatedAt: string;
   cursorDeadlineAt: string;
   id: string;
   isParticipated: boolean;

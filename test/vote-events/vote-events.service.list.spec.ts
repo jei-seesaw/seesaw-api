@@ -18,6 +18,7 @@ describe('VoteEventsService list', () => {
       items: [
         {
           category: 'daily',
+          cursorCreatedAt: '2026-07-01 11:00:00',
           cursorDeadlineAt: '2026-07-01 12:00:00',
           id: 'daily-id',
           isParticipated: true,
@@ -36,6 +37,7 @@ describe('VoteEventsService list', () => {
         },
         {
           category: 'betting',
+          cursorCreatedAt: '2026-07-01 11:00:00',
           cursorDeadlineAt: '2026-07-01 12:00:00',
           id: 'betting-id',
           isParticipated: true,
@@ -54,6 +56,7 @@ describe('VoteEventsService list', () => {
         },
         {
           category: 'daily',
+          cursorCreatedAt: '2026-07-01 11:00:00',
           cursorDeadlineAt: '2026-07-01 12:00:00',
           id: 'hidden-id',
           isParticipated: false,
@@ -106,6 +109,7 @@ describe('VoteEventsService list', () => {
       items: [
         {
           category: 'daily',
+          cursorCreatedAt: '2026-07-01 11:00:00',
           cursorDeadlineAt: '2026-07-01 12:00:00',
           id: 'daily-id',
           isParticipated: false,
@@ -124,6 +128,7 @@ describe('VoteEventsService list', () => {
         },
         {
           category: 'betting',
+          cursorCreatedAt: '2026-07-01 11:00:00',
           cursorDeadlineAt: '2026-07-01 12:00:00',
           id: 'betting-id',
           isParticipated: false,

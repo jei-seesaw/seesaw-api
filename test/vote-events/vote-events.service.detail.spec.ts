@@ -17,6 +17,7 @@ describe('VoteEventsService detail', () => {
   it('진행중인 투표 상세는 미참여자에게 결과 정보를 숨긴다', async () => {
     repository.detail = {
       category: 'daily',
+      cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
       id: 'detail-id',
       isCompleted: false,
@@ -60,6 +61,7 @@ describe('VoteEventsService detail', () => {
   it('참여한 진행중인 배팅 투표 상세는 토큰 기준 결과와 내 선택지를 반환한다', async () => {
     repository.detail = {
       category: 'betting',
+      cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
       id: 'betting-detail-id',
       isCompleted: false,
@@ -137,6 +139,7 @@ describe('VoteEventsService detail', () => {
   it('완료된 투표 상세는 비로그인 요청에도 결과 정보를 반환한다', async () => {
     repository.detail = {
       category: 'daily',
+      cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
       id: 'completed-detail-id',
       isCompleted: true,

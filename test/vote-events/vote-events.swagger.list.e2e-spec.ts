@@ -45,6 +45,8 @@ describe('Vote events Swagger list', () => {
       parameters: [
         expect.objectContaining({ in: 'query', name: 'limit' }),
         expect.objectContaining({ in: 'query', name: 'cursor' }),
+        expect.objectContaining({ in: 'query', name: 'sort' }),
+        expect.objectContaining({ in: 'query', name: 'category' }),
       ],
       responses: {
         '200': { description: '진행중인 투표 이벤트 목록을 반환합니다.' },
@@ -112,6 +114,8 @@ describe('Vote events Swagger list', () => {
       parameters: [
         expect.objectContaining({ in: 'query', name: 'limit' }),
         expect.objectContaining({ in: 'query', name: 'cursor' }),
+        expect.objectContaining({ in: 'query', name: 'sort' }),
+        expect.objectContaining({ in: 'query', name: 'category' }),
       ],
       responses: {
         '200': { description: '완료된 투표 이벤트 목록을 반환합니다.' },
@@ -166,6 +170,8 @@ describe('Vote events Swagger list', () => {
       parameters: [
         expect.objectContaining({ in: 'query', name: 'limit' }),
         expect.objectContaining({ in: 'query', name: 'cursor' }),
+        expect.objectContaining({ in: 'query', name: 'sort' }),
+        expect.objectContaining({ in: 'query', name: 'category' }),
       ],
       responses: {
         '200': { description: '내가 만든 투표 이벤트 목록을 반환합니다.' },
@@ -181,6 +187,8 @@ describe('Vote events Swagger list', () => {
       parameters: [
         expect.objectContaining({ in: 'query', name: 'limit' }),
         expect.objectContaining({ in: 'query', name: 'cursor' }),
+        expect.objectContaining({ in: 'query', name: 'sort' }),
+        expect.objectContaining({ in: 'query', name: 'category' }),
       ],
       responses: {
         '200': { description: '내가 참여한 투표 이벤트 목록을 반환합니다.' },

@@ -42,6 +42,7 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
   };
   detail: {
     category: 'betting' | 'daily' | 'balance' | 'work';
+    cursorCreatedAt: string;
     cursorDeadlineAt: string;
     id: string;
     isCompleted: boolean;
@@ -142,6 +143,7 @@ export function voteEventDetail(
 ): NonNullable<FakeVoteEventsRepository['detail']> {
   return {
     category: 'daily',
+    cursorCreatedAt: '2026-07-01 11:00:00',
     cursorDeadlineAt: '2026-07-01 12:00:00',
     id: 'vote-event-id',
     isCompleted: false,

@@ -18,13 +18,14 @@ describe('Vote events completed list endpoint', () => {
     await context.close();
   });
 
-  it('완료된 투표 목록을 최근 완료순으로 조회하고 결과 비율을 항상 반환한다', async () => {
+  it('완료된 투표 목록을 기본 최신 생성순과 최근 완료순으로 조회한다', async () => {
     await deleteListTestVoteEvents();
 
     const prefix = `vote-list-${Date.now()}-completed`;
     const now = new Date();
     const olderDailyId = await insertVoteEvent({
       category: 'daily',
+      createdAt: secondsFrom(now, -1),
       deadlineAt: secondsFrom(now, -10),
       optionAParticipantCount: 1,
       optionBParticipantCount: 3,
@@ -33,6 +34,7 @@ describe('Vote events completed list endpoint', () => {
     });
     const recentBettingId = await insertVoteEvent({
       category: 'betting',
+      createdAt: secondsFrom(now, -20),
       deadlineAt: secondsFrom(now, -5),
       optionATokenAmount: 25,
       optionBTokenAmount: 75,
@@ -55,18 +57,10 @@ describe('Vote events completed list endpoint', () => {
 
     expect(body.data).not.toHaveProperty('mainVote');
     expect(body.data.voteEvents.map((voteEvent) => voteEvent.id)).toEqual([
-      recentBettingId,
       olderDailyId,
+      recentBettingId,
     ]);
     expect(body.data.voteEvents[0]).toMatchObject({
-      categoryName: '배팅',
-      isParticipated: false,
-      optionARatio: 25,
-      optionBRatio: 75,
-      remainingTime: '00:00:00',
-      totalTokenAmount: 100,
-    });
-    expect(body.data.voteEvents[1]).toMatchObject({
       categoryName: '일상',
       isParticipated: false,
       optionARatio: 25,
@@ -74,9 +68,68 @@ describe('Vote events completed list endpoint', () => {
       remainingTime: '00:00:00',
       totalTokenAmount: null,
     });
+    expect(body.data.voteEvents[1]).toMatchObject({
+      categoryName: '배팅',
+      isParticipated: false,
+      optionARatio: 25,
+      optionBRatio: 75,
+      remainingTime: '00:00:00',
+      totalTokenAmount: 100,
+    });
     expect(typeof body.data.pageInfo.hasNext).toBe('boolean');
     expect(body.data.pageInfo.nextCursor).toEqual(
       body.data.pageInfo.hasNext ? expect.any(String) : null,
+    );
+
+    const deadlineResponse = await request(server)
+      .get('/api/v2/completed-vote-events')
+      .query({ limit: 2, sort: 'deadline' })
+      .expect(200);
+    const deadlineBody =
+      deadlineResponse.body as ListCompletedVoteEventsEnvelope;
+
+    expect(deadlineBody.data.voteEvents.map((voteEvent) => voteEvent.id)).toEqual([
+      recentBettingId,
+      olderDailyId,
+    ]);
+  });
+
+  it('category와 participants 정렬로 완료된 투표 목록을 조회한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-list-${Date.now()}-completed-category`;
+    const now = new Date();
+    const smallerDailyId = await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: secondsFrom(now, -10),
+      title: `${prefix}-small-daily`,
+      totalParticipantCount: 1_000_001,
+    });
+    const biggerDailyId = await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: secondsFrom(now, -20),
+      title: `${prefix}-big-daily`,
+      totalParticipantCount: 1_000_002,
+    });
+    await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: secondsFrom(now, -5),
+      title: `${prefix}-filtered-betting`,
+      totalParticipantCount: 2_000_000,
+    });
+
+    const response = await request(server)
+      .get('/api/v2/completed-vote-events')
+      .query({ category: 'daily', limit: 2, sort: 'participants' })
+      .expect(200);
+    const body = response.body as ListCompletedVoteEventsEnvelope;
+
+    expect(body.data.voteEvents.map((voteEvent) => voteEvent.id)).toEqual([
+      biggerDailyId,
+      smallerDailyId,
+    ]);
+    expect(body.data.voteEvents.every((item) => item.categoryName === '일상')).toBe(
+      true,
     );
   });
   it('cursor로 다음 완료된 투표 목록을 조회한다', async () => {
@@ -105,7 +158,7 @@ describe('Vote events completed list endpoint', () => {
 
     const firstPage = await request(server)
       .get('/api/v2/completed-vote-events')
-      .query({ limit: 1 })
+      .query({ limit: 1, sort: 'deadline' })
       .expect(200);
     const firstPageData = (firstPage.body as ListCompletedVoteEventsEnvelope).data;
 
@@ -115,7 +168,11 @@ describe('Vote events completed list endpoint', () => {
 
     const secondPage = await request(server)
       .get('/api/v2/completed-vote-events')
-      .query({ cursor: firstPageData.pageInfo.nextCursor, limit: 1 })
+      .query({
+        cursor: firstPageData.pageInfo.nextCursor,
+        limit: 1,
+        sort: 'deadline',
+      })
       .expect(200);
     const secondPageData = (secondPage.body as ListCompletedVoteEventsEnvelope).data;
 

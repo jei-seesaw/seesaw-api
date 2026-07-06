@@ -1,6 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  VOTE_EVENT_CATEGORIES,
+  type VoteEventCategory,
+} from './create-vote-event.dto';
+
+export const VOTE_EVENT_LIST_SORTS = [
+  'latest',
+  'deadline',
+  'participants',
+] as const;
+
+export type VoteEventListSort = (typeof VOTE_EVENT_LIST_SORTS)[number];
 
 export class ListVoteEventsQueryDto {
   @ApiPropertyOptional({
@@ -23,6 +35,24 @@ export class ListVoteEventsQueryDto {
   @IsOptional()
   @IsString()
   cursor?: string;
+
+  @ApiPropertyOptional({
+    default: 'latest',
+    description:
+      '정렬 기준. latest는 최신 생성순, deadline은 마감 기준순, participants는 참여자 많은 순입니다.',
+    enum: VOTE_EVENT_LIST_SORTS,
+  })
+  @IsOptional()
+  @IsIn(VOTE_EVENT_LIST_SORTS)
+  sort?: VoteEventListSort;
+
+  @ApiPropertyOptional({
+    description: '조회할 투표 이벤트 카테고리. 생략하면 전체 카테고리를 조회합니다.',
+    enum: VOTE_EVENT_CATEGORIES,
+  })
+  @IsOptional()
+  @IsIn(VOTE_EVENT_CATEGORIES)
+  category?: VoteEventCategory;
 }
 
 export class VoteEventListItemDto {

@@ -1,6 +1,11 @@
 import type { Server } from 'node:http';
 import request from 'supertest';
-import { createVoteEventsE2eContext, minutesFrom, type VoteEventsE2eContext } from './vote-events.e2e.fixture';
+import {
+  createVoteEventsE2eContext,
+  minutesFrom,
+  secondsFrom,
+  type VoteEventsE2eContext,
+} from './vote-events.e2e.fixture';
 import type { ErrorEnvelope, ListVoteEventsEnvelope, VoteEventListItem } from './vote-events.e2e.types';
 
 describe('Vote events ongoing list endpoint', () => {
@@ -20,34 +25,44 @@ describe('Vote events ongoing list endpoint', () => {
     await context.close();
   });
 
-  it('진행중인 투표 목록을 메인 투표와 마감임박순 목록으로 조회한다', async () => {
+  it('진행중인 투표 목록을 메인 투표와 선택한 정렬 목록으로 조회한다', async () => {
     await deleteListTestVoteEvents();
 
     const prefix = `vote-list-${Date.now()}`;
     const now = new Date();
     const mainId = await insertVoteEvent({
       category: 'daily',
+      createdAt: secondsFrom(now, -40),
       deadlineAt: minutesFrom(now, 60),
       optionAParticipantCount: 900,
       optionBParticipantCount: 100,
       title: `${prefix}-main`,
       totalParticipantCount: 1000,
     });
-    const firstId = await insertVoteEvent({
+    const deadlineId = await insertVoteEvent({
       category: 'daily',
+      createdAt: secondsFrom(now, -20),
       deadlineAt: minutesFrom(now, 10),
       optionAImageUrl: 'https://example.com/a.jpg',
       optionAParticipantCount: 1,
       optionBParticipantCount: 2,
-      title: `${prefix}-first`,
+      title: `${prefix}-deadline`,
       totalParticipantCount: 3,
     });
-    const secondId = await insertVoteEvent({
+    const participantId = await insertVoteEvent({
+      category: 'daily',
+      createdAt: secondsFrom(now, -10),
+      deadlineAt: minutesFrom(now, 30),
+      title: `${prefix}-participants`,
+      totalParticipantCount: 50,
+    });
+    const latestId = await insertVoteEvent({
       category: 'betting',
+      createdAt: secondsFrom(now, -1),
       deadlineAt: minutesFrom(now, 20),
       optionATokenAmount: 25,
       optionBTokenAmount: 75,
-      title: `${prefix}-second`,
+      title: `${prefix}-latest`,
       totalParticipantCount: 2,
       totalTokenAmount: 100,
     });
@@ -60,7 +75,7 @@ describe('Vote events ongoing list endpoint', () => {
 
     const response = await request(server)
       .get('/api/v2/ongoing-vote-events')
-      .query({ limit: 2 })
+      .query({ limit: 3 })
       .expect(200);
     const body = response.body as ListVoteEventsEnvelope;
 
@@ -76,10 +91,11 @@ describe('Vote events ongoing list endpoint', () => {
     });
     expect(body.data.mainVote?.remainingTime).toMatch(/^\d{2}:\d{2}:\d{2}$/);
     expect(body.data.otherVoteEvents.map((voteEvent) => voteEvent.id)).toEqual([
-      firstId,
-      secondId,
+      latestId,
+      participantId,
+      deadlineId,
     ]);
-    expect(body.data.otherVoteEvents[0]).toMatchObject({
+    expect(body.data.otherVoteEvents[2]).toMatchObject({
       categoryName: '일상',
       optionAImageUrl: 'https://example.com/a.jpg',
       optionBImageUrl: null,
@@ -87,11 +103,70 @@ describe('Vote events ongoing list endpoint', () => {
       optionBRatio: null,
       totalTokenAmount: null,
     });
-    expect(body.data.otherVoteEvents[1]).toMatchObject({
+    expect(body.data.otherVoteEvents[0]).toMatchObject({
       categoryName: '배팅',
       totalTokenAmount: 100,
     });
     expect(typeof body.data.pageInfo.hasNext).toBe('boolean');
+
+    const deadlineResponse = await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ limit: 3, sort: 'deadline' })
+      .expect(200);
+    const deadlineBody = deadlineResponse.body as ListVoteEventsEnvelope;
+
+    expect(
+      deadlineBody.data.otherVoteEvents.map((voteEvent) => voteEvent.id),
+    ).toEqual([deadlineId, latestId, participantId]);
+
+    const participantsResponse = await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ limit: 3, sort: 'participants' })
+      .expect(200);
+    const participantsBody = participantsResponse.body as ListVoteEventsEnvelope;
+
+    expect(
+      participantsBody.data.otherVoteEvents.map((voteEvent) => voteEvent.id),
+    ).toEqual([participantId, deadlineId, latestId]);
+  });
+
+  it('category가 진행중인 투표 mainVote와 목록을 함께 제한한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-list-${Date.now()}-category`;
+    const now = new Date();
+    await insertVoteEvent({
+      category: 'daily',
+      deadlineAt: minutesFrom(now, 60),
+      title: `${prefix}-daily-main`,
+      totalParticipantCount: 2_000_000,
+    });
+    const bettingMainId = await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: minutesFrom(now, 50),
+      title: `${prefix}-betting-main`,
+      totalParticipantCount: 1_000_000,
+    });
+    const bettingOtherId = await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: minutesFrom(now, 10),
+      title: `${prefix}-betting-other`,
+      totalParticipantCount: 999_999,
+    });
+
+    const response = await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ category: 'betting', limit: 10 })
+      .expect(200);
+    const body = response.body as ListVoteEventsEnvelope;
+
+    expect(body.data.mainVote).toMatchObject({
+      categoryName: '배팅',
+      id: bettingMainId,
+    });
+    expect(body.data.otherVoteEvents.map((voteEvent) => voteEvent.id)).toEqual([
+      bettingOtherId,
+    ]);
   });
   it('로그인한 사용자가 참여한 투표만 선택지 비율을 조회한다', async () => {
     await deleteListTestVoteEvents();
@@ -155,7 +230,7 @@ describe('Vote events ongoing list endpoint', () => {
       optionBRatio: null,
     });
   });
-  it('cursor로 다음 진행중인 투표 목록을 조회할 때 mainVote를 반복하지 않는다', async () => {
+  it('non-default sort/category cursor로 다음 진행중인 투표 목록을 조회한다', async () => {
     await deleteListTestVoteEvents();
 
     const prefix = `vote-cursor-${Date.now()}`;
@@ -170,18 +245,24 @@ describe('Vote events ongoing list endpoint', () => {
       category: 'daily',
       deadlineAt: minutesFrom(now, 10),
       title: `${prefix}-first`,
-      totalParticipantCount: 1,
+      totalParticipantCount: 10,
     });
     const secondId = await insertVoteEvent({
       category: 'daily',
       deadlineAt: minutesFrom(now, 20),
       title: `${prefix}-second`,
-      totalParticipantCount: 1,
+      totalParticipantCount: 5,
+    });
+    await insertVoteEvent({
+      category: 'betting',
+      deadlineAt: minutesFrom(now, 5),
+      title: `${prefix}-filtered`,
+      totalParticipantCount: 999,
     });
 
     const firstPage = await request(server)
       .get('/api/v2/ongoing-vote-events')
-      .query({ limit: 1 })
+      .query({ category: 'daily', limit: 1, sort: 'participants' })
       .expect(200);
     const firstPageData = (firstPage.body as ListVoteEventsEnvelope).data;
 
@@ -194,7 +275,12 @@ describe('Vote events ongoing list endpoint', () => {
 
     const secondPage = await request(server)
       .get('/api/v2/ongoing-vote-events')
-      .query({ cursor: firstPageData.pageInfo.nextCursor, limit: 1 })
+      .query({
+        category: 'daily',
+        cursor: firstPageData.pageInfo.nextCursor,
+        limit: 1,
+        sort: 'participants',
+      })
       .expect(200);
     const secondPageData = (secondPage.body as ListVoteEventsEnvelope).data;
 
@@ -202,6 +288,36 @@ describe('Vote events ongoing list endpoint', () => {
     expect(secondPageData.otherVoteEvents.map((item) => item.id)).toEqual([
       secondId,
     ]);
+
+    await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({
+        category: 'daily',
+        cursor: firstPageData.pageInfo.nextCursor,
+        limit: 1,
+        sort: 'latest',
+      })
+      .expect(400)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'invalid_cursor',
+        );
+      });
+
+    await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({
+        category: 'betting',
+        cursor: firstPageData.pageInfo.nextCursor,
+        limit: 1,
+        sort: 'participants',
+      })
+      .expect(400)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'invalid_cursor',
+        );
+      });
   });
   it('잘못된 cursor로 진행중인 투표 목록을 조회하면 거절한다', () => {
     return request(server)
@@ -211,6 +327,28 @@ describe('Vote events ongoing list endpoint', () => {
       .expect((response: { body: unknown }) => {
         expect((response.body as ErrorEnvelope).error.code).toBe(
           'invalid_cursor',
+        );
+      });
+  });
+
+  it('잘못된 sort 또는 category로 진행중인 투표 목록을 조회하면 거절한다', async () => {
+    await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ sort: 'unknown' })
+      .expect(400)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'validation_error',
+        );
+      });
+
+    await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ category: 'unknown' })
+      .expect(400)
+      .expect((response: { body: unknown }) => {
+        expect((response.body as ErrorEnvelope).error.code).toBe(
+          'validation_error',
         );
       });
   });

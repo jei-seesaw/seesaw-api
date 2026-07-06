@@ -20,6 +20,7 @@ import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
+  VOTE_EVENT_CATEGORIES,
 } from './dto/create-vote-event.dto';
 import {
   VoteEventAffiliationStatDto,
@@ -29,6 +30,7 @@ import {
   ListCompletedVoteEventsResponseDto,
   ListVoteEventsPageInfoDto,
   ListVoteEventsResponseDto,
+  VOTE_EVENT_LIST_SORTS,
   VoteEventListItemDto,
 } from './dto/list-vote-events.dto';
 import {
@@ -78,6 +80,19 @@ export function ApiListVoteEvents() {
       required: false,
       schema: { type: 'string' },
     }),
+    ApiQuery({
+      description:
+        '정렬 기준. latest는 최신 생성순, deadline은 마감 기준순, participants는 참여자 많은 순입니다.',
+      name: 'sort',
+      required: false,
+      schema: { default: 'latest', enum: [...VOTE_EVENT_LIST_SORTS], type: 'string' },
+    }),
+    ApiQuery({
+      description: '조회할 투표 이벤트 카테고리. 생략하면 전체를 조회합니다.',
+      name: 'category',
+      required: false,
+      schema: { enum: [...VOTE_EVENT_CATEGORIES], type: 'string' },
+    }),
     ApiOkResponse({
       description: '진행중인 투표 이벤트 목록을 반환합니다.',
       schema: listVoteEventsResponseSchema,
@@ -112,6 +127,19 @@ export function ApiListCompletedVoteEvents() {
       required: false,
       schema: { type: 'string' },
     }),
+    ApiQuery({
+      description:
+        '정렬 기준. latest는 최신 생성순, deadline은 마감 기준순, participants는 참여자 많은 순입니다.',
+      name: 'sort',
+      required: false,
+      schema: { default: 'latest', enum: [...VOTE_EVENT_LIST_SORTS], type: 'string' },
+    }),
+    ApiQuery({
+      description: '조회할 투표 이벤트 카테고리. 생략하면 전체를 조회합니다.',
+      name: 'category',
+      required: false,
+      schema: { enum: [...VOTE_EVENT_CATEGORIES], type: 'string' },
+    }),
     ApiOkResponse({
       description: '완료된 투표 이벤트 목록을 반환합니다.',
       schema: listCompletedVoteEventsResponseSchema,
@@ -145,6 +173,19 @@ export function ApiListCreatedVoteEvents() {
       required: false,
       schema: { type: 'string' },
     }),
+    ApiQuery({
+      description:
+        '정렬 기준. latest는 최신 생성순, deadline은 진행중 마감임박순 뒤 완료 최근순, participants는 참여자 많은 순입니다.',
+      name: 'sort',
+      required: false,
+      schema: { default: 'latest', enum: [...VOTE_EVENT_LIST_SORTS], type: 'string' },
+    }),
+    ApiQuery({
+      description: '조회할 투표 이벤트 카테고리. 생략하면 전체를 조회합니다.',
+      name: 'category',
+      required: false,
+      schema: { enum: [...VOTE_EVENT_CATEGORIES], type: 'string' },
+    }),
     ApiOkResponse({
       description: '내가 만든 투표 이벤트 목록을 반환합니다.',
       schema: listMyVoteEventsResponseSchema,
@@ -177,6 +218,19 @@ export function ApiListParticipatedVoteEvents() {
       name: 'cursor',
       required: false,
       schema: { type: 'string' },
+    }),
+    ApiQuery({
+      description:
+        '정렬 기준. latest는 최신 생성순, deadline은 진행중 마감임박순 뒤 완료 최근순, participants는 참여자 많은 순입니다.',
+      name: 'sort',
+      required: false,
+      schema: { default: 'latest', enum: [...VOTE_EVENT_LIST_SORTS], type: 'string' },
+    }),
+    ApiQuery({
+      description: '조회할 투표 이벤트 카테고리. 생략하면 전체를 조회합니다.',
+      name: 'category',
+      required: false,
+      schema: { enum: [...VOTE_EVENT_CATEGORIES], type: 'string' },
     }),
     ApiOkResponse({
       description: '내가 참여한 투표 이벤트 목록을 반환합니다.',

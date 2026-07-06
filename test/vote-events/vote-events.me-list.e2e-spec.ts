@@ -114,6 +114,62 @@ describe('Vote events me list endpoints', () => {
     });
   });
 
+  it('내가 만든 투표를 category와 deadline 정렬로 조회한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-me-${Date.now()}-created-filter`;
+    const { accessToken, userId } = await createUser(`${prefix}-owner`);
+    const now = new Date();
+    const ongoingNearId = await insertVoteEvent({
+      category: 'work',
+      createdAt: secondsFrom(now, -30),
+      deadlineAt: minutesFrom(now, 10),
+      organizerUserId: userId,
+      title: `${prefix}-ongoing-near`,
+      totalParticipantCount: 1,
+    });
+    const ongoingFarId = await insertVoteEvent({
+      category: 'work',
+      createdAt: secondsFrom(now, -20),
+      deadlineAt: minutesFrom(now, 30),
+      organizerUserId: userId,
+      title: `${prefix}-ongoing-far`,
+      totalParticipantCount: 1,
+    });
+    const completedRecentId = await insertVoteEvent({
+      category: 'work',
+      createdAt: secondsFrom(now, -10),
+      deadlineAt: secondsFrom(now, -5),
+      organizerUserId: userId,
+      title: `${prefix}-completed-recent`,
+      totalParticipantCount: 1,
+    });
+    await insertVoteEvent({
+      category: 'daily',
+      createdAt: secondsFrom(now, -1),
+      deadlineAt: minutesFrom(now, 5),
+      organizerUserId: userId,
+      title: `${prefix}-filtered-daily`,
+      totalParticipantCount: 100,
+    });
+
+    const response = await request(server)
+      .get('/api/v2/me/created-vote-events')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .query({ category: 'work', limit: 3, sort: 'deadline' })
+      .expect(200);
+    const body = response.body as ListCompletedVoteEventsEnvelope;
+
+    expect(body.data.voteEvents.map((item) => item.id)).toEqual([
+      ongoingNearId,
+      ongoingFarId,
+      completedRecentId,
+    ]);
+    expect(body.data.voteEvents.every((item) => item.categoryName === '업무')).toBe(
+      true,
+    );
+  });
+
   it('내가 참여한 투표만 최신 생성순으로 조회한다', async () => {
     await deleteListTestVoteEvents();
 
@@ -177,6 +233,59 @@ describe('Vote events me list endpoints', () => {
       optionBRatio: 75,
       totalTokenAmount: null,
     });
+  });
+
+  it('내가 참여한 투표를 category와 participants 정렬로 조회한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-me-${Date.now()}-participated-filter`;
+    const { accessToken, userId } = await createUser(`${prefix}-user`);
+    const other = await createUser(`${prefix}-other`);
+    const now = new Date();
+    const smallerBettingId = await insertVoteEvent({
+      category: 'betting',
+      createdAt: secondsFrom(now, -10),
+      deadlineAt: minutesFrom(now, 30),
+      organizerUserId: other.userId,
+      title: `${prefix}-small-betting`,
+      totalParticipantCount: 2,
+      totalTokenAmount: 10,
+    });
+    const biggerBettingId = await insertVoteEvent({
+      category: 'betting',
+      createdAt: secondsFrom(now, -20),
+      deadlineAt: minutesFrom(now, 30),
+      organizerUserId: other.userId,
+      title: `${prefix}-big-betting`,
+      totalParticipantCount: 20,
+      totalTokenAmount: 100,
+    });
+    const dailyId = await insertVoteEvent({
+      category: 'daily',
+      createdAt: secondsFrom(now, -1),
+      deadlineAt: minutesFrom(now, 30),
+      organizerUserId: other.userId,
+      title: `${prefix}-filtered-daily`,
+      totalParticipantCount: 100,
+    });
+    await insertParticipation(smallerBettingId, userId, 'A', 10);
+    await insertParticipation(biggerBettingId, userId, 'A', 100);
+    await insertParticipation(dailyId, userId);
+
+    const response = await request(server)
+      .get('/api/v2/me/participated-vote-events')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .query({ category: 'betting', limit: 2, sort: 'participants' })
+      .expect(200);
+    const body = response.body as ListCompletedVoteEventsEnvelope;
+
+    expect(body.data.voteEvents.map((item) => item.id)).toEqual([
+      biggerBettingId,
+      smallerBettingId,
+    ]);
+    expect(body.data.voteEvents.every((item) => item.categoryName === '배팅')).toBe(
+      true,
+    );
   });
 
   it('accessToken이 없거나 유효하지 않으면 내 투표 목록 조회를 거절한다', async () => {

@@ -16,6 +16,7 @@ export interface VoteEventsSummaryRow {
 
 export interface OngoingVoteEventRow {
   category: VoteEventCategory;
+  cursorCreatedAt: string;
   cursorDeadlineAt: string;
   id: string;
   isParticipated: boolean | number | string;
@@ -39,7 +40,6 @@ export interface VoteEventDetailRow extends OngoingVoteEventRow {
 }
 
 export interface UserVoteEventRow extends OngoingVoteEventRow {
-  cursorCreatedAt: string;
   isCompleted: boolean | number | string;
 }
 
@@ -106,7 +106,6 @@ export function userVoteEventListSelect(): string {
     'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
     `${isParticipated} as \`isParticipated\``,
     'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
-    "date_format(ve.`created_at`, '%Y-%m-%d %H:%i:%s') as `cursorCreatedAt`",
   ].join(', ');
 }
 
@@ -122,6 +121,7 @@ export function toOngoingVoteEventRecord(
 ): OngoingVoteEventRecord {
   return {
     category: row.category,
+    cursorCreatedAt: row.cursorCreatedAt,
     cursorDeadlineAt: row.cursorDeadlineAt,
     id: row.id,
     isParticipated: row.isParticipated === true || Number(row.isParticipated) === 1,
@@ -220,6 +220,7 @@ function voteEventBaseSelect(): string[] {
     've.`option_b_token_amount` as `optionBTokenAmount`',
     've.`total_participant_count` as `totalParticipantCount`',
     've.`total_token_amount` as `totalTokenAmount`',
+    "date_format(ve.`created_at`, '%Y-%m-%d %H:%i:%s') as `cursorCreatedAt`",
     "date_format(ve.`deadline_at`, '%Y-%m-%d %H:%i:%s') as `cursorDeadlineAt`",
   ];
 }
