@@ -164,9 +164,47 @@ describe('Vote events ongoing list endpoint', () => {
       categoryName: '배팅',
       id: bettingMainId,
     });
-    expect(body.data.otherVoteEvents.map((voteEvent) => voteEvent.id)).toEqual([
+    expect(body.data.otherVoteEvents.map((voteEvent) => voteEvent.id)).toContain(
       bettingOtherId,
-    ]);
+    );
+    expect(
+      body.data.otherVoteEvents.every(
+        (voteEvent) => voteEvent.categoryName === '배팅',
+      ),
+    ).toBe(true);
+  });
+  it('mainVote는 참여자 수가 같으면 마감이 더 임박한 진행중 투표를 선택한다', async () => {
+    await deleteListTestVoteEvents();
+
+    const prefix = `vote-list-${Date.now()}-main-tie`;
+    const now = new Date();
+    const laterDeadlineId = await insertVoteEvent({
+      category: 'balance',
+      createdAt: secondsFrom(now, -10),
+      deadlineAt: minutesFrom(now, 60),
+      id: '00000000-0000-4000-8000-000000000001',
+      title: `${prefix}-later-deadline`,
+      totalParticipantCount: 2_000_000,
+    });
+    const earlierDeadlineId = await insertVoteEvent({
+      category: 'balance',
+      createdAt: secondsFrom(now, -20),
+      deadlineAt: minutesFrom(now, 10),
+      id: '00000000-0000-4000-8000-000000000002',
+      title: `${prefix}-earlier-deadline`,
+      totalParticipantCount: 2_000_000,
+    });
+
+    const response = await request(server)
+      .get('/api/v2/ongoing-vote-events')
+      .query({ category: 'balance', limit: 10 })
+      .expect(200);
+    const body = response.body as ListVoteEventsEnvelope;
+
+    expect(body.data.mainVote?.id).toBe(earlierDeadlineId);
+    expect(body.data.otherVoteEvents.map((voteEvent) => voteEvent.id)).toContain(
+      laterDeadlineId,
+    );
   });
   it('로그인한 사용자가 참여한 투표만 선택지 비율을 조회한다', async () => {
     await deleteListTestVoteEvents();

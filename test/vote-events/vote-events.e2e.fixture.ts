@@ -52,6 +52,7 @@ interface InsertVoteEventArgs {
   category: 'betting' | 'daily' | 'balance' | 'work';
   createdAt?: Date;
   deadlineAt: Date;
+  id?: string;
   optionAImageUrl?: string | null;
   optionAParticipantCount?: number;
   optionATokenAmount?: number;
@@ -109,7 +110,7 @@ export async function createVoteEventsE2eContext(): Promise<VoteEventsE2eContext
   }
 
   async function insertVoteEvent(args: InsertVoteEventArgs): Promise<string> {
-    const id = randomUUID();
+    const id = args.id ?? randomUUID();
     const createdAt = args.createdAt ?? new Date();
 
     await orm.em.getConnection().execute(

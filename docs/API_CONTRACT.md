@@ -361,7 +361,8 @@ Authorization: Bearer jwt-access-token
   전체 카테고리를 조회한다. 카테고리는 응답 그룹이 아니라 DB pagination 전에
   적용되는 필터다.
 - `mainVote`는 첫 페이지에서만 반환하며, 필터링된 진행중인 투표 중
-  `totalParticipantCount`가 가장 큰 투표다. 다음 페이지에서는 `null`이다.
+  `totalParticipantCount` 내림차순, `deadlineAt` 오름차순, `id` 오름차순으로
+  첫 번째 투표다. 다음 페이지에서는 `null`이다.
 - `otherVoteEvents`는 `mainVote`를 제외한 진행중인 투표다.
 - `otherVoteEvents` 정렬은 `latest`일 때 `createdAt` 내림차순, 같은 시각이면
   `id` 오름차순이다.

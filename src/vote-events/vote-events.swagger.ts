@@ -63,7 +63,7 @@ export function ApiListVoteEvents() {
   return applyDecorators(
     ApiOperation({
       description:
-        '진행중인 투표 이벤트를 메인 투표와 마감임박순 목록으로 조회합니다. accessToken이 유효하면 참여한 투표의 선택지 비율을 함께 반환합니다.',
+        '진행중인 투표 이벤트를 참여자 수 우선(동률이면 마감임박순) 메인 투표와 선택한 정렬 목록으로 조회합니다. accessToken이 유효하면 참여한 투표의 선택지 비율을 함께 반환합니다.',
       summary: '진행중인 투표 이벤트 목록 조회',
     }),
     ApiBearerAuth(),
