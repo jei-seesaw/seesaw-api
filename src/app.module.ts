@@ -12,6 +12,7 @@ import { getEnvFilePaths, validateEnv } from './config/env';
 import mikroOrmConfig from './config/mikro-orm.config';
 import { HealthController } from './health/health.controller';
 import { HomeModule } from './home/home.module';
+import { ImageUploadsModule } from './image-uploads/image-uploads.module';
 import { UsersModule } from './users/users.module';
 import { VoteEventsModule } from './vote-events/vote-events.module';
 
@@ -27,6 +28,7 @@ import { VoteEventsModule } from './vote-events/vote-events.module';
     AffiliationsModule,
     UsersModule,
     AuthModule,
+    ImageUploadsModule,
     VoteEventsModule,
     HomeModule,
   ],

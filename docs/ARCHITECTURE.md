@@ -14,6 +14,7 @@ flowchart TD
   App --> Config[src/config]
   App --> Auth[src/auth]
   App --> Users[src/users]
+  App --> ImageUploads[src/image-uploads]
   App --> VoteEvents[src/vote-events]
   App --> Home[src/home]
   VoteEvents --> Users
@@ -30,6 +31,8 @@ flowchart TD
 - `src/common/` owns response wrapping, exception normalization, and logging.
 - `src/auth/` owns login, refresh, JWT verification, and required/optional bearer
   guards.
+- `src/image-uploads/` owns Cloudinary signed upload parameter generation. Image
+  binaries go directly from the client to Cloudinary.
 - `src/users/` owns user persistence, password verification, nickname checks,
   vote token storage, and affiliation lookup for user ids.
 - `src/vote-events/` owns vote event creation, participation writes, aggregate

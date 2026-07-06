@@ -192,6 +192,67 @@ Cookie: refreshToken=jwt-refresh-token
 - refresh token 저장, token rotation, logout, revoke list는 현재 contract에
   포함하지 않는다.
 
+## Image upload endpoints
+
+`POST /api/v2/image-uploads`는 투표 이벤트 선택지 이미지를 Cloudinary에 직접
+업로드하기 위한 signed upload 값을 발급한다. bearer `accessToken`이 필요하다.
+API 서버는 이미지 바이너리를 받거나 저장하지 않는다.
+
+권장 클라이언트 흐름:
+
+1. 이미지 파일 선택 시점에는 브라우저 로컬 미리보기만 만든다.
+2. 사용자가 투표 생성 버튼을 누르면 최종 선택된 이미지마다 이 API를 호출한다.
+3. 응답받은 `uploadUrl`과 `formFields`로 Cloudinary에 직접 업로드한다.
+4. Cloudinary 응답의 `secure_url`을 `POST /api/v2/vote-events`의
+   `optionAImageUrl` 또는 `optionBImageUrl`에 전달한다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+```json
+{
+  "purpose": "vote-event-option",
+  "contentType": "image/jpeg",
+  "bytes": 420000
+}
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "uploadUrl": "https://api.cloudinary.com/v1_1/seesaw/image/upload",
+    "formFields": {
+      "api_key": "123456789012345",
+      "timestamp": 1783296000,
+      "public_id": "seesaw/vote-event-option/8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90",
+      "signature": "b5c4c38f4d5c2e5f4c3b2a190807060504030201"
+    },
+    "expiresAt": "2026-07-06T00:10:00.000Z",
+    "maxBytes": 2097152,
+    "allowedContentTypes": ["image/jpeg", "image/webp"]
+  }
+}
+```
+
+- `purpose`는 현재 `vote-event-option`만 허용한다.
+- `contentType`은 `image/jpeg` 또는 `image/webp`만 허용한다.
+- `bytes`는 1 이상 2MB 이하 정수여야 한다.
+- 클라이언트는 최종 투표 생성 시점에 선택된 이미지에 대해서만 이 API와
+  Cloudinary 직접 업로드를 수행한다. 파일 재선택 중에는 Cloudinary에 업로드하지
+  않는다.
+- Cloudinary 이미지를 화면에 노출할 때는 `f_auto,q_auto,c_limit,w_1280` 같은
+  전달 URL 변환을 사용한다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- 요청 body가 유효하지 않으면 `400`과 `validation_error`를 반환한다.
+- v1 범위에는 `media_assets` 테이블, 미사용 업로드 정리 job, 관리자 삭제 API가
+  포함되지 않는다.
+
 ## User endpoints
 
 `POST /api/v2/register`는 사용자를 생성한다. 인증 토큰은 발급하지 않는다.
@@ -673,7 +734,8 @@ Authorization: Bearer jwt-access-token
   24시간 이하여야 한다. 예를 들어 2026-07-06 10:34에 생성하면 마지막 허용
   정각은 2026-07-07 10:00이다.
 - `optionAImageUrl`, `optionBImageUrl`은 생략하거나 `null`일 수 있다. 값이
-  있으면 2048자 이하의 http/https URL이어야 한다.
+  있으면 투표 생성 시점에 Cloudinary 직접 업로드 후 받은 `secure_url`을
+  전달한다. URL은 2048자 이하의 http/https URL이어야 한다.
 - bearer access token이 없거나 유효하지 않으면 `401`과
   `invalid_access_token`을 반환한다.
 - 마감 시각이 정각이 아니거나 허용 범위를 벗어나면 `422`와

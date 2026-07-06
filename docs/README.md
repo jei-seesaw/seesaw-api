@@ -39,6 +39,7 @@ flowchart LR
   src --> config
   src --> auth
   src --> users
+  src --> image-uploads
   src --> vote-events
   src --> home
   test --> src

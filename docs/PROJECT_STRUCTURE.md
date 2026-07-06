@@ -17,6 +17,8 @@ src/
   health/
   home/
     dto/
+  image-uploads/
+    dto/
   migrations/
   users/
     dto/
@@ -28,6 +30,7 @@ test/
   config/
   health/
   home/
+  image-uploads/
   users/
   vote-events/
 
@@ -62,7 +65,9 @@ test/
 - Dev deployment compose lives in `deploy/docker-compose.dev.yml` with
   `deploy/.env`.
 - `APP_ENV=live`에서는 `DB_PASSWORD`, `CORS_ORIGINS`,
-  `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`를 명시해야 한다.
+  `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CLOUDINARY_CLOUD_NAME`,
+  `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`,
+  `CLOUDINARY_UPLOAD_FOLDER`를 명시해야 한다.
 - Swagger is skipped when `APP_ENV=live`.
 
 ## Common layer
@@ -83,6 +88,8 @@ test/
 - `src/health/` owns the health check.
 - `src/home/` owns the main-page summary API. It reads vote event aggregate
   counters and, when an access token is present, the current user's vote token.
+- `src/image-uploads/` owns signed Cloudinary direct-upload parameters for
+  vote event option images. The API server does not receive image binaries.
 - `src/users/`는 User storage, password hashing/verification, nickname
   availability API를 소유하며 MikroORM user data access는 repository provider
   뒤에 둔다.

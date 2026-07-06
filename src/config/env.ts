@@ -15,6 +15,10 @@ export interface EnvConfig {
   DB_NAME: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  CLOUDINARY_UPLOAD_FOLDER: string;
 }
 
 export function getEnvFilePaths(): string[] {
@@ -60,6 +64,26 @@ export function validateEnv(config: Record<string, unknown>): EnvConfig {
       config.JWT_REFRESH_SECRET,
       'JWT_REFRESH_SECRET',
       APP_ENV === 'local' ? 'local-jwt-refresh-secret' : undefined,
+    ),
+    CLOUDINARY_CLOUD_NAME: parseString(
+      config.CLOUDINARY_CLOUD_NAME,
+      'CLOUDINARY_CLOUD_NAME',
+      APP_ENV === 'local' ? 'seesaw-local' : undefined,
+    ),
+    CLOUDINARY_API_KEY: parseString(
+      config.CLOUDINARY_API_KEY,
+      'CLOUDINARY_API_KEY',
+      APP_ENV === 'local' ? 'local-cloudinary-api-key' : undefined,
+    ),
+    CLOUDINARY_API_SECRET: parseString(
+      config.CLOUDINARY_API_SECRET,
+      'CLOUDINARY_API_SECRET',
+      APP_ENV === 'local' ? 'local-cloudinary-api-secret' : undefined,
+    ),
+    CLOUDINARY_UPLOAD_FOLDER: parseString(
+      config.CLOUDINARY_UPLOAD_FOLDER,
+      'CLOUDINARY_UPLOAD_FOLDER',
+      APP_ENV === 'local' ? 'seesaw/local' : undefined,
     ),
   };
 }

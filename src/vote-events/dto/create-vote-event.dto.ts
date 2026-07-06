@@ -72,7 +72,8 @@ export class CreateVoteEventRequestDto {
   optionB!: string;
 
   @ApiPropertyOptional({
-    description: 'A 선택지 이미지 URL',
+    description:
+      'A 선택지 이미지 URL. 투표 생성 시점에 Cloudinary 직접 업로드 후 받은 secure_url입니다.',
     example: null,
     maxLength: 2048,
     nullable: true,
@@ -84,8 +85,10 @@ export class CreateVoteEventRequestDto {
   optionAImageUrl?: string | null;
 
   @ApiPropertyOptional({
-    description: 'B 선택지 이미지 URL',
-    example: 'https://example.com/b.jpg',
+    description:
+      'B 선택지 이미지 URL. 투표 생성 시점에 Cloudinary 직접 업로드 후 받은 secure_url입니다.',
+    example:
+      'https://res.cloudinary.com/seesaw/image/upload/v1783305600/seesaw/local/vote-event-option/b.jpg',
     maxLength: 2048,
     nullable: true,
     type: String,

@@ -31,6 +31,10 @@ describe('AuthService', () => {
         DB_USER: 'seesaw',
         JWT_ACCESS_SECRET: 'access-secret-for-test',
         JWT_REFRESH_SECRET: 'refresh-secret-for-test',
+        CLOUDINARY_CLOUD_NAME: 'seesaw-test',
+        CLOUDINARY_API_KEY: 'cloudinary-key',
+        CLOUDINARY_API_SECRET: 'cloudinary-secret',
+        CLOUDINARY_UPLOAD_FOLDER: 'seesaw/test',
         PORT: 3000,
       }) as unknown as ConfigService<EnvConfig, true>,
     );
