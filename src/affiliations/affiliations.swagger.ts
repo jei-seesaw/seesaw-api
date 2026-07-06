@@ -11,7 +11,7 @@ import { AffiliationResponseDto } from './dto/affiliation.dto';
 const affiliationListResponseSchema = {
   example: {
     data: [
-      { code: 'business-group', name: '사업조' },
+      { code: 'business-group', name: '사업조직' },
       { code: 'e-academy', name: '재능e아카데미' },
       { code: 'education', name: '재능교육' },
       { code: 'broadcasting', name: '재능방송' },

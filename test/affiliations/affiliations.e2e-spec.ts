@@ -73,7 +73,7 @@ const AFFILIATIONS: AffiliationRow[] = [
   { code: 'printing', name: '재능인쇄' },
   { code: 'e-academy', name: '재능e아카데미' },
   { code: 'self-learning', name: '재능셀프러닝' },
-  { code: 'business-group', name: '사업조' },
+  { code: 'business-group', name: '사업조직' },
 ];
 
 interface AffiliationListEnvelope {

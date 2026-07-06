@@ -265,7 +265,7 @@ Public response:
   "data": [
     {
       "code": "business-group",
-      "name": "사업조"
+      "name": "사업조직"
     },
     {
       "code": "e-academy",
