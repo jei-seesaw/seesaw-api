@@ -41,6 +41,15 @@ export class VoteEventAlreadyParticipatedException extends ConflictException {
   }
 }
 
+export class InvalidVoteEventDeadlineException extends UnprocessableEntityException {
+  constructor() {
+    super({
+      code: 'invalid_vote_event_deadline',
+      message: 'Vote event deadline must be hourly and within 24 hours',
+    });
+  }
+}
+
 export class InsufficientVoteTokenException extends ConflictException {
   constructor() {
     super({

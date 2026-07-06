@@ -13,12 +13,14 @@ describe('VoteEventsService create and vote', () => {
     ({ repository, service } = createVoteEventsServiceTestContext());
   });
 
-  it('투표 이벤트를 만들면 마감시간과 초기 집계값을 설정한다', async () => {
+  it('투표 이벤트를 만들면 요청한 정각 마감시간과 초기 집계값을 저장한다', async () => {
     const startedAt = Date.now();
+    const deadlineAt = deadlineAtHoursFromNow(2);
 
     const result = await service.create(
       {
         category: 'betting',
+        deadlineAt,
         optionA: '김치찌개',
         optionAImageUrl: null,
         optionB: '돈까스',
@@ -51,12 +53,34 @@ describe('VoteEventsService create and vote', () => {
       optionBParticipantCount: 0,
     });
     expect(
-      createdVoteEvent.deadlineAt.getTime() -
-        createdVoteEvent.createdAt.getTime(),
-    ).toBe(24 * 60 * 60 * 1000);
+      createdVoteEvent.deadlineAt.toISOString(),
+    ).toBe(new Date(deadlineAt).toISOString());
     expect(createdVoteEvent.createdAt.getTime()).toBeGreaterThanOrEqual(
       startedAt,
     );
+  });
+  it.each([
+    ['정각이 아닌', () => deadlineAtHoursFromNow(2, 30)],
+    ['생성 시각 이하인', () => deadlineAtHoursFromNow(-1)],
+    ['생성 후 24시간을 넘는', () => deadlineAtHoursFromNow(25)],
+  ])('%s 마감시간이면 투표 이벤트 생성을 거절한다', async (_label, deadlineAt) => {
+    await expect(
+      service.create(
+        {
+          category: 'betting',
+          deadlineAt: deadlineAt(),
+          optionA: '김치찌개',
+          optionB: '돈까스',
+          title: '점심 메뉴는?',
+        },
+        { id: 'organizer-user-id', nickname: 'organizer' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'invalid_vote_event_deadline',
+      },
+      status: 422,
+    });
   });
   it('일반 투표를 진행하면 참여 기록과 참여자 집계를 요청한다', async () => {
     repository.detail = voteEventDetail({
@@ -188,3 +212,11 @@ describe('VoteEventsService create and vote', () => {
     });
   });
 });
+
+function deadlineAtHoursFromNow(hours: number, minutes = 0): string {
+  const deadlineAt = new Date();
+
+  deadlineAt.setUTCHours(deadlineAt.getUTCHours() + hours, minutes, 0, 0);
+
+  return deadlineAt.toISOString();
+}

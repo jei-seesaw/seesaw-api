@@ -255,6 +255,7 @@ export function ApiCreateVoteEvent() {
           summary: '투표 이벤트 생성 요청',
           value: {
             category: 'betting',
+            deadlineAt: '2026-07-06T11:00:00+09:00',
             optionA: '김치찌개',
             optionAImageUrl: null,
             optionB: '돈까스',
@@ -274,6 +275,9 @@ export function ApiCreateVoteEvent() {
     }),
     ApiUnauthorizedResponse({
       description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+    ApiUnprocessableEntityResponse({
+      description: '투표 마감시간 의미 규칙이 유효하지 않습니다.',
     }),
   );
 }

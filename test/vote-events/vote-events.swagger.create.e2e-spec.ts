@@ -25,6 +25,13 @@ describe('Vote events Swagger create', () => {
           example: 'betting',
           type: 'string',
         },
+        deadlineAt: {
+          description:
+            '투표 마감 시각. ISO 8601 date-time 문자열이며 명시적 timezone과 정각 단위가 필요합니다.',
+          example: '2026-07-06T11:00:00+09:00',
+          format: 'date-time',
+          type: 'string',
+        },
         optionA: {
           description: 'A 선택지',
           example: '김치찌개',
@@ -61,7 +68,7 @@ describe('Vote events Swagger create', () => {
           type: 'string',
         },
       },
-      required: ['category', 'title', 'optionA', 'optionB'],
+      required: ['category', 'title', 'deadlineAt', 'optionA', 'optionB'],
       type: 'object',
     });
     expect(
@@ -79,6 +86,7 @@ describe('Vote events Swagger create', () => {
         '201': { description: '투표 이벤트가 생성되었습니다.' },
         '400': { description: '투표 이벤트 생성 요청 body가 유효하지 않습니다.' },
         '401': { description: 'accessToken이 없거나 유효하지 않습니다.' },
+        '422': { description: '투표 마감시간 의미 규칙이 유효하지 않습니다.' },
       },
     });
     expect(document.paths['/api/v2/vote-events']?.post?.security).toEqual([

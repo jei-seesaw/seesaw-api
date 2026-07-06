@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUrl, Length } from 'class-validator';
+import {
+  IsISO8601,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+  Matches,
+} from 'class-validator';
 
 export const VOTE_EVENT_CATEGORIES = [
   'betting',
@@ -9,6 +17,9 @@ export const VOTE_EVENT_CATEGORIES = [
 ] as const;
 
 export type VoteEventCategory = (typeof VOTE_EVENT_CATEGORIES)[number];
+
+const ISO_DATE_TIME_WITH_TIMEZONE_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 
 export class CreateVoteEventRequestDto {
   @ApiProperty({
@@ -28,6 +39,17 @@ export class CreateVoteEventRequestDto {
   @IsString()
   @Length(1, 120)
   title!: string;
+
+  @ApiProperty({
+    description:
+      '투표 마감 시각. ISO 8601 date-time 문자열이며 명시적 timezone과 정각 단위가 필요합니다.',
+    example: '2026-07-06T11:00:00+09:00',
+    format: 'date-time',
+  })
+  @IsString()
+  @Matches(ISO_DATE_TIME_WITH_TIMEZONE_PATTERN)
+  @IsISO8601({ strict: true })
+  deadlineAt!: string;
 
   @ApiProperty({
     description: 'A 선택지',

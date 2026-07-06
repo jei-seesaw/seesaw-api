@@ -606,6 +606,7 @@ Authorization: Bearer jwt-access-token
 {
   "category": "betting",
   "title": "점심 메뉴는?",
+  "deadlineAt": "2026-07-06T11:00:00+09:00",
   "optionA": "김치찌개",
   "optionB": "돈까스",
   "optionAImageUrl": null,
@@ -625,13 +626,19 @@ Authorization: Bearer jwt-access-token
 
 - `category`는 `betting`, `daily`, `balance`, `work` 중 하나여야 한다.
 - `title`, `optionA`, `optionB`는 1자 이상 120자 이하여야 한다.
+- `deadlineAt`은 필수다. ISO 8601 date-time 문자열이며 `Z` 또는
+  `+09:00` 같은 명시적 timezone이 있어야 한다.
+- `deadlineAt`은 정각 단위여야 하며 생성 시각보다 뒤이고 생성 시각으로부터
+  24시간 이하여야 한다. 예를 들어 2026-07-06 10:34에 생성하면 마지막 허용
+  정각은 2026-07-07 10:00이다.
 - `optionAImageUrl`, `optionBImageUrl`은 생략하거나 `null`일 수 있다. 값이
   있으면 2048자 이하의 http/https URL이어야 한다.
 - bearer access token이 없거나 유효하지 않으면 `401`과
   `invalid_access_token`을 반환한다.
+- 마감 시각이 정각이 아니거나 허용 범위를 벗어나면 `422`와
+  `invalid_vote_event_deadline`을 반환한다.
 - 요청 body에는 주최자 필드를 받지 않고, 서버가 accessToken의 사용자 ID를
   `vote_events.organizer_user_id`에 저장한다.
-- `deadlineAt`은 생성 시각으로부터 24시간 뒤로 설정한다.
 - 참여자 수와 토큰 집계는 `0`에서 시작한다.
 
 `POST /api/v2/vote`는 로그인한 사용자의 투표 참여를 기록한다.

@@ -19,6 +19,7 @@ import {
 } from './dto/list-vote-events.dto';
 import { VoteEvent } from './vote-event.entity';
 import {
+  InvalidVoteEventDeadlineException,
   VoteEventAlreadyParticipatedException,
   VoteEventClosedException,
   VoteEventNotFoundException,
@@ -46,7 +47,9 @@ import {
   voteTokenAmount,
 } from './vote-events.presenter';
 
-const VOTE_EVENT_DURATION_MS = 24 * 60 * 60 * 1000;
+const VOTE_EVENT_MAX_DURATION_MS = 24 * 60 * 60 * 1000;
+const HOURLY_DEADLINE_TIME_PATTERN =
+  /T\d{2}:00:00(?:\.0{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 
 @Injectable()
 export class VoteEventsService {
@@ -60,10 +63,14 @@ export class VoteEventsService {
     user: AuthenticatedUser,
   ): Promise<CreateVoteEventResponseDto> {
     const createdAt = new Date();
+    const deadlineAt = new Date(dto.deadlineAt);
+
+    this.assertValidCreateDeadline(dto.deadlineAt, createdAt, deadlineAt);
+
     const voteEvent = new VoteEvent({
       category: dto.category,
       createdAt,
-      deadlineAt: new Date(createdAt.getTime() + VOTE_EVENT_DURATION_MS),
+      deadlineAt,
       optionA: dto.optionA,
       optionAImageUrl: dto.optionAImageUrl ?? null,
       optionB: dto.optionB,
@@ -251,6 +258,23 @@ export class VoteEventsService {
     });
 
     return null;
+  }
+
+  private assertValidCreateDeadline(
+    deadlineAtText: string,
+    createdAt: Date,
+    deadlineAt: Date,
+  ): void {
+    const deadlineAtTime = deadlineAt.getTime();
+
+    if (
+      Number.isNaN(deadlineAtTime) ||
+      !HOURLY_DEADLINE_TIME_PATTERN.test(deadlineAtText) ||
+      deadlineAtTime <= createdAt.getTime() ||
+      deadlineAtTime > createdAt.getTime() + VOTE_EVENT_MAX_DURATION_MS
+    ) {
+      throw new InvalidVoteEventDeadlineException();
+    }
   }
 
   private async mapVoteEventDetail(
