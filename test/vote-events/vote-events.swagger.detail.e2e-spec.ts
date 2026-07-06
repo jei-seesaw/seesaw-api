@@ -20,10 +20,23 @@ describe('Vote events Swagger detail', () => {
         affiliationStats: {
           nullable: true,
         },
+        bettingResultConfirmedAt: {
+          nullable: true,
+          type: 'string',
+        },
+        bettingResultOption: {
+          nullable: true,
+        },
+        canConfirmBettingResult: {
+          type: 'boolean',
+        },
         categoryName: {
           description: '카테고리 이름',
           example: '배팅',
           type: 'string',
+        },
+        isOrganizer: {
+          type: 'boolean',
         },
         isParticipated: {
           type: 'boolean',
@@ -55,8 +68,12 @@ describe('Vote events Swagger detail', () => {
         'optionBResultAmount',
         'affiliationStats',
         'isParticipated',
+        'isOrganizer',
         'selectedOption',
         'totalTokenAmount',
+        'bettingResultOption',
+        'bettingResultConfirmedAt',
+        'canConfirmBettingResult',
       ],
       type: 'object',
     });
@@ -85,7 +102,11 @@ describe('Vote events Swagger detail', () => {
                     optionBRatio: 25,
                   },
                 ],
+                bettingResultConfirmedAt: null,
+                bettingResultOption: null,
+                canConfirmBettingResult: true,
                 categoryName: '배팅',
+                isOrganizer: true,
                 isParticipated: true,
                 optionA: '김치찌개',
                 optionAImageUrl: null,

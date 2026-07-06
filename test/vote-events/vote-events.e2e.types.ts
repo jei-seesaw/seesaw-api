@@ -106,7 +106,11 @@ export interface VoteEventDetailEnvelope {
       optionARatio: number;
       optionBRatio: number;
     }> | null;
+    bettingResultConfirmedAt: string | null;
+    bettingResultOption: 'A' | 'B' | null;
+    canConfirmBettingResult: boolean;
     categoryName: string;
+    isOrganizer: boolean;
     isParticipated: boolean;
     optionA: string;
     optionAImageUrl: string | null;

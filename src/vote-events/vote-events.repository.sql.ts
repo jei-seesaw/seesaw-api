@@ -35,7 +35,10 @@ export interface OngoingVoteEventRow {
 }
 
 export interface VoteEventDetailRow extends OngoingVoteEventRow {
+  bettingResultConfirmedAt: string | null;
+  bettingResultOption: VoteEventSelectedOption | null;
   isCompleted: boolean | number | string;
+  isOrganizer: boolean | number | string;
   selectedOption: VoteEventSelectedOption | null;
 }
 
@@ -53,14 +56,20 @@ export function voteEventDetailSelect(userId: string | undefined): string {
   const isParticipated = userId
     ? 'case when current_vep.`id` is null then 0 else 1 end'
     : '0';
+  const isOrganizer = userId
+    ? 'case when ve.`organizer_user_id` = ? then 1 else 0 end'
+    : '0';
   const selectedOption = userId ? 'current_vep.`selected_option`' : 'null';
 
   return [
     ...voteEventBaseSelect(),
-    'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
-    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    `case when ${completedCondition()} then 1 else 0 end as \`isCompleted\``,
+    remainingSecondsSelect(),
     `${isParticipated} as \`isParticipated\``,
+    `${isOrganizer} as \`isOrganizer\``,
     `${selectedOption} as \`selectedOption\``,
+    've.`betting_result_option` as `bettingResultOption`',
+    "date_format(ve.`betting_result_confirmed_at`, '%Y-%m-%dT%H:%i:%s.000Z') as `bettingResultConfirmedAt`",
   ].join(', ');
 }
 
@@ -74,7 +83,7 @@ export function voteEventDetailParams(
   options: GetVoteEventDetailOptions,
 ): unknown[] {
   return options.userId
-    ? [options.now, options.now, options.userId, options.id]
+    ? [options.now, options.now, options.userId, options.userId, options.id]
     : [options.now, options.now, options.id];
 }
 
@@ -85,7 +94,7 @@ export function voteEventListSelect(userId: string | undefined): string {
 
   return [
     ...voteEventBaseSelect(),
-    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    remainingSecondsSelect(),
     `${isParticipated} as \`isParticipated\``,
   ].join(', ');
 }
@@ -103,9 +112,9 @@ export function userVoteEventListSelect(): string {
 
   return [
     ...voteEventBaseSelect(),
-    'greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) as `remainingSeconds`',
+    remainingSecondsSelect(),
     `${isParticipated} as \`isParticipated\``,
-    'case when ve.`deadline_at` <= ? then 1 else 0 end as `isCompleted`',
+    `case when ${completedCondition()} then 1 else 0 end as \`isCompleted\``,
   ].join(', ');
 }
 
@@ -145,7 +154,10 @@ export function toVoteEventDetailRecord(
 ): VoteEventDetailRecord {
   return {
     ...toOngoingVoteEventRecord(row),
+    bettingResultConfirmedAt: row.bettingResultConfirmedAt,
+    bettingResultOption: row.bettingResultOption,
     isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
+    isOrganizer: row.isOrganizer === true || Number(row.isOrganizer) === 1,
     selectedOption: row.selectedOption,
   };
 }
@@ -223,6 +235,18 @@ function voteEventBaseSelect(): string[] {
     "date_format(ve.`created_at`, '%Y-%m-%d %H:%i:%s') as `cursorCreatedAt`",
     "date_format(ve.`deadline_at`, '%Y-%m-%d %H:%i:%s') as `cursorDeadlineAt`",
   ];
+}
+
+export function completedCondition(): string {
+  return 've.`deadline_at` <= ? or ve.`betting_result_confirmed_at` is not null';
+}
+
+export function ongoingCondition(): string {
+  return 've.`deadline_at` > ? and ve.`betting_result_confirmed_at` is null';
+}
+
+function remainingSecondsSelect(): string {
+  return 'case when ve.`betting_result_confirmed_at` is not null then 0 else greatest(timestampdiff(second, ?, ve.`deadline_at`), 0) end as `remainingSeconds`';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

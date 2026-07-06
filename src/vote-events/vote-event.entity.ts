@@ -1,6 +1,7 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/decorators/legacy';
 import { randomUUID } from 'node:crypto';
 import type { VoteEventCategory } from './dto/create-vote-event.dto';
+import type { VoteEventSelectedOption } from './dto/vote-event-detail.dto';
 
 @Entity({ tableName: 'vote_events' })
 export class VoteEvent {
@@ -85,6 +86,21 @@ export class VoteEvent {
 
   @Property({ type: Date, fieldName: 'deadline_at' })
   deadlineAt: Date;
+
+  @Property({
+    type: 'string',
+    length: 1,
+    fieldName: 'betting_result_option',
+    nullable: true,
+  })
+  bettingResultOption: VoteEventSelectedOption | null = null;
+
+  @Property({
+    type: Date,
+    fieldName: 'betting_result_confirmed_at',
+    nullable: true,
+  })
+  bettingResultConfirmedAt: Date | null = null;
 
   @Property({ type: Date, fieldName: 'created_at' })
   createdAt: Date;

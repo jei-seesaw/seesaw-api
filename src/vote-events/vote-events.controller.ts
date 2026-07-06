@@ -19,6 +19,7 @@ import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
 } from './dto/create-vote-event.dto';
+import { ConfirmBettingResultRequestDto } from './dto/confirm-betting-result.dto';
 import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import { VoteEventDetailResponseDto } from './dto/vote-event-detail.dto';
 import {
@@ -29,6 +30,7 @@ import {
 import { VoteEventsService } from './vote-events.service';
 import {
   ApiCreateVoteEvent,
+  ApiConfirmBettingResult,
   ApiGetVoteEventDetail,
   ApiListCreatedVoteEvents,
   ApiListCompletedVoteEvents,
@@ -107,6 +109,18 @@ export class VoteEventsController {
     @Req() request: AuthenticatedRequest,
   ): Promise<CreateVoteEventResponseDto> {
     return this.voteEventsService.create(dto, request.user!);
+  }
+
+  @Post('vote-events/:id/betting-result')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiConfirmBettingResult()
+  confirmBettingResult(
+    @Param('id') id: string,
+    @Body() dto: ConfirmBettingResultRequestDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<null> {
+    return this.voteEventsService.confirmBettingResult(id, dto, request.user!);
   }
 
   @Post('vote')

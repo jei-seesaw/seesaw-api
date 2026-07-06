@@ -16,6 +16,7 @@ describe('Vote events create endpoint', () => {
   let server: Server;
   let createUser: VoteEventsE2eContext['createUser'];
   let issueAccessToken: VoteEventsE2eContext['issueAccessToken'];
+  const createdVoteEventIds: string[] = [];
 
   beforeAll(async () => {
     context = await createVoteEventsE2eContext();
@@ -23,6 +24,13 @@ describe('Vote events create endpoint', () => {
   });
 
   afterAll(async () => {
+    if (createdVoteEventIds.length > 0) {
+      await orm.em.getConnection().execute(
+        `delete from \`vote_events\` where \`id\` in (${createdVoteEventIds.map(() => '?').join(', ')})`,
+        createdVoteEventIds,
+      );
+    }
+
     await context.close();
   });
 
@@ -41,7 +49,7 @@ describe('Vote events create endpoint', () => {
         optionAImageUrl: null,
         optionB: '돈까스',
         optionBImageUrl: 'https://example.com/b.jpg',
-        title: `점심 메뉴는? ${startedAt}`,
+        title: `vote-api-create-${startedAt}`,
       })
       .expect(201)
       .expect((response: { body: unknown }) => {
@@ -51,6 +59,7 @@ describe('Vote events create endpoint', () => {
       });
 
     const { id } = (response.body as CreateVoteEventEnvelope).data;
+    createdVoteEventIds.push(id);
     const rows = await orm.em.getConnection().execute<VoteEventRow[]>(
       "select `category`, `title`, `option_a`, `option_b`, `option_a_image_url`, `option_b_image_url`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `option_a_participant_count`, `option_b_participant_count`, `organizer_user_id`, `created_at`, date_format(`deadline_at`, '%Y-%m-%dT%H:%i:%s.000Z') as `deadline_at` from `vote_events` where `id` = ?",
       [id],

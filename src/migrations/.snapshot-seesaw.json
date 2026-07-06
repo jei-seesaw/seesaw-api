@@ -404,6 +404,40 @@
     {
       "name": "vote_events",
       "columns": {
+        "betting_result_confirmed_at": {
+          "name": "betting_result_confirmed_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "betting_result_option": {
+          "name": "betting_result_option",
+          "type": "varchar(1)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 1,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
         "category": {
           "name": "category",
           "type": "varchar(20)",
@@ -687,6 +721,16 @@
           "keyName": "PRIMARY",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": [
+            "betting_result_confirmed_at"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "vote_events_betting_result_confirmed_at_index",
+          "primary": false,
+          "unique": false
         },
         {
           "columnNames": [

@@ -5,6 +5,7 @@ import {
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiExtraModels,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -17,6 +18,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { CastVoteRequestDto } from './dto/cast-vote.dto';
+import { ConfirmBettingResultRequestDto } from './dto/confirm-betting-result.dto';
 import {
   CreateVoteEventRequestDto,
   CreateVoteEventResponseDto,
@@ -47,6 +49,7 @@ export function ApiVoteEventsController() {
     ApiTags('투표 이벤트'),
     ApiExtraModels(
       CastVoteRequestDto,
+      ConfirmBettingResultRequestDto,
       CreateVoteEventRequestDto,
       CreateVoteEventResponseDto,
       ListCompletedVoteEventsResponseDto,
@@ -333,6 +336,53 @@ export function ApiVote() {
   );
 }
 
+export function ApiConfirmBettingResult() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '투표 이벤트 주최자가 배팅 이벤트의 A/B 정답을 확정하고 승자 토큰을 정산합니다.',
+      summary: '배팅 결과 확정',
+    }),
+    ApiBearerAuth(),
+    ApiParam({
+      description: '투표 이벤트 ID',
+      name: 'id',
+      schema: { type: 'string' },
+    }),
+    ApiBody({
+      examples: {
+        default: {
+          summary: '배팅 결과 확정 요청',
+          value: {
+            winningOption: 'A',
+          },
+        },
+      },
+      type: ConfirmBettingResultRequestDto,
+    }),
+    ApiOkResponse({
+      description: '배팅 결과가 확정되고 정산되었습니다.',
+      schema: castVoteResponseSchema,
+    }),
+    ApiBadRequestResponse({
+      description: '배팅 결과 확정 요청 body가 유효하지 않습니다.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+    ApiNotFoundResponse({
+      description: '투표 이벤트를 찾을 수 없습니다.',
+    }),
+    ApiConflictResponse({
+      description: '이미 배팅 결과가 확정되었습니다.',
+    }),
+    ApiUnprocessableEntityResponse({
+      description: '배팅 이벤트가 아니므로 결과를 확정할 수 없습니다.',
+    }),
+    ApiForbiddenResultResponse(),
+  );
+}
+
 export function ApiGetVoteEventDetail() {
   return applyDecorators(
     ApiOperation({
@@ -358,4 +408,10 @@ export function ApiGetVoteEventDetail() {
       description: '투표 이벤트를 찾을 수 없습니다.',
     }),
   );
+}
+
+function ApiForbiddenResultResponse() {
+  return ApiForbiddenResponse({
+    description: '투표 이벤트 주최자가 아닙니다.',
+  });
 }

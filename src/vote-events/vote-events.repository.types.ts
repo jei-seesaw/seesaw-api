@@ -46,6 +46,13 @@ export interface ParticipateInVoteEventOptions {
   voteEventId: string;
 }
 
+export interface ConfirmBettingResultOptions {
+  confirmedAt: Date;
+  organizerUserId: string;
+  voteEventId: string;
+  winningOption: VoteEventSelectedOption;
+}
+
 export interface OngoingVoteEventRecord {
   category: VoteEventCategory;
   cursorCreatedAt: string;
@@ -67,7 +74,10 @@ export interface OngoingVoteEventRecord {
 }
 
 export interface VoteEventDetailRecord extends OngoingVoteEventRecord {
+  bettingResultConfirmedAt: string | null;
+  bettingResultOption: VoteEventSelectedOption | null;
   isCompleted: boolean;
+  isOrganizer: boolean;
   selectedOption: VoteEventSelectedOption | null;
 }
 
@@ -120,4 +130,7 @@ export abstract class VoteEventsRepository {
     options: ListUserVoteEventsOptions,
   ): Promise<UserVoteEventsPage>;
   abstract participate(options: ParticipateInVoteEventOptions): Promise<void>;
+  abstract confirmBettingResult(
+    options: ConfirmBettingResultOptions,
+  ): Promise<void>;
 }

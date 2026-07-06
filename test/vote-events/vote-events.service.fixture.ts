@@ -34,6 +34,13 @@ type FakeParticipation = {
   voteEventId: string;
 };
 
+type FakeBettingResultConfirmation = {
+  confirmedAt: Date;
+  organizerUserId: string;
+  voteEventId: string;
+  winningOption: 'A' | 'B';
+};
+
 export class FakeVoteEventsRepository implements VoteEventsRepository {
   createdVoteEvent?: VoteEvent;
   completedListResult: CompletedVoteEventsPage = {
@@ -45,7 +52,10 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
     cursorCreatedAt: string;
     cursorDeadlineAt: string;
     id: string;
+    bettingResultConfirmedAt: string | null;
+    bettingResultOption: 'A' | 'B' | null;
     isCompleted: boolean;
+    isOrganizer: boolean;
     isParticipated: boolean;
     optionA: string;
     optionAImageUrl: string | null;
@@ -61,6 +71,7 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
     totalParticipantCount: number;
     totalTokenAmount: number;
   } | null = null;
+  confirmedBettingResult?: FakeBettingResultConfirmation;
   listResult: OngoingVoteEventsPage = {
     hasNext: false,
     items: [],
@@ -112,6 +123,12 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
 
     return Promise.resolve();
   }
+
+  confirmBettingResult(args: FakeBettingResultConfirmation): Promise<void> {
+    this.confirmedBettingResult = args;
+
+    return Promise.resolve();
+  }
 }
 
 export class FakeUsersRepository implements UsersRepository {
@@ -143,10 +160,13 @@ export function voteEventDetail(
 ): NonNullable<FakeVoteEventsRepository['detail']> {
   return {
     category: 'daily',
+    bettingResultConfirmedAt: null,
+    bettingResultOption: null,
     cursorCreatedAt: '2026-07-01 11:00:00',
     cursorDeadlineAt: '2026-07-01 12:00:00',
     id: 'vote-event-id',
     isCompleted: false,
+    isOrganizer: false,
     isParticipated: false,
     optionA: 'A',
     optionAImageUrl: null,

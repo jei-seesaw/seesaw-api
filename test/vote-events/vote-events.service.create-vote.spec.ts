@@ -211,6 +211,106 @@ describe('VoteEventsService create and vote', () => {
       status: 422,
     });
   });
+  it('주최자가 배팅 결과를 확정하면 정산을 요청한다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'betting',
+      id: 'betting-id',
+      isOrganizer: true,
+    });
+
+    await expect(
+      service.confirmBettingResult(
+        'betting-id',
+        { winningOption: 'A' },
+        { id: 'organizer-id', nickname: 'organizer' },
+      ),
+    ).resolves.toBeNull();
+
+    expect(repository.confirmedBettingResult).toMatchObject({
+      organizerUserId: 'organizer-id',
+      voteEventId: 'betting-id',
+      winningOption: 'A',
+    });
+    expect(repository.confirmedBettingResult?.confirmedAt).toBeInstanceOf(Date);
+  });
+  it('비주최자는 배팅 결과를 확정할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'betting',
+      id: 'betting-id',
+      isOrganizer: false,
+    });
+
+    await expect(
+      service.confirmBettingResult(
+        'betting-id',
+        { winningOption: 'A' },
+        { id: 'other-user-id', nickname: 'other' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_result_forbidden',
+      },
+      status: 403,
+    });
+  });
+  it('배팅 이벤트가 아니면 결과를 확정할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'daily',
+      id: 'daily-id',
+      isOrganizer: true,
+    });
+
+    await expect(
+      service.confirmBettingResult(
+        'daily-id',
+        { winningOption: 'A' },
+        { id: 'organizer-id', nickname: 'organizer' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_result_not_allowed',
+      },
+      status: 422,
+    });
+  });
+  it('이미 확정된 배팅 이벤트 결과는 다시 확정할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      bettingResultConfirmedAt: '2026-07-06T01:00:00.000Z',
+      bettingResultOption: 'B',
+      category: 'betting',
+      id: 'confirmed-id',
+      isOrganizer: true,
+    });
+
+    await expect(
+      service.confirmBettingResult(
+        'confirmed-id',
+        { winningOption: 'A' },
+        { id: 'organizer-id', nickname: 'organizer' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_result_already_confirmed',
+      },
+      status: 409,
+    });
+  });
+  it('없는 투표 이벤트의 배팅 결과는 확정할 수 없다', async () => {
+    repository.detail = null;
+
+    await expect(
+      service.confirmBettingResult(
+        'missing-id',
+        { winningOption: 'A' },
+        { id: 'organizer-id', nickname: 'organizer' },
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_not_found',
+      },
+      status: 404,
+    });
+  });
 });
 
 function deadlineAtHoursFromNow(hours: number, minutes = 0): string {

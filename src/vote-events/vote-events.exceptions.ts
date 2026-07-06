@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -37,6 +38,33 @@ export class VoteEventAlreadyParticipatedException extends ConflictException {
     super({
       code: 'vote_event_already_participated',
       message: 'Already participated in this vote event',
+    });
+  }
+}
+
+export class VoteEventResultForbiddenException extends ForbiddenException {
+  constructor() {
+    super({
+      code: 'vote_event_result_forbidden',
+      message: 'Only the vote event organizer can confirm the result',
+    });
+  }
+}
+
+export class VoteEventResultAlreadyConfirmedException extends ConflictException {
+  constructor() {
+    super({
+      code: 'vote_event_result_already_confirmed',
+      message: 'Vote event result is already confirmed',
+    });
+  }
+}
+
+export class VoteEventResultNotAllowedException extends UnprocessableEntityException {
+  constructor() {
+    super({
+      code: 'vote_event_result_not_allowed',
+      message: 'Only betting vote events can confirm a result',
     });
   }
 }

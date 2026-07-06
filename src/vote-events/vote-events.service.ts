@@ -6,6 +6,7 @@ import {
   CreateVoteEventResponseDto,
   type VoteEventCategory,
 } from './dto/create-vote-event.dto';
+import { ConfirmBettingResultRequestDto } from './dto/confirm-betting-result.dto';
 import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import {
   VoteEventAffiliationStatDto,
@@ -23,6 +24,9 @@ import {
   VoteEventAlreadyParticipatedException,
   VoteEventClosedException,
   VoteEventNotFoundException,
+  VoteEventResultAlreadyConfirmedException,
+  VoteEventResultForbiddenException,
+  VoteEventResultNotAllowedException,
 } from './vote-events.exceptions';
 import {
   GetVoteEventDetailOptions,
@@ -260,6 +264,43 @@ export class VoteEventsService {
     return null;
   }
 
+  async confirmBettingResult(
+    id: string,
+    dto: ConfirmBettingResultRequestDto,
+    user: AuthenticatedUser,
+  ): Promise<null> {
+    const voteEvent = await this.voteEvents.findDetail({
+      id,
+      now: new Date(),
+      userId: user.id,
+    });
+
+    if (!voteEvent) {
+      throw new VoteEventNotFoundException();
+    }
+
+    if (!voteEvent.isOrganizer) {
+      throw new VoteEventResultForbiddenException();
+    }
+
+    if (voteEvent.category !== 'betting') {
+      throw new VoteEventResultNotAllowedException();
+    }
+
+    if (voteEvent.bettingResultOption !== null) {
+      throw new VoteEventResultAlreadyConfirmedException();
+    }
+
+    await this.voteEvents.confirmBettingResult({
+      confirmedAt: new Date(),
+      organizerUserId: user.id,
+      voteEventId: id,
+      winningOption: dto.winningOption,
+    });
+
+    return null;
+  }
+
   private assertValidCreateDeadline(
     deadlineAtText: string,
     createdAt: Date,
@@ -293,7 +334,14 @@ export class VoteEventsService {
 
     return {
       affiliationStats,
+      bettingResultConfirmedAt: voteEvent.bettingResultConfirmedAt,
+      bettingResultOption: voteEvent.bettingResultOption,
+      canConfirmBettingResult:
+        voteEvent.category === 'betting' &&
+        voteEvent.isOrganizer &&
+        voteEvent.bettingResultOption === null,
       categoryName: CATEGORY_NAMES[voteEvent.category],
+      isOrganizer: voteEvent.isOrganizer,
       isParticipated: voteEvent.isParticipated,
       optionA: voteEvent.optionA,
       optionAImageUrl: voteEvent.optionAImageUrl,

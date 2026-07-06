@@ -98,6 +98,9 @@ export class VoteEventDetailResponseDto {
   @ApiProperty({ description: '현재 사용자의 투표 참여 여부', example: true })
   isParticipated!: boolean;
 
+  @ApiProperty({ description: '현재 사용자의 투표 이벤트 주최자 여부', example: true })
+  isOrganizer!: boolean;
+
   @ApiProperty({
     description: '현재 사용자가 선택한 선택지',
     enum: ['A', 'B'],
@@ -113,4 +116,26 @@ export class VoteEventDetailResponseDto {
     type: Number,
   })
   totalTokenAmount!: number | null;
+
+  @ApiProperty({
+    description: '확정된 배팅 정답 선택지',
+    enum: ['A', 'B'],
+    example: 'A',
+    nullable: true,
+  })
+  bettingResultOption!: VoteEventSelectedOption | null;
+
+  @ApiProperty({
+    description: '배팅 정답 확정 시각',
+    example: '2026-07-06T01:02:03.000Z',
+    nullable: true,
+    type: String,
+  })
+  bettingResultConfirmedAt!: string | null;
+
+  @ApiProperty({
+    description: '현재 사용자의 배팅 결과 확정 가능 여부',
+    example: true,
+  })
+  canConfirmBettingResult!: boolean;
 }

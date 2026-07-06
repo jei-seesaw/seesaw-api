@@ -11,6 +11,7 @@ describe('Home endpoint', () => {
   let app: INestApplication;
   let server: Server;
   let orm: MikroORM;
+  const createdVoteEventIds: string[] = [];
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -25,6 +26,13 @@ describe('Home endpoint', () => {
   });
 
   afterAll(async () => {
+    if (createdVoteEventIds.length > 0) {
+      await orm.em.getConnection().execute(
+        `delete from vote_events where id in (${createdVoteEventIds.map(() => '?').join(', ')})`,
+        createdVoteEventIds,
+      );
+    }
+
     await app.close();
   });
 
@@ -117,10 +125,12 @@ describe('Home endpoint', () => {
         ? new Date(now.getTime() + 24 * 60 * 60 * 1000)
         : new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+    const id = randomUUID();
+
     await orm.em.getConnection().execute(
       'insert into `vote_events` (`id`, `category`, `title`, `option_a`, `option_b`, `total_participant_count`, `total_token_amount`, `option_a_token_amount`, `option_b_token_amount`, `deadline_at`, `created_at`) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
-        randomUUID(),
+        id,
         'daily',
         `메인페이지 테스트 ${Date.now()}-${participantCount}`,
         'A',
@@ -133,11 +143,12 @@ describe('Home endpoint', () => {
         now,
       ],
     );
+    createdVoteEventIds.push(id);
   }
 
   async function readStoredHomeSummary(): Promise<HomeSummary> {
     const rows = await orm.em.getConnection().execute<HomeSummaryRow[]>(
-      'select sum(case when `deadline_at` > current_timestamp then 1 else 0 end) as `ongoingVoteEventCount`, sum(case when `deadline_at` <= current_timestamp then 1 else 0 end) as `completedVoteEventCount`, coalesce(sum(`total_participant_count`), 0) as `participantCount` from `vote_events`',
+      'select sum(case when `deadline_at` > current_timestamp and `betting_result_confirmed_at` is null then 1 else 0 end) as `ongoingVoteEventCount`, sum(case when `deadline_at` <= current_timestamp or `betting_result_confirmed_at` is not null then 1 else 0 end) as `completedVoteEventCount`, coalesce(sum(`total_participant_count`), 0) as `participantCount` from `vote_events`',
     );
     const row = rows[0]!;
 

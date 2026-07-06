@@ -47,6 +47,7 @@ export async function createVoteEventsSwaggerContext(): Promise<VoteEventsSwagge
         provide: VoteEventsService,
         useValue: {
           create: () => Promise.resolve(undefined),
+          confirmBettingResult: () => Promise.resolve(null),
           getDetail: () => Promise.resolve(undefined),
           listCreatedByUser: () => Promise.resolve(undefined),
           listCompleted: () => Promise.resolve(undefined),

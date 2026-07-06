@@ -123,9 +123,10 @@ Authorization: Bearer jwt-access-token
 }
 ```
 
-- `ongoingVoteEventCount`는 `deadlineAt`이 현재 시각보다 뒤인 vote event 수다.
-- `completedVoteEventCount`는 `deadlineAt`이 현재 시각보다 같거나 앞선 vote
-  event 수다.
+- `ongoingVoteEventCount`는 `deadlineAt`이 현재 시각보다 뒤이고 배팅 결과가
+  확정되지 않은 vote event 수다.
+- `completedVoteEventCount`는 `deadlineAt`이 현재 시각보다 같거나 앞섰거나
+  배팅 결과가 확정된 vote event 수다.
 - `participantCount`는 `vote_events.total_participant_count` 합계다.
 - `isLoggedIn`은 현재 요청의 로그인 여부다.
 - Authorization header가 없으면 익명 요청으로 처리한다.
@@ -461,7 +462,8 @@ GET /api/v2/completed-vote-events?limit=20&sort=latest&category=betting&cursor=o
 - `sort=deadline`은 최근 완료순(`deadlineAt` 내림차순, `id` 오름차순)이다.
 - `sort=participants`는 `totalParticipantCount` 내림차순, `id` 오름차순이다.
 - `category`는 진행중인 투표 목록과 같은 카테고리 필터다.
-- `deadlineAt`이 서버 기준 현재 시각보다 같거나 앞선 투표만 반환한다.
+- `deadlineAt`이 서버 기준 현재 시각보다 같거나 앞섰거나 배팅 결과가 확정된
+  투표만 반환한다.
 - 완료된 투표는 결과가 공개되므로 로그인 여부나 참여 여부와 무관하게
   `optionARatio`, `optionBRatio`를 항상 반환한다.
 - 유효한 bearer `accessToken`을 함께 보내면 `isParticipated`에 현재 사용자의
@@ -596,8 +598,12 @@ Authorization: Bearer jwt-access-token
       }
     ],
     "isParticipated": true,
+    "isOrganizer": true,
     "selectedOption": "B",
-    "totalTokenAmount": 100
+    "totalTokenAmount": 100,
+    "bettingResultOption": null,
+    "bettingResultConfirmedAt": null,
+    "canConfirmBettingResult": true
   }
 }
 ```
@@ -616,6 +622,14 @@ Authorization: Bearer jwt-access-token
 - `affiliationStats`는 참여자가 있는 소속만 반환한다. 결과를 공개하지 않는
   요청에서는 `null`이다.
 - non-betting 투표의 `totalTokenAmount`는 `null`이다.
+- `isOrganizer`는 현재 사용자가 이 투표 이벤트의 주최자인지 여부다. 미로그인
+  요청에서는 `false`다.
+- `bettingResultOption`은 배팅 정답이 확정되면 `A` 또는 `B`이고, 미확정 또는
+  non-betting 투표에서는 `null`이다.
+- `bettingResultConfirmedAt`은 배팅 정답 확정 시각이다. 미확정 또는 non-betting
+  투표에서는 `null`이다.
+- `canConfirmBettingResult`는 현재 사용자가 주최자인 미확정 배팅 이벤트에서만
+  `true`다.
 - 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
 - Authorization header가 있지만 유효하지 않으면 `401`과
   `invalid_access_token`을 반환한다.
@@ -704,8 +718,8 @@ Authorization: Bearer jwt-access-token
 - `selectedOption`은 `A` 또는 `B`만 허용한다.
 - 사용자는 같은 투표 이벤트에 한 번만 참여할 수 있다. 이미 참여했다면
   `409`와 `vote_event_already_participated`를 반환한다.
-- 마감된 투표 이벤트에는 참여할 수 없다. 마감된 이벤트면 `409`와
-  `vote_event_closed`를 반환한다.
+- 마감되었거나 배팅 결과가 확정된 투표 이벤트에는 참여할 수 없다. 닫힌
+  이벤트면 `409`와 `vote_event_closed`를 반환한다.
 - 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
 - `betting` 투표는 `tokenAmount`가 필수다. 없으면 `422`와
   `token_amount_required`를 반환한다.
@@ -718,3 +732,43 @@ Authorization: Bearer jwt-access-token
   선택지별 participant count를 증가시킨다.
 - 배팅 투표는 추가로 `totalTokenAmount`, 선택지별 token amount를 증가시키고,
   사용자 `voteToken`을 `tokenAmount`만큼 차감한다.
+
+`POST /api/v2/vote-events/:id/betting-result`는 투표 이벤트 주최자가 배팅
+정답을 확정하고 즉시 정산한다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+```json
+{
+  "winningOption": "A"
+}
+```
+
+공개 응답:
+
+```json
+{
+  "data": null
+}
+```
+
+- `winningOption`은 `A` 또는 `B`만 허용한다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
+- 현재 사용자가 주최자가 아니면 `403`과 `vote_event_result_forbidden`을
+  반환한다.
+- 이미 확정된 배팅 이벤트면 `409`와 `vote_event_result_already_confirmed`를
+  반환한다.
+- 배팅 이벤트가 아니면 `422`와 `vote_event_result_not_allowed`를 반환한다.
+- 배팅 결과가 확정된 이벤트는 마감 전이어도 완료된 투표로 취급하며 이후
+  투표 참여를 `vote_event_closed`로 거절한다.
+- 승자는 원금과 패자 풀을 지분 비례로 받는다.
+- 승자별 지급액은 `stake + floor(losingPool * stake / winningPool)`이다.
+- 나눗셈 후 남은 토큰은 소수 잔여가 큰 승자부터, 동률이면 참여 `createdAt`,
+  `id` 오름차순으로 1개씩 배분한다.
+- 승자가 없으면 사용자 `voteToken`을 업데이트하지 않고 결과만 확정한다.

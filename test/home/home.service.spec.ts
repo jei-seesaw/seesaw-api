@@ -95,6 +95,10 @@ class FakeVoteEventsRepository implements VoteEventsRepository {
   participate(): never {
     throw new Error('not used');
   }
+
+  confirmBettingResult(): never {
+    throw new Error('not used');
+  }
 }
 
 class FakeUsersRepository implements UsersRepository {
