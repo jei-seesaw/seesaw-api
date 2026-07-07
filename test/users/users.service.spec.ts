@@ -51,21 +51,21 @@ describe('UsersService', () => {
     Math.random = () => 0;
 
     await expect(service.suggestNickname()).resolves.toEqual({
-      nickname: '행복한 라이온',
+      nickname: '용감한 호랑이',
     });
 
-    expect(repository.checkedNicknames).toEqual(['행복한 라이온']);
+    expect(repository.checkedNicknames).toEqual(['용감한 호랑이']);
   });
 
   it('첫 추천 후보가 중복이면 다음 사용 가능한 닉네임을 추천한다', async () => {
     Math.random = () => 0;
-    repository.takenNicknames.add('행복한 라이온');
+    repository.takenNicknames.add('용감한 호랑이');
 
     await expect(service.suggestNickname()).resolves.toEqual({
-      nickname: '행복한 메타몽',
+      nickname: '용감한 여우',
     });
 
-    expect(repository.checkedNicknames).toEqual(['행복한 라이온', '행복한 메타몽']);
+    expect(repository.checkedNicknames).toEqual(['용감한 호랑이', '용감한 여우']);
   });
 
   it('모든 추천 후보가 중복이면 추천 불가 예외를 던진다', async () => {

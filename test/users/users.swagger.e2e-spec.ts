@@ -100,7 +100,7 @@ describe('Users Swagger', () => {
   it('닉네임 추천 계약을 Swagger JSON에 노출한다', () => {
     expect(document.components?.schemas?.NicknameSuggestionResponseDto).toMatchObject({
       properties: {
-        nickname: { example: '행복한 라이온', type: 'string' },
+        nickname: { example: '용감한 호랑이', type: 'string' },
       },
       required: ['nickname'],
       type: 'object',

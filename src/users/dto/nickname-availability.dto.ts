@@ -18,7 +18,7 @@ export class NicknameAvailabilityResponseDto {
 export class NicknameSuggestionResponseDto {
   @ApiProperty({
     description: '추천 닉네임',
-    example: '행복한 라이온',
+    example: '용감한 호랑이',
   })
   nickname!: string;
 }

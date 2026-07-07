@@ -54,7 +54,7 @@ const nicknameAvailabilityResponseSchema = {
 const nicknameSuggestionResponseSchema = {
   example: {
     data: {
-      nickname: '행복한 라이온',
+      nickname: '용감한 호랑이',
     },
   },
   properties: {
