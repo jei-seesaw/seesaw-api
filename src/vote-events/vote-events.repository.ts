@@ -4,9 +4,13 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { Injectable } from '@nestjs/common';
 import { User } from '../users/user.entity';
 import type { VoteEventListSort } from './dto/list-vote-events.dto';
+import { calculateBettingPayouts } from './vote-events.betting';
 import { VoteEventParticipation } from './vote-event-participation.entity';
 import { VoteEvent } from './vote-event.entity';
 import {
+  BettingResultNotConfirmedException,
+  BettingRewardForbiddenException,
+  BettingRewardNotAllowedException,
   InsufficientVoteTokenException,
   VoteEventAlreadyParticipatedException,
   VoteEventClosedException,
@@ -17,6 +21,8 @@ import {
 } from './vote-events.exceptions';
 import { VoteEventsRepository } from './vote-events.repository.types';
 import type {
+  ClaimBettingRewardOptions,
+  ClaimBettingRewardResult,
   ConfirmBettingResultOptions,
   CompletedVoteEventsPage,
   GetVoteEventDetailOptions,
@@ -95,11 +101,13 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
       .getEntityManager()
       .getConnection()
       .execute<VoteEventParticipationChoiceRow[]>(
-        "select `user_id` as `userId`, `selected_option` as `selectedOption`, `token_amount` as `tokenAmount` from `vote_event_participations` where `vote_event_id` = ? and `selected_option` in ('A', 'B') order by `created_at` asc, `id` asc",
+        "select `id` as `id`, `created_at` as `createdAt`, `user_id` as `userId`, `selected_option` as `selectedOption`, `token_amount` as `tokenAmount` from `vote_event_participations` where `vote_event_id` = ? and `selected_option` in ('A', 'B') order by `created_at` asc, `id` asc",
         [voteEventId],
       );
 
     return rows.map((row) => ({
+      createdAt: toDate(row.createdAt),
+      id: row.id,
       selectedOption: row.selectedOption,
       tokenAmount: Number(row.tokenAmount),
       userId: row.userId,
@@ -205,6 +213,49 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
       if (updatedVoteEventCount !== 1) {
         throw new VoteEventResultAlreadyConfirmedException();
       }
+    });
+  }
+
+  async claimBettingReward(
+    options: ClaimBettingRewardOptions,
+  ): Promise<ClaimBettingRewardResult> {
+    const em = this.voteEvents.getEntityManager();
+
+    return em.transactional(async (tx) => {
+      const voteEvent = await tx.findOne(
+        VoteEvent,
+        { id: options.voteEventId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+
+      if (!voteEvent) {
+        throw new VoteEventNotFoundException();
+      }
+
+      if (voteEvent.category !== 'betting') {
+        throw new BettingRewardNotAllowedException();
+      }
+
+      if (voteEvent.bettingResultOption === null) {
+        throw new BettingResultNotConfirmedException();
+      }
+
+      const participation = await tx.findOne(
+        VoteEventParticipation,
+        {
+          user: options.userId,
+          voteEvent: options.voteEventId,
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+
+      if (!participation) {
+        throw new BettingRewardForbiddenException();
+      }
+
+      if (participation.selectedOption !== voteEvent.bettingResultOption) {
+        return { earnedTokenAmount: null, rewardClaimed: true };
+      }
 
       const participations = await tx.find(
         VoteEventParticipation,
@@ -217,18 +268,41 @@ export class MikroOrmVoteEventsRepository implements VoteEventsRepository {
           populate: ['user'],
         },
       );
-      const payouts = calculateBettingPayouts(
-        participations,
-        options.winningOption,
-      );
 
-      for (const payout of payouts) {
+      const payouts = calculateBettingPayouts(
+        participations.flatMap((item) =>
+          item.selectedOption === null
+            ? []
+            : [
+                {
+                  createdAt: item.createdAt,
+                  id: item.id,
+                  selectedOption: item.selectedOption,
+                  tokenAmount: item.tokenAmount,
+                  userId: item.user.id,
+                },
+              ],
+        ),
+        voteEvent.bettingResultOption,
+      );
+      const earnedTokenAmount =
+        payouts.find((payout) => payout.userId === options.userId)?.amount ??
+        null;
+
+      if (
+        earnedTokenAmount !== null &&
+        participation.bettingRewardClaimedAt === null
+      ) {
         await tx.nativeUpdate(
           User,
-          { id: payout.userId },
-          { voteToken: raw<number>('`vote_token` + ?', [payout.amount]) },
+          { id: options.userId },
+          { voteToken: raw<number>('`vote_token` + ?', [earnedTokenAmount]) },
         );
+        participation.bettingRewardClaimedAt = options.claimedAt;
+        await tx.flush();
       }
+
+      return { earnedTokenAmount, rewardClaimed: true };
     });
   }
 
@@ -438,17 +512,6 @@ interface OrderByFragment {
   sql: string;
 }
 
-interface BettingPayout {
-  amount: number;
-  userId: string;
-}
-
-interface BettingPayoutDraft extends BettingPayout {
-  createdAt: Date;
-  id: string;
-  remainder: number;
-}
-
 function addCategoryCondition(
   conditions: string[],
   params: unknown[],
@@ -460,6 +523,10 @@ function addCategoryCondition(
 
   conditions.push('ve.`category` = ?');
   params.push(category);
+}
+
+function toDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
 }
 
 function publicCursorPredicate(
@@ -560,69 +627,4 @@ function userOrderBy(sort: VoteEventListSort, now: Date): OrderByFragment {
     params: [now, now, now],
     sql: 'case when ve.`deadline_at` > ? and ve.`betting_result_confirmed_at` is null then 0 else 1 end asc, case when ve.`deadline_at` > ? and ve.`betting_result_confirmed_at` is null then ve.`deadline_at` end asc, case when ve.`deadline_at` <= ? or ve.`betting_result_confirmed_at` is not null then ve.`deadline_at` end desc, ve.`id` asc',
   };
-}
-
-function calculateBettingPayouts(
-  participations: VoteEventParticipation[],
-  winningOption: 'A' | 'B',
-): BettingPayout[] {
-  const winners = participations.filter(
-    (participation) => participation.selectedOption === winningOption,
-  );
-
-  if (winners.length === 0) {
-    return [];
-  }
-
-  const winningPool = sumTokenAmounts(winners);
-  const losingPool = sumTokenAmounts(
-    participations.filter(
-      (participation) => participation.selectedOption !== winningOption,
-    ),
-  );
-  let allocatedLosingPool = 0;
-  const drafts: BettingPayoutDraft[] = winners.map((participation) => {
-    const numerator = losingPool * participation.tokenAmount;
-    const profit = Math.floor(numerator / winningPool);
-
-    allocatedLosingPool += profit;
-
-    return {
-      amount: participation.tokenAmount + profit,
-      createdAt: participation.createdAt,
-      id: participation.id,
-      remainder: numerator % winningPool,
-      userId: participation.user.id,
-    };
-  });
-  let remaining = losingPool - allocatedLosingPool;
-
-  for (const draft of [...drafts].sort(comparePayoutDrafts)) {
-    if (remaining <= 0) {
-      break;
-    }
-
-    draft.amount += 1;
-    remaining -= 1;
-  }
-
-  return drafts.map(({ amount, userId }) => ({ amount, userId }));
-}
-
-function sumTokenAmounts(participations: VoteEventParticipation[]): number {
-  return participations.reduce(
-    (sum, participation) => sum + participation.tokenAmount,
-    0,
-  );
-}
-
-function comparePayoutDrafts(
-  left: BettingPayoutDraft,
-  right: BettingPayoutDraft,
-): number {
-  return (
-    right.remainder - left.remainder ||
-    left.createdAt.getTime() - right.createdAt.getTime() ||
-    left.id.localeCompare(right.id)
-  );
 }

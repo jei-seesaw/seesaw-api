@@ -6,10 +6,12 @@ import {
   CreateVoteEventResponseDto,
   type VoteEventCategory,
 } from './dto/create-vote-event.dto';
+import { ClaimBettingRewardResponseDto } from './dto/claim-betting-reward.dto';
 import { ConfirmBettingResultRequestDto } from './dto/confirm-betting-result.dto';
 import { CastVoteRequestDto } from './dto/cast-vote.dto';
 import {
   VoteEventAffiliationStatDto,
+  VoteEventBettingInfoDto,
   VoteEventDetailResponseDto,
 } from './dto/vote-event-detail.dto';
 import {
@@ -19,7 +21,11 @@ import {
   type VoteEventListSort,
 } from './dto/list-vote-events.dto';
 import { VoteEvent } from './vote-event.entity';
+import { calculateBettingPayouts } from './vote-events.betting';
 import {
+  BettingResultNotConfirmedException,
+  BettingRewardForbiddenException,
+  BettingRewardNotAllowedException,
   InvalidVoteEventDeadlineException,
   VoteEventAlreadyParticipatedException,
   VoteEventClosedException,
@@ -36,6 +42,7 @@ import {
   UserVoteEventRecord,
   UserVoteEventsPage,
   VoteEventDetailRecord,
+  VoteEventParticipationChoiceRecord,
   VoteEventsRepository,
 } from './vote-events.repository';
 import {
@@ -48,6 +55,7 @@ import {
   formatRemainingTime,
   mapVoteEvent,
   mapVoteEventItem,
+  percentage,
   voteTokenAmount,
 } from './vote-events.presenter';
 
@@ -228,7 +236,7 @@ export class VoteEventsService {
       throw new VoteEventNotFoundException();
     }
 
-    return this.mapVoteEventDetail(voteEvent);
+    return this.mapVoteEventDetail(voteEvent, user?.id);
   }
 
   async vote(
@@ -301,6 +309,39 @@ export class VoteEventsService {
     return null;
   }
 
+  async claimBettingReward(
+    id: string,
+    user: AuthenticatedUser,
+  ): Promise<ClaimBettingRewardResponseDto> {
+    const voteEvent = await this.voteEvents.findDetail({
+      id,
+      now: new Date(),
+      userId: user.id,
+    });
+
+    if (!voteEvent) {
+      throw new VoteEventNotFoundException();
+    }
+
+    if (voteEvent.category !== 'betting') {
+      throw new BettingRewardNotAllowedException();
+    }
+
+    if (!voteEvent.isParticipated) {
+      throw new BettingRewardForbiddenException();
+    }
+
+    if (voteEvent.bettingResultOption === null) {
+      throw new BettingResultNotConfirmedException();
+    }
+
+    return this.voteEvents.claimBettingReward({
+      claimedAt: new Date(),
+      userId: user.id,
+      voteEventId: id,
+    });
+  }
+
   private assertValidCreateDeadline(
     deadlineAtText: string,
     createdAt: Date,
@@ -320,6 +361,7 @@ export class VoteEventsService {
 
   private async mapVoteEventDetail(
     voteEvent: VoteEventDetailRecord,
+    userId?: string,
   ): Promise<VoteEventDetailResponseDto> {
     const revealResults = voteEvent.isCompleted || voteEvent.isParticipated;
     const [optionARatio, optionBRatio] = revealResults
@@ -328,12 +370,16 @@ export class VoteEventsService {
     const [optionAResultAmount, optionBResultAmount] = revealResults
       ? calculateResultAmounts(voteEvent)
       : [null, null];
+    const participationChoices = revealResults
+      ? await this.voteEvents.findParticipationChoices(voteEvent.id)
+      : [];
     const affiliationStats = revealResults
-      ? await this.getAffiliationStats(voteEvent)
+      ? await this.getAffiliationStats(voteEvent, participationChoices)
       : null;
 
     return {
       affiliationStats,
+      bettingInfo: this.getBettingInfo(voteEvent, participationChoices, userId),
       bettingResultConfirmedAt: voteEvent.bettingResultConfirmedAt,
       bettingResultOption: voteEvent.bettingResultOption,
       canConfirmBettingResult:
@@ -364,12 +410,65 @@ export class VoteEventsService {
 
   private async getAffiliationStats(
     voteEvent: VoteEventDetailRecord,
+    choices: VoteEventParticipationChoiceRecord[],
   ): Promise<VoteEventAffiliationStatDto[]> {
-    const choices = await this.voteEvents.findParticipationChoices(voteEvent.id);
     const userIds = [...new Set(choices.map((choice) => choice.userId))];
     const affiliations = await this.users.findAffiliationsByIds(userIds);
 
     return buildAffiliationStats(voteEvent, choices, affiliations);
+  }
+
+  private getBettingInfo(
+    voteEvent: VoteEventDetailRecord,
+    choices: VoteEventParticipationChoiceRecord[],
+    userId?: string,
+  ): VoteEventBettingInfoDto | null {
+    if (voteEvent.category !== 'betting') {
+      return null;
+    }
+
+    const resultConfirmed = voteEvent.bettingResultOption !== null;
+    const selectedOptionTokenTotal =
+      voteEvent.selectedOption === 'A'
+        ? voteEvent.optionATokenAmount
+        : voteEvent.selectedOption === 'B'
+          ? voteEvent.optionBTokenAmount
+          : null;
+    const payoutRate =
+      voteEvent.myTokenAmount !== null && selectedOptionTokenTotal !== null
+        ? percentage(voteEvent.myTokenAmount, selectedOptionTokenTotal)
+        : null;
+    const isWinner =
+      resultConfirmed &&
+      voteEvent.selectedOption === voteEvent.bettingResultOption;
+    const earnedTokenAmount =
+      isWinner && userId && voteEvent.bettingResultOption !== null
+        ? calculateBettingPayouts(choices, voteEvent.bettingResultOption).find(
+            (payout) => payout.userId === userId,
+          )?.amount ?? null
+        : null;
+    const rewardClaimed = resultConfirmed
+      ? this.getRewardClaimed(voteEvent, isWinner)
+      : null;
+
+    return {
+      earnedTokenAmount,
+      myTokenAmount: voteEvent.myTokenAmount,
+      payoutRate,
+      resultConfirmed,
+      rewardClaimed,
+    };
+  }
+
+  private getRewardClaimed(
+    voteEvent: VoteEventDetailRecord,
+    isWinner: boolean,
+  ): boolean | null {
+    if (!voteEvent.isParticipated) {
+      return null;
+    }
+
+    return isWinner ? voteEvent.bettingRewardClaimedAt !== null : true;
   }
 
   private buildUserVoteEventsOptions(

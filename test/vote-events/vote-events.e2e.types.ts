@@ -108,6 +108,13 @@ export interface VoteEventDetailEnvelope {
     }> | null;
     bettingResultConfirmedAt: string | null;
     bettingResultOption: 'A' | 'B' | null;
+    bettingInfo: {
+      earnedTokenAmount: number | null;
+      myTokenAmount: number | null;
+      payoutRate: number | null;
+      resultConfirmed: boolean;
+      rewardClaimed: boolean | null;
+    } | null;
     canConfirmBettingResult: boolean;
     categoryName: string;
     isOrganizer: boolean;

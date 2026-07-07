@@ -18,6 +18,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingRewardClaimedAt: null,
       category: 'daily',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -25,6 +26,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: false,
       isOrganizer: false,
       isParticipated: false,
+      myTokenAmount: null,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 1,
@@ -44,6 +46,7 @@ describe('VoteEventsService detail', () => {
 
     expect(result).toEqual({
       affiliationStats: null,
+      bettingInfo: null,
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
       canConfirmBettingResult: false,
@@ -69,6 +72,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingRewardClaimedAt: null,
       category: 'betting',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -76,6 +80,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: false,
       isOrganizer: false,
       isParticipated: true,
+      myTokenAmount: 10,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 0,
@@ -91,9 +96,27 @@ describe('VoteEventsService detail', () => {
       totalTokenAmount: 100,
     };
     repository.participationChoices = [
-      { selectedOption: 'A', tokenAmount: 30, userId: 'education-a' },
-      { selectedOption: 'B', tokenAmount: 10, userId: 'education-b' },
-      { selectedOption: 'B', tokenAmount: 60, userId: 'holdings-a' },
+      {
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        id: 'choice-a',
+        selectedOption: 'A',
+        tokenAmount: 30,
+        userId: 'education-a',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+        id: 'choice-b',
+        selectedOption: 'B',
+        tokenAmount: 10,
+        userId: 'education-b',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:02.000Z'),
+        id: 'choice-c',
+        selectedOption: 'B',
+        tokenAmount: 60,
+        userId: 'holdings-a',
+      },
     ];
     users.affiliations = [
       {
@@ -135,6 +158,13 @@ describe('VoteEventsService detail', () => {
       ]),
     );
     expect(result).toMatchObject({
+      bettingInfo: {
+        earnedTokenAmount: null,
+        myTokenAmount: 10,
+        payoutRate: 16.67,
+        resultConfirmed: false,
+        rewardClaimed: null,
+      },
       categoryName: '배팅',
       isParticipated: true,
       optionAResultAmount: 40,
@@ -150,6 +180,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingRewardClaimedAt: null,
       category: 'daily',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -157,6 +188,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: true,
       isOrganizer: false,
       isParticipated: false,
+      myTokenAmount: null,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 1,
@@ -172,10 +204,34 @@ describe('VoteEventsService detail', () => {
       totalTokenAmount: 0,
     };
     repository.participationChoices = [
-      { selectedOption: 'A', tokenAmount: 0, userId: 'education-a' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'education-b' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'education-c' },
-      { selectedOption: 'B', tokenAmount: 0, userId: 'education-d' },
+      {
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        id: 'choice-a',
+        selectedOption: 'A',
+        tokenAmount: 0,
+        userId: 'education-a',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+        id: 'choice-b',
+        selectedOption: 'B',
+        tokenAmount: 0,
+        userId: 'education-b',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:02.000Z'),
+        id: 'choice-c',
+        selectedOption: 'B',
+        tokenAmount: 0,
+        userId: 'education-c',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:03.000Z'),
+        id: 'choice-d',
+        selectedOption: 'B',
+        tokenAmount: 0,
+        userId: 'education-d',
+      },
     ];
     users.affiliations = [
       {
@@ -211,6 +267,7 @@ describe('VoteEventsService detail', () => {
           optionBRatio: 75,
         },
       ],
+      bettingInfo: null,
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
       canConfirmBettingResult: false,
@@ -228,6 +285,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingRewardClaimedAt: null,
       category: 'betting',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -235,6 +293,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: true,
       isOrganizer: false,
       isParticipated: false,
+      myTokenAmount: null,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 1,
@@ -255,6 +314,13 @@ describe('VoteEventsService detail', () => {
     expect(result).toMatchObject({
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingInfo: {
+        earnedTokenAmount: null,
+        myTokenAmount: null,
+        payoutRate: null,
+        resultConfirmed: false,
+        rewardClaimed: null,
+      },
       canConfirmBettingResult: false,
       optionAResultAmount: 25,
       optionARatio: 25,
@@ -268,6 +334,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingRewardClaimedAt: null,
       category: 'betting',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -275,6 +342,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: false,
       isOrganizer: true,
       isParticipated: false,
+      myTokenAmount: null,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 0,
@@ -298,6 +366,13 @@ describe('VoteEventsService detail', () => {
     expect(result).toMatchObject({
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingInfo: {
+        earnedTokenAmount: null,
+        myTokenAmount: null,
+        payoutRate: null,
+        resultConfirmed: false,
+        rewardClaimed: null,
+      },
       canConfirmBettingResult: true,
       isOrganizer: true,
       remainingTime: '00:02:00',
@@ -307,6 +382,7 @@ describe('VoteEventsService detail', () => {
     repository.detail = {
       bettingResultConfirmedAt: '2026-07-06T01:02:03.000Z',
       bettingResultOption: 'A',
+      bettingRewardClaimedAt: null,
       category: 'betting',
       cursorCreatedAt: '2026-07-01 11:00:00',
       cursorDeadlineAt: '2026-07-01 12:00:00',
@@ -314,6 +390,7 @@ describe('VoteEventsService detail', () => {
       isCompleted: true,
       isOrganizer: true,
       isParticipated: false,
+      myTokenAmount: null,
       optionA: 'A',
       optionAImageUrl: null,
       optionAParticipantCount: 1,
@@ -337,9 +414,137 @@ describe('VoteEventsService detail', () => {
     expect(result).toMatchObject({
       bettingResultConfirmedAt: '2026-07-06T01:02:03.000Z',
       bettingResultOption: 'A',
+      bettingInfo: {
+        earnedTokenAmount: null,
+        myTokenAmount: null,
+        payoutRate: null,
+        resultConfirmed: true,
+        rewardClaimed: null,
+      },
       canConfirmBettingResult: false,
       isOrganizer: true,
       remainingTime: null,
+    });
+  });
+  it('확정된 배팅 투표 상세는 승자의 보상 수령 정보를 반환한다', async () => {
+    repository.detail = {
+      bettingResultConfirmedAt: '2026-07-06T01:02:03.000Z',
+      bettingResultOption: 'A',
+      bettingRewardClaimedAt: null,
+      category: 'betting',
+      cursorCreatedAt: '2026-07-01 11:00:00',
+      cursorDeadlineAt: '2026-07-01 12:00:00',
+      id: 'confirmed-winner-detail-id',
+      isCompleted: true,
+      isOrganizer: false,
+      isParticipated: true,
+      myTokenAmount: 1,
+      optionA: 'A',
+      optionAImageUrl: null,
+      optionAParticipantCount: 2,
+      optionATokenAmount: 2,
+      optionB: 'B',
+      optionBImageUrl: null,
+      optionBParticipantCount: 1,
+      optionBTokenAmount: 1,
+      remainingSeconds: 0,
+      selectedOption: 'A',
+      title: '확정된 배팅 투표',
+      totalParticipantCount: 3,
+      totalTokenAmount: 3,
+    };
+    repository.participationChoices = [
+      {
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        id: 'early-winner',
+        selectedOption: 'A',
+        tokenAmount: 1,
+        userId: 'user-id',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+        id: 'late-winner',
+        selectedOption: 'A',
+        tokenAmount: 1,
+        userId: 'other-winner',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:02.000Z'),
+        id: 'loser',
+        selectedOption: 'B',
+        tokenAmount: 1,
+        userId: 'loser',
+      },
+    ];
+
+    const result = await service.getDetail('confirmed-winner-detail-id', {
+      id: 'user-id',
+      nickname: 'user',
+    });
+
+    expect(result.bettingInfo).toEqual({
+      earnedTokenAmount: 2,
+      myTokenAmount: 1,
+      payoutRate: 50,
+      resultConfirmed: true,
+      rewardClaimed: false,
+    });
+  });
+  it('확정된 배팅 투표 상세는 패자의 보상 수령 상태를 true로 반환한다', async () => {
+    repository.detail = {
+      bettingResultConfirmedAt: '2026-07-06T01:02:03.000Z',
+      bettingResultOption: 'A',
+      bettingRewardClaimedAt: null,
+      category: 'betting',
+      cursorCreatedAt: '2026-07-01 11:00:00',
+      cursorDeadlineAt: '2026-07-01 12:00:00',
+      id: 'confirmed-loser-detail-id',
+      isCompleted: true,
+      isOrganizer: false,
+      isParticipated: true,
+      myTokenAmount: 20,
+      optionA: 'A',
+      optionAImageUrl: null,
+      optionAParticipantCount: 1,
+      optionATokenAmount: 80,
+      optionB: 'B',
+      optionBImageUrl: null,
+      optionBParticipantCount: 1,
+      optionBTokenAmount: 20,
+      remainingSeconds: 0,
+      selectedOption: 'B',
+      title: '확정된 배팅 투표',
+      totalParticipantCount: 2,
+      totalTokenAmount: 100,
+    };
+    repository.participationChoices = [
+      {
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        id: 'winner',
+        selectedOption: 'A',
+        tokenAmount: 80,
+        userId: 'winner',
+      },
+      {
+        createdAt: new Date('2026-01-01T00:00:01.000Z'),
+        id: 'loser',
+        selectedOption: 'B',
+        tokenAmount: 20,
+        userId: 'user-id',
+      },
+    ];
+
+    const result = await service.getDetail('confirmed-loser-detail-id', {
+      id: 'user-id',
+      nickname: 'user',
+    });
+
+    expect(result.bettingInfo).toEqual({
+      earnedTokenAmount: null,
+      myTokenAmount: 20,
+      payoutRate: 100,
+      resultConfirmed: true,
+      rewardClaimed: true,
     });
   });
 });

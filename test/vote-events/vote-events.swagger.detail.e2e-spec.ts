@@ -27,6 +27,9 @@ describe('Vote events Swagger detail', () => {
         bettingResultOption: {
           nullable: true,
         },
+        bettingInfo: {
+          nullable: true,
+        },
         canConfirmBettingResult: {
           type: 'boolean',
         },
@@ -67,6 +70,7 @@ describe('Vote events Swagger detail', () => {
         'optionAResultAmount',
         'optionBResultAmount',
         'affiliationStats',
+        'bettingInfo',
         'isParticipated',
         'isOrganizer',
         'selectedOption',
@@ -104,6 +108,13 @@ describe('Vote events Swagger detail', () => {
                 ],
                 bettingResultConfirmedAt: null,
                 bettingResultOption: null,
+                bettingInfo: {
+                  earnedTokenAmount: null,
+                  myTokenAmount: 25,
+                  payoutRate: 62.5,
+                  resultConfirmed: false,
+                  rewardClaimed: null,
+                },
                 canConfirmBettingResult: true,
                 categoryName: '배팅',
                 isOrganizer: true,

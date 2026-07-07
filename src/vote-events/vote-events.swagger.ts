@@ -18,6 +18,7 @@ import {
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { CastVoteRequestDto } from './dto/cast-vote.dto';
+import { ClaimBettingRewardResponseDto } from './dto/claim-betting-reward.dto';
 import { ConfirmBettingResultRequestDto } from './dto/confirm-betting-result.dto';
 import {
   CreateVoteEventRequestDto,
@@ -26,6 +27,7 @@ import {
 } from './dto/create-vote-event.dto';
 import {
   VoteEventAffiliationStatDto,
+  VoteEventBettingInfoDto,
   VoteEventDetailResponseDto,
 } from './dto/vote-event-detail.dto';
 import {
@@ -37,6 +39,7 @@ import {
 } from './dto/list-vote-events.dto';
 import {
   castVoteResponseSchema,
+  claimBettingRewardResponseSchema,
   createVoteEventResponseSchema,
   listCompletedVoteEventsResponseSchema,
   listMyVoteEventsResponseSchema,
@@ -49,6 +52,7 @@ export function ApiVoteEventsController() {
     ApiTags('투표 이벤트'),
     ApiExtraModels(
       CastVoteRequestDto,
+      ClaimBettingRewardResponseDto,
       ConfirmBettingResultRequestDto,
       CreateVoteEventRequestDto,
       CreateVoteEventResponseDto,
@@ -56,6 +60,7 @@ export function ApiVoteEventsController() {
       ListVoteEventsPageInfoDto,
       ListVoteEventsResponseDto,
       VoteEventAffiliationStatDto,
+      VoteEventBettingInfoDto,
       VoteEventDetailResponseDto,
       VoteEventListItemDto,
     ),
@@ -340,7 +345,7 @@ export function ApiConfirmBettingResult() {
   return applyDecorators(
     ApiOperation({
       description:
-        '투표 이벤트 주최자가 배팅 이벤트의 A/B 정답을 확정하고 승자 토큰을 정산합니다.',
+        '투표 이벤트 주최자가 배팅 이벤트의 A/B 정답을 확정합니다. 승자 토큰은 별도 수령 API에서 지급합니다.',
       summary: '배팅 결과 확정',
     }),
     ApiBearerAuth(),
@@ -361,7 +366,7 @@ export function ApiConfirmBettingResult() {
       type: ConfirmBettingResultRequestDto,
     }),
     ApiOkResponse({
-      description: '배팅 결과가 확정되고 정산되었습니다.',
+      description: '배팅 결과가 확정되었습니다.',
       schema: castVoteResponseSchema,
     }),
     ApiBadRequestResponse({
@@ -380,6 +385,41 @@ export function ApiConfirmBettingResult() {
       description: '배팅 이벤트가 아니므로 결과를 확정할 수 없습니다.',
     }),
     ApiForbiddenResultResponse(),
+  );
+}
+
+export function ApiClaimBettingReward() {
+  return applyDecorators(
+    ApiOperation({
+      description:
+        '배팅 결과가 확정된 이벤트에서 참여자가 보상을 직접 수령합니다. 승자는 원금 포함 보상을 한 번만 지급받고, 중복 호출은 같은 결과로 성공합니다. 패자는 지급 없이 성공합니다.',
+      summary: '배팅 보상 수령',
+    }),
+    ApiBearerAuth(),
+    ApiParam({
+      description: '투표 이벤트 ID',
+      name: 'id',
+      schema: { type: 'string' },
+    }),
+    ApiOkResponse({
+      description: '배팅 보상 수령 상태를 반환합니다.',
+      schema: claimBettingRewardResponseSchema,
+    }),
+    ApiUnauthorizedResponse({
+      description: 'accessToken이 없거나 유효하지 않습니다.',
+    }),
+    ApiNotFoundResponse({
+      description: '투표 이벤트를 찾을 수 없습니다.',
+    }),
+    ApiForbiddenResponse({
+      description: '배팅 참여자가 아니므로 보상을 수령할 수 없습니다.',
+    }),
+    ApiConflictResponse({
+      description: '배팅 결과가 아직 확정되지 않았습니다.',
+    }),
+    ApiUnprocessableEntityResponse({
+      description: '배팅 이벤트가 아니므로 보상을 수령할 수 없습니다.',
+    }),
   );
 }
 

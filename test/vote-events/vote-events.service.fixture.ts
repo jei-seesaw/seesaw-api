@@ -41,6 +41,12 @@ type FakeBettingResultConfirmation = {
   winningOption: 'A' | 'B';
 };
 
+type FakeBettingRewardClaim = {
+  claimedAt: Date;
+  userId: string;
+  voteEventId: string;
+};
+
 export class FakeVoteEventsRepository implements VoteEventsRepository {
   createdVoteEvent?: VoteEvent;
   completedListResult: CompletedVoteEventsPage = {
@@ -54,9 +60,11 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
     id: string;
     bettingResultConfirmedAt: string | null;
     bettingResultOption: 'A' | 'B' | null;
+    bettingRewardClaimedAt: string | null;
     isCompleted: boolean;
     isOrganizer: boolean;
     isParticipated: boolean;
+    myTokenAmount: number | null;
     optionA: string;
     optionAImageUrl: string | null;
     optionAParticipantCount: number;
@@ -78,11 +86,18 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
     mainVote: null,
   };
   participationChoices: Array<{
+    createdAt: Date;
+    id: string;
     selectedOption: 'A' | 'B';
     tokenAmount: number;
     userId: string;
   }> = [];
   participation?: FakeParticipation;
+  claimedBettingReward?: FakeBettingRewardClaim;
+  claimResult: { earnedTokenAmount: number | null; rewardClaimed: true } = {
+    earnedTokenAmount: null,
+    rewardClaimed: true,
+  };
 
   create(voteEvent: VoteEvent): Promise<VoteEvent> {
     this.createdVoteEvent = voteEvent;
@@ -129,6 +144,14 @@ export class FakeVoteEventsRepository implements VoteEventsRepository {
 
     return Promise.resolve();
   }
+
+  claimBettingReward(
+    args: FakeBettingRewardClaim,
+  ): Promise<{ earnedTokenAmount: number | null; rewardClaimed: true }> {
+    this.claimedBettingReward = args;
+
+    return Promise.resolve(this.claimResult);
+  }
 }
 
 export class FakeUsersRepository implements UsersRepository {
@@ -162,12 +185,14 @@ export function voteEventDetail(
     category: 'daily',
     bettingResultConfirmedAt: null,
     bettingResultOption: null,
+    bettingRewardClaimedAt: null,
     cursorCreatedAt: '2026-07-01 11:00:00',
     cursorDeadlineAt: '2026-07-01 12:00:00',
     id: 'vote-event-id',
     isCompleted: false,
     isOrganizer: false,
     isParticipated: false,
+    myTokenAmount: null,
     optionA: 'A',
     optionAImageUrl: null,
     optionAParticipantCount: 0,

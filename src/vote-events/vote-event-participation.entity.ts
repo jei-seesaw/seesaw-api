@@ -39,6 +39,13 @@ export class VoteEventParticipation {
   @Property({ type: Date, fieldName: 'created_at' })
   createdAt: Date = new Date();
 
+  @Property({
+    type: Date,
+    fieldName: 'betting_reward_claimed_at',
+    nullable: true,
+  })
+  bettingRewardClaimedAt: Date | null = null;
+
   constructor(
     voteEvent: VoteEvent,
     user: User,

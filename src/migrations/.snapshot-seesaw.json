@@ -233,6 +233,23 @@
     {
       "name": "vote_event_participations",
       "columns": {
+        "betting_reward_claimed_at": {
+          "name": "betting_reward_claimed_at",
+          "type": "datetime",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",

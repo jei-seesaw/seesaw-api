@@ -69,6 +69,33 @@ export class VoteEventResultNotAllowedException extends UnprocessableEntityExcep
   }
 }
 
+export class BettingRewardForbiddenException extends ForbiddenException {
+  constructor() {
+    super({
+      code: 'betting_reward_forbidden',
+      message: 'Only participants can claim betting rewards',
+    });
+  }
+}
+
+export class BettingResultNotConfirmedException extends ConflictException {
+  constructor() {
+    super({
+      code: 'betting_result_not_confirmed',
+      message: 'Betting result is not confirmed',
+    });
+  }
+}
+
+export class BettingRewardNotAllowedException extends UnprocessableEntityException {
+  constructor() {
+    super({
+      code: 'betting_reward_not_allowed',
+      message: 'Only betting vote events can claim rewards',
+    });
+  }
+}
+
 export class InvalidVoteEventDeadlineException extends UnprocessableEntityException {
   constructor() {
     super({

@@ -38,7 +38,7 @@ describe('Vote events Swagger betting result', () => {
       summary: '배팅 결과 확정',
       parameters: [expect.objectContaining({ in: 'path', name: 'id' })],
       responses: {
-        '200': { description: '배팅 결과가 확정되고 정산되었습니다.' },
+        '200': { description: '배팅 결과가 확정되었습니다.' },
         '400': { description: '배팅 결과 확정 요청 body가 유효하지 않습니다.' },
         '401': { description: 'accessToken이 없거나 유효하지 않습니다.' },
         '403': { description: '투표 이벤트 주최자가 아닙니다.' },
@@ -64,5 +64,27 @@ describe('Vote events Swagger betting result', () => {
       },
       required: true,
     });
+    expect(
+      document.paths['/api/v2/vote-events/{id}/betting-reward/claim']?.post,
+    ).toMatchObject({
+      summary: '배팅 보상 수령',
+      parameters: [expect.objectContaining({ in: 'path', name: 'id' })],
+      responses: {
+        '200': { description: '배팅 보상 수령 상태를 반환합니다.' },
+        '401': { description: 'accessToken이 없거나 유효하지 않습니다.' },
+        '403': {
+          description: '배팅 참여자가 아니므로 보상을 수령할 수 없습니다.',
+        },
+        '404': { description: '투표 이벤트를 찾을 수 없습니다.' },
+        '409': { description: '배팅 결과가 아직 확정되지 않았습니다.' },
+        '422': {
+          description: '배팅 이벤트가 아니므로 보상을 수령할 수 없습니다.',
+        },
+      },
+    });
+    expect(
+      document.paths['/api/v2/vote-events/{id}/betting-reward/claim']?.post
+        ?.security,
+    ).toEqual([{ bearer: [] }]);
   });
 });

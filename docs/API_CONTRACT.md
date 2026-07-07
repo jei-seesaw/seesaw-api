@@ -664,6 +664,13 @@ Authorization: Bearer jwt-access-token
     "totalTokenAmount": 100,
     "bettingResultOption": null,
     "bettingResultConfirmedAt": null,
+    "bettingInfo": {
+      "myTokenAmount": 25,
+      "payoutRate": 62.5,
+      "rewardClaimed": null,
+      "resultConfirmed": false,
+      "earnedTokenAmount": null
+    },
     "canConfirmBettingResult": true
   }
 }
@@ -689,6 +696,16 @@ Authorization: Bearer jwt-access-token
   non-betting 투표에서는 `null`이다.
 - `bettingResultConfirmedAt`은 배팅 정답 확정 시각이다. 미확정 또는 non-betting
   투표에서는 `null`이다.
+- `bettingInfo`는 `betting` 투표에서만 객체이고 non-betting 투표에서는 `null`이다.
+- `bettingInfo.myTokenAmount`는 현재 사용자가 배팅한 토큰 수다. 미로그인 또는
+  미참여 요청에서는 `null`이다.
+- `bettingInfo.payoutRate`는 `myTokenAmount / selectedOptionTokenTotal * 100`을
+  소수 둘째 자리로 반올림한 값이다. 현재 사용자가 참여하지 않았으면 `null`이다.
+- `bettingInfo.resultConfirmed`는 배팅 정답 확정 여부다.
+- `bettingInfo.rewardClaimed`는 미로그인, 미참여, 미확정이면 `null`이다. 승자는
+  실제 수령 여부를 반환하고, 패자는 `true`를 반환한다.
+- `bettingInfo.earnedTokenAmount`는 수령 API 호출 시 `users.vote_token`에 더해지는
+  총 토큰 수이며 원금을 포함한다. 패자, 미확정, 미참여 요청에서는 `null`이다.
 - `canConfirmBettingResult`는 현재 사용자가 주최자인 미확정 배팅 이벤트에서만
   `true`다.
 - 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
@@ -796,7 +813,7 @@ Authorization: Bearer jwt-access-token
   사용자 `voteToken`을 `tokenAmount`만큼 차감한다.
 
 `POST /api/v2/vote-events/:id/betting-result`는 투표 이벤트 주최자가 배팅
-정답을 확정하고 즉시 정산한다.
+정답만 확정한다. 토큰 지급은 보상 수령 API에서 처리한다.
 
 요청:
 
@@ -829,8 +846,43 @@ Authorization: Bearer jwt-access-token
 - 배팅 이벤트가 아니면 `422`와 `vote_event_result_not_allowed`를 반환한다.
 - 배팅 결과가 확정된 이벤트는 마감 전이어도 완료된 투표로 취급하며 이후
   투표 참여를 `vote_event_closed`로 거절한다.
+- 승자가 없더라도 사용자 `voteToken`을 업데이트하지 않고 결과만 확정한다.
+
+`POST /api/v2/vote-events/:id/betting-reward/claim`은 로그인한 배팅 참여자가
+확정된 배팅 결과의 보상을 직접 수령한다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "earnedTokenAmount": 40,
+    "rewardClaimed": true
+  }
+}
+```
+
+- 승자는 `users.vote_token`에 원금을 포함한 지급액을 한 번만 더하고
+  `vote_event_participations.betting_reward_claimed_at`을 저장한다.
+- 이미 수령한 승자가 다시 호출하면 `200`으로 같은 `earnedTokenAmount`를 반환하고
+  토큰을 추가 지급하지 않는다.
+- 패자가 호출하면 `200`으로 `earnedTokenAmount: null`, `rewardClaimed: true`를
+  반환하고 토큰을 변경하지 않는다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
+- 현재 사용자가 해당 배팅 이벤트에 참여하지 않았으면 `403`과
+  `betting_reward_forbidden`을 반환한다.
+- 배팅 결과가 아직 확정되지 않았으면 `409`와
+  `betting_result_not_confirmed`를 반환한다.
+- 배팅 이벤트가 아니면 `422`와 `betting_reward_not_allowed`를 반환한다.
 - 승자는 원금과 패자 풀을 지분 비례로 받는다.
 - 승자별 지급액은 `stake + floor(losingPool * stake / winningPool)`이다.
 - 나눗셈 후 남은 토큰은 소수 잔여가 큰 승자부터, 동률이면 참여 `createdAt`,
   `id` 오름차순으로 1개씩 배분한다.
-- 승자가 없으면 사용자 `voteToken`을 업데이트하지 않고 결과만 확정한다.

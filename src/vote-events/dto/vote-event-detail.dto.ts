@@ -16,6 +16,43 @@ export class VoteEventAffiliationStatDto {
   optionBRatio!: number;
 }
 
+export class VoteEventBettingInfoDto {
+  @ApiProperty({
+    description: '현재 사용자가 배팅에 사용한 토큰 수',
+    example: 25,
+    nullable: true,
+    type: Number,
+  })
+  myTokenAmount!: number | null;
+
+  @ApiProperty({
+    description: '현재 사용자의 배팅 토큰이 선택지 풀에서 차지하는 비율',
+    example: 12.5,
+    nullable: true,
+    type: Number,
+  })
+  payoutRate!: number | null;
+
+  @ApiProperty({
+    description: '현재 사용자의 배팅 보상 수령 완료 여부',
+    example: false,
+    nullable: true,
+    type: Boolean,
+  })
+  rewardClaimed!: boolean | null;
+
+  @ApiProperty({ description: '배팅 정답 확정 여부', example: true })
+  resultConfirmed!: boolean;
+
+  @ApiProperty({
+    description: '수령 시 지급되는 총 토큰 수',
+    example: 40,
+    nullable: true,
+    type: Number,
+  })
+  earnedTokenAmount!: number | null;
+}
+
 export class VoteEventDetailResponseDto {
   @ApiProperty({ description: '카테고리 이름', example: '배팅' })
   categoryName!: string;
@@ -94,6 +131,13 @@ export class VoteEventDetailResponseDto {
     type: () => [VoteEventAffiliationStatDto],
   })
   affiliationStats!: VoteEventAffiliationStatDto[] | null;
+
+  @ApiProperty({
+    description: '배팅 보상 정보. non-betting 투표에서는 null',
+    nullable: true,
+    type: () => VoteEventBettingInfoDto,
+  })
+  bettingInfo!: VoteEventBettingInfoDto | null;
 
   @ApiProperty({ description: '현재 사용자의 투표 참여 여부', example: true })
   isParticipated!: boolean;

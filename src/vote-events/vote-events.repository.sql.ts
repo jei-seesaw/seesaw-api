@@ -37,8 +37,10 @@ export interface OngoingVoteEventRow {
 export interface VoteEventDetailRow extends OngoingVoteEventRow {
   bettingResultConfirmedAt: string | null;
   bettingResultOption: VoteEventSelectedOption | null;
+  bettingRewardClaimedAt: string | null;
   isCompleted: boolean | number | string;
   isOrganizer: boolean | number | string;
+  myTokenAmount: number | string | null;
   selectedOption: VoteEventSelectedOption | null;
 }
 
@@ -47,6 +49,8 @@ export interface UserVoteEventRow extends OngoingVoteEventRow {
 }
 
 export interface VoteEventParticipationChoiceRow {
+  createdAt: Date | string;
+  id: string;
   selectedOption: VoteEventSelectedOption;
   tokenAmount: number | string;
   userId: string;
@@ -59,6 +63,10 @@ export function voteEventDetailSelect(userId: string | undefined): string {
   const isOrganizer = userId
     ? 'case when ve.`organizer_user_id` = ? then 1 else 0 end'
     : '0';
+  const bettingRewardClaimedAt = userId
+    ? "date_format(current_vep.`betting_reward_claimed_at`, '%Y-%m-%dT%H:%i:%s.000Z')"
+    : 'null';
+  const myTokenAmount = userId ? 'current_vep.`token_amount`' : 'null';
   const selectedOption = userId ? 'current_vep.`selected_option`' : 'null';
 
   return [
@@ -67,9 +75,11 @@ export function voteEventDetailSelect(userId: string | undefined): string {
     remainingSecondsSelect(),
     `${isParticipated} as \`isParticipated\``,
     `${isOrganizer} as \`isOrganizer\``,
+    `${myTokenAmount} as \`myTokenAmount\``,
     `${selectedOption} as \`selectedOption\``,
     've.`betting_result_option` as `bettingResultOption`',
     "date_format(ve.`betting_result_confirmed_at`, '%Y-%m-%dT%H:%i:%s.000Z') as `bettingResultConfirmedAt`",
+    `${bettingRewardClaimedAt} as \`bettingRewardClaimedAt\``,
   ].join(', ');
 }
 
@@ -156,8 +166,11 @@ export function toVoteEventDetailRecord(
     ...toOngoingVoteEventRecord(row),
     bettingResultConfirmedAt: row.bettingResultConfirmedAt,
     bettingResultOption: row.bettingResultOption,
+    bettingRewardClaimedAt: row.bettingRewardClaimedAt,
     isCompleted: row.isCompleted === true || Number(row.isCompleted) === 1,
     isOrganizer: row.isOrganizer === true || Number(row.isOrganizer) === 1,
+    myTokenAmount:
+      row.myTokenAmount === null ? null : Number(row.myTokenAmount),
     selectedOption: row.selectedOption,
   };
 }

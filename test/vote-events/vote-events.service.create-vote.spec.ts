@@ -311,6 +311,104 @@ describe('VoteEventsService create and vote', () => {
       status: 404,
     });
   });
+  it('참여한 승자가 배팅 보상을 수령하면 수령 결과를 반환한다', async () => {
+    repository.detail = voteEventDetail({
+      bettingResultConfirmedAt: '2026-07-06T01:00:00.000Z',
+      bettingResultOption: 'A',
+      category: 'betting',
+      id: 'betting-id',
+      isParticipated: true,
+      selectedOption: 'A',
+    });
+    repository.claimResult = { earnedTokenAmount: 40, rewardClaimed: true };
+
+    await expect(
+      service.claimBettingReward('betting-id', {
+        id: 'user-id',
+        nickname: 'user',
+      }),
+    ).resolves.toEqual({ earnedTokenAmount: 40, rewardClaimed: true });
+
+    expect(repository.claimedBettingReward).toMatchObject({
+      userId: 'user-id',
+      voteEventId: 'betting-id',
+    });
+    expect(repository.claimedBettingReward?.claimedAt).toBeInstanceOf(Date);
+  });
+  it('미확정 배팅 보상은 수령할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      bettingResultOption: null,
+      category: 'betting',
+      id: 'betting-id',
+      isParticipated: true,
+    });
+
+    await expect(
+      service.claimBettingReward('betting-id', {
+        id: 'user-id',
+        nickname: 'user',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'betting_result_not_confirmed',
+      },
+      status: 409,
+    });
+  });
+  it('배팅 이벤트가 아니면 보상을 수령할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      category: 'daily',
+      id: 'daily-id',
+      isParticipated: true,
+    });
+
+    await expect(
+      service.claimBettingReward('daily-id', {
+        id: 'user-id',
+        nickname: 'user',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'betting_reward_not_allowed',
+      },
+      status: 422,
+    });
+  });
+  it('미참여자는 배팅 보상을 수령할 수 없다', async () => {
+    repository.detail = voteEventDetail({
+      bettingResultOption: 'A',
+      category: 'betting',
+      id: 'betting-id',
+      isParticipated: false,
+    });
+
+    await expect(
+      service.claimBettingReward('betting-id', {
+        id: 'user-id',
+        nickname: 'user',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'betting_reward_forbidden',
+      },
+      status: 403,
+    });
+  });
+  it('없는 투표 이벤트의 배팅 보상은 수령할 수 없다', async () => {
+    repository.detail = null;
+
+    await expect(
+      service.claimBettingReward('missing-id', {
+        id: 'user-id',
+        nickname: 'user',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'vote_event_not_found',
+      },
+      status: 404,
+    });
+  });
 });
 
 function deadlineAtHoursFromNow(hours: number, minutes = 0): string {

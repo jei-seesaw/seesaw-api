@@ -53,6 +53,17 @@ export interface ConfirmBettingResultOptions {
   winningOption: VoteEventSelectedOption;
 }
 
+export interface ClaimBettingRewardOptions {
+  claimedAt: Date;
+  userId: string;
+  voteEventId: string;
+}
+
+export interface ClaimBettingRewardResult {
+  earnedTokenAmount: number | null;
+  rewardClaimed: true;
+}
+
 export interface OngoingVoteEventRecord {
   category: VoteEventCategory;
   cursorCreatedAt: string;
@@ -76,9 +87,11 @@ export interface OngoingVoteEventRecord {
 export interface VoteEventDetailRecord extends OngoingVoteEventRecord {
   bettingResultConfirmedAt: string | null;
   bettingResultOption: VoteEventSelectedOption | null;
+  bettingRewardClaimedAt: string | null;
   isCompleted: boolean;
   isOrganizer: boolean;
   selectedOption: VoteEventSelectedOption | null;
+  myTokenAmount: number | null;
 }
 
 export interface UserVoteEventRecord extends OngoingVoteEventRecord {
@@ -87,6 +100,8 @@ export interface UserVoteEventRecord extends OngoingVoteEventRecord {
 }
 
 export interface VoteEventParticipationChoiceRecord {
+  createdAt: Date;
+  id: string;
   selectedOption: VoteEventSelectedOption;
   tokenAmount: number;
   userId: string;
@@ -133,4 +148,7 @@ export abstract class VoteEventsRepository {
   abstract confirmBettingResult(
     options: ConfirmBettingResultOptions,
   ): Promise<void>;
+  abstract claimBettingReward(
+    options: ClaimBettingRewardOptions,
+  ): Promise<ClaimBettingRewardResult>;
 }

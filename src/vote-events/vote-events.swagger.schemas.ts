@@ -1,4 +1,5 @@
 import { getSchemaPath } from '@nestjs/swagger';
+import { ClaimBettingRewardResponseDto } from './dto/claim-betting-reward.dto';
 import { CreateVoteEventResponseDto } from './dto/create-vote-event.dto';
 import { VoteEventDetailResponseDto } from './dto/vote-event-detail.dto';
 import {
@@ -29,6 +30,22 @@ export const castVoteResponseSchema = {
     data: {
       nullable: true,
       type: 'object' as const,
+    },
+  },
+  required: ['data'],
+  type: 'object' as const,
+};
+
+export const claimBettingRewardResponseSchema = {
+  example: {
+    data: {
+      earnedTokenAmount: 40,
+      rewardClaimed: true,
+    },
+  },
+  properties: {
+    data: {
+      $ref: getSchemaPath(ClaimBettingRewardResponseDto),
     },
   },
   required: ['data'],
@@ -152,6 +169,13 @@ export const voteEventDetailResponseSchema = {
       ],
       bettingResultConfirmedAt: null,
       bettingResultOption: null,
+      bettingInfo: {
+        earnedTokenAmount: null,
+        myTokenAmount: 25,
+        payoutRate: 62.5,
+        resultConfirmed: false,
+        rewardClaimed: null,
+      },
       canConfirmBettingResult: true,
       categoryName: '배팅',
       isOrganizer: true,
