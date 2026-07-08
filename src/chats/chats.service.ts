@@ -42,6 +42,7 @@ export class ChatsService {
   async listMessages(
     voteEventId: string,
     query: ListChatMessagesQueryDto,
+    user: AuthenticatedUser,
   ): Promise<ListChatMessagesResponseDto> {
     await this.assertVoteEventExists(voteEventId);
 
@@ -56,7 +57,7 @@ export class ChatsService {
     const firstMessage = page.items[0];
 
     return {
-      messages: page.items.map(toChatMessageDto),
+      messages: page.items.map((message) => toChatMessageDto(message, user.id)),
       pageInfo: {
         hasNext: page.hasNext,
         nextCursor:
@@ -120,12 +121,16 @@ function assertValidMessage(
   }
 }
 
-function toChatMessageDto(message: ChatMessageRecord): ChatMessageDto {
+function toChatMessageDto(
+  message: ChatMessageRecord,
+  currentUserId?: string,
+): ChatMessageDto {
   return {
     clientMessageId: message.clientMessageId,
     content: message.content,
     createdAt: message.createdAt,
     id: message.id,
+    ...(currentUserId ? { isMine: message.userId === currentUserId } : {}),
     user: {
       affiliationName: message.userAffiliationName,
       id: message.userId,

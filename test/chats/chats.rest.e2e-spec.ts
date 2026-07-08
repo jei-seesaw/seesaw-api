@@ -32,18 +32,19 @@ describe('Chat messages REST endpoint', () => {
   it('로그인 사용자가 최근 채팅 기록을 오래된 순서로 조회한다', async () => {
     const now = Date.now();
     const { accessToken, userId } = await createUser(`chat-rest-${now}`);
+    const otherUser = await createUser(`chat-rest-other-${now}`);
     const voteEventId = await insertVoteEvent(`chat-e2e-rest-${now}`);
 
     await insertChatMessage({
       content: '첫 번째',
       createdAt: new Date('2026-07-08T12:00:00.000Z'),
-      userId,
+      userId: otherUser.userId,
       voteEventId,
     });
     const secondId = await insertChatMessage({
       content: '두 번째',
       createdAt: new Date('2026-07-08T12:01:00.000Z'),
-      userId,
+      userId: otherUser.userId,
       voteEventId,
     });
     const thirdId = await insertChatMessage({
@@ -66,12 +67,20 @@ describe('Chat messages REST endpoint', () => {
     ]);
     expect(body.data.messages[0]).toMatchObject({
       content: '두 번째',
+      isMine: false,
       user: {
         affiliationName: '재능교육',
-        id: userId,
-        nickname: `chat-rest-${now}`,
+        id: otherUser.userId,
+        nickname: `chat-rest-other-${now}`,
       },
       voteEventId,
+    });
+    expect(body.data.messages[1]).toMatchObject({
+      content: '세 번째',
+      isMine: true,
+      user: {
+        id: userId,
+      },
     });
     expect(body.data.pageInfo.hasNext).toBe(true);
     expect(typeof body.data.pageInfo.nextCursor).toBe('string');
@@ -150,6 +159,7 @@ interface ChatMessagesEnvelope {
       content: string;
       createdAt: string;
       id: string;
+      isMine: boolean;
       user: {
         affiliationName: string;
         id: string;

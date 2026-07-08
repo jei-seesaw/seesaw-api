@@ -5,9 +5,13 @@ import {
   HttpStatus,
   Param,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  AuthenticatedRequest,
+  JwtAuthGuard,
+} from '../auth/guards/jwt-auth.guard';
 import { ChatsService } from './chats.service';
 import {
   ApiChatsController,
@@ -30,7 +34,8 @@ export class ChatsController {
   list(
     @Param('id') id: string,
     @Query() query: ListChatMessagesQueryDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<ListChatMessagesResponseDto> {
-    return this.chats.listMessages(id, query);
+    return this.chats.listMessages(id, query, request.user!);
   }
 }

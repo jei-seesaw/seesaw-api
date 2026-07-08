@@ -57,6 +57,9 @@ export class ChatMessageDto {
     format: 'date-time',
   })
   createdAt!: string;
+
+  @ApiProperty({ example: true })
+  isMine?: boolean;
 }
 
 export class ChatMessagesPageInfoDto {

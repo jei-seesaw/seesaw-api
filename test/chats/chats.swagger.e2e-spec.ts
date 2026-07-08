@@ -78,6 +78,10 @@ describe('Chats Swagger', () => {
           example: '8f6d3b2a-9c4e-4f2b-8a1d-6e0f3c2b1a90',
           type: 'string',
         },
+        isMine: {
+          example: true,
+          type: 'boolean',
+        },
         user: {
           $ref: '#/components/schemas/ChatMessageUserDto',
         },
@@ -93,6 +97,7 @@ describe('Chats Swagger', () => {
         'user',
         'content',
         'createdAt',
+        'isMine',
       ],
       type: 'object',
     });

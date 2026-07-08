@@ -119,8 +119,38 @@ describe('ChatsService', () => {
     const { service } = createServiceContext();
 
     await expect(
-      service.listMessages(VOTE_EVENT_ID, { cursor: 'not-a-cursor', limit: 50 }),
+      service.listMessages(
+        VOTE_EVENT_ID,
+        { cursor: 'not-a-cursor', limit: 50 },
+        USER,
+      ),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('채팅 기록 조회 시 현재 사용자가 보낸 메시지를 표시한다', async () => {
+    const { chatMessages, service } = createServiceContext();
+
+    chatMessages.page = {
+      hasNext: false,
+      items: [
+        chatMessageRecord({ userId: USER.id }),
+        chatMessageRecord({
+          id: '66666666-6666-4666-8666-666666666666',
+          userId: '77777777-7777-4777-8777-777777777777',
+        }),
+      ],
+    };
+
+    const result = await service.listMessages(
+      VOTE_EVENT_ID,
+      { limit: 50 },
+      USER,
+    );
+
+    expect(result.messages.map((message) => message.isMine)).toEqual([
+      true,
+      false,
+    ]);
   });
 });
 

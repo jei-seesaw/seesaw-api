@@ -925,7 +925,8 @@ GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50&cursor=op
           "affiliationName": "재능교육"
         },
         "content": "저는 A가 더 좋아요",
-        "createdAt": "2026-07-08T12:00:00.000Z"
+        "createdAt": "2026-07-08T12:00:00.000Z",
+        "isMine": true
       }
     ],
     "pageInfo": {
