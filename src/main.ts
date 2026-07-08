@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppLogger } from './common/logging/app-logger.service';
 import { API_PREFIX } from './config/api-prefix';
 import type { EnvConfig } from './config/env';
+import { AppSocketIoAdapter } from './config/socket-io.adapter';
 import { setupSwagger } from './config/swagger';
 import { AppModule } from './app.module';
 
@@ -16,6 +17,7 @@ async function bootstrap(): Promise<void> {
   const config = app.get(ConfigService<EnvConfig, true>);
   const corsOrigins = config.getOrThrow<string[]>('CORS_ORIGINS');
 
+  app.useWebSocketAdapter(new AppSocketIoAdapter(app, config));
   app.enableCors({
     credentials: true,
     origin: corsOrigins,

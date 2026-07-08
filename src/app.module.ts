@@ -8,6 +8,7 @@ import { LoggingModule } from './common/logging/logging.module';
 import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { AffiliationsModule } from './affiliations/affiliations.module';
 import { AuthModule } from './auth/auth.module';
+import { ChatsModule } from './chats/chats.module';
 import { getEnvFilePaths, validateEnv } from './config/env';
 import mikroOrmConfig from './config/mikro-orm.config';
 import { HealthController } from './health/health.controller';
@@ -30,6 +31,7 @@ import { VoteEventsModule } from './vote-events/vote-events.module';
     AuthModule,
     ImageUploadsModule,
     VoteEventsModule,
+    ChatsModule,
     HomeModule,
   ],
   controllers: [HealthController],

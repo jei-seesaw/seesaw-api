@@ -13,11 +13,14 @@ flowchart TD
   App --> Common[src/common]
   App --> Config[src/config]
   App --> Auth[src/auth]
+  App --> Chats[src/chats]
   App --> Users[src/users]
   App --> ImageUploads[src/image-uploads]
   App --> VoteEvents[src/vote-events]
   App --> Home[src/home]
   VoteEvents --> Users
+  Chats --> Auth
+  Chats --> VoteEvents
   Home --> VoteEvents
   Home --> Users
   Common --> Envelope[success and error envelopes]
@@ -31,6 +34,9 @@ flowchart TD
 - `src/common/` owns response wrapping, exception normalization, and logging.
 - `src/auth/` owns login, refresh, JWT verification, and required/optional bearer
   guards.
+- `src/chats/` owns vote-event chat message history, Socket.IO room events, and
+  chat message persistence. It treats each vote event as the chat room and
+  reuses vote-events for existence checks.
 - `src/image-uploads/` owns Cloudinary signed upload parameter generation. Image
   binaries go directly from the client to Cloudinary.
 - `src/users/` owns user persistence, password verification, nickname checks,

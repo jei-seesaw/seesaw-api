@@ -886,3 +886,122 @@ Authorization: Bearer jwt-access-token
 - 승자별 지급액은 `stake + floor(losingPool * stake / winningPool)`이다.
 - 나눗셈 후 남은 토큰은 소수 잔여가 큰 승자부터, 동률이면 참여 `createdAt`,
   `id` 오름차순으로 1개씩 배분한다.
+
+## Vote event chat endpoints
+
+각 투표 이벤트는 별도 `chat_rooms` 리소스 없이 하나의 채팅방으로 취급한다.
+v1 채팅은 로그인 사용자만 접근할 수 있고, 진행/완료 투표 이벤트 모두에서
+텍스트 메시지만 허용한다.
+
+`GET /api/v2/vote-events/:id/chat-messages`는 투표 이벤트의 채팅 메시지를
+cursor pagination으로 조회한다. bearer `accessToken`이 필요하다.
+
+요청:
+
+```text
+Authorization: Bearer jwt-access-token
+GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50
+```
+
+다음 페이지 요청:
+
+```text
+GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50&cursor=opaque-next-cursor
+```
+
+공개 응답:
+
+```json
+{
+  "data": {
+    "messages": [
+      {
+        "id": "message-id",
+        "voteEventId": "generated-vote-event-id",
+        "clientMessageId": "client-message-id",
+        "user": {
+          "id": "user-id",
+          "nickname": "hyoseok",
+          "affiliationName": "재능교육"
+        },
+        "content": "저는 A가 더 좋아요",
+        "createdAt": "2026-07-08T12:00:00.000Z"
+      }
+    ],
+    "pageInfo": {
+      "hasNext": false,
+      "nextCursor": null
+    }
+  }
+}
+```
+
+- `limit` 기본값은 `50`, 최댓값은 `50`이다.
+- cursor가 없으면 최신 메시지부터 최대 `limit`개를 고르되, 응답 배열은 오래된
+  순서부터 반환한다.
+- cursor가 있으면 해당 메시지보다 오래된 메시지를 조회한다.
+- `cursor`는 opaque 문자열이며 클라이언트가 해석하지 않는다.
+- cursor가 유효하지 않으면 `400`과 `invalid_cursor`를 반환한다.
+- bearer access token이 없거나 유효하지 않으면 `401`과
+  `invalid_access_token`을 반환한다.
+- 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
+
+Socket.IO 채팅은 namespace `/api/v2/chats`, path `/socket.io`를 사용한다.
+
+클라이언트 연결:
+
+```ts
+io(`${API_BASE_URL}/chats`, {
+  path: '/socket.io',
+  auth: { accessToken },
+});
+```
+
+여기서 `API_BASE_URL`은 `/api/v2`까지 포함한 값이다. 예를 들어
+`https://api.example.com/api/v2`를 사용하면 Socket.IO 연결 URL은
+`https://api.example.com/api/v2/chats`다.
+
+이벤트:
+
+```text
+client -> server: chat:join
+client -> server: chat:message:send
+server -> client: chat:message:new
+```
+
+`chat:join` payload:
+
+```json
+{
+  "voteEventId": "generated-vote-event-id"
+}
+```
+
+`chat:message:send` payload:
+
+```json
+{
+  "voteEventId": "generated-vote-event-id",
+  "clientMessageId": "client-message-id",
+  "content": "저는 A가 더 좋아요"
+}
+```
+
+Socket ack shape:
+
+```ts
+type SocketAck<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: { code: string; message: string } };
+```
+
+- 연결 시 `auth.accessToken`을 검증하고 실패하면 `connect_error` 메시지
+  `invalid_access_token`으로 거절한다.
+- room 이름은 `vote-event:{voteEventId}`다.
+- `voteEventId`, `clientMessageId`는 UUID 문자열이어야 한다.
+- `content`는 trim 후 1자 이상 500자 이하여야 한다.
+- 메시지는 MariaDB에 저장한 뒤 같은 room에 `chat:message:new`으로 전송한다.
+- 같은 사용자가 같은 `clientMessageId`를 재전송하면 기존 메시지를 성공 ack로
+  반환하고 다시 전송하지 않는다.
+- Redis adapter, 읽음 처리, 타이핑 상태, 메시지 수정/삭제/신고/관리 기능은 v1
+  contract에 포함하지 않는다.

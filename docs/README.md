@@ -38,6 +38,7 @@ flowchart LR
   src --> common
   src --> config
   src --> auth
+  src --> chats
   src --> users
   src --> image-uploads
   src --> vote-events

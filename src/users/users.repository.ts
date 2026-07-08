@@ -62,7 +62,7 @@ export class MikroOrmUsersRepository implements UsersRepository {
   }
 
   findById(id: string): Promise<User | null> {
-    return this.users.findOne({ id });
+    return this.users.getEntityManager().fork().findOne(User, { id });
   }
 
   findByNickname(nickname: string): Promise<User | null> {
