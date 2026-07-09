@@ -947,13 +947,14 @@ GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50&cursor=op
   `invalid_access_token`을 반환한다.
 - 투표 이벤트가 없으면 `404`와 `vote_event_not_found`를 반환한다.
 
-Socket.IO 채팅은 namespace `/api/v2/chats`, path `/socket.io`를 사용한다.
+Socket.IO 채팅은 namespace `/api/v2/chats`, path `/api/v2/socket.io`를
+사용한다.
 
 클라이언트 연결:
 
 ```ts
 io(`${API_BASE_URL}/chats`, {
-  path: '/socket.io',
+  path: '/api/v2/socket.io',
   auth: { accessToken },
 });
 ```

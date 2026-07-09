@@ -15,6 +15,7 @@ export class AppSocketIoAdapter extends IoAdapter {
   override createIOServer(port: number, options?: ServerOptions): unknown {
     return super.createIOServer(port, {
       ...options,
+      path: '/api/v2/socket.io',
       cors: {
         credentials: true,
         origin: this.config.getOrThrow<string[]>('CORS_ORIGINS'),

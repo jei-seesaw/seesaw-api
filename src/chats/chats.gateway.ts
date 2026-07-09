@@ -20,7 +20,7 @@ interface AuthenticatedSocket extends Socket {
   };
 }
 
-@WebSocketGateway({ namespace: '/api/v2/chats' })
+@WebSocketGateway({ namespace: '/api/v2/chats', path: '/api/v2/socket.io' })
 export class ChatsGateway implements OnGatewayInit {
   @WebSocketServer()
   private server!: Server;

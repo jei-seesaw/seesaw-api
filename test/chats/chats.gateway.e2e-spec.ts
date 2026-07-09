@@ -113,7 +113,7 @@ async function connectChatSocket(
   const socket = io(`${baseUrl}/api/v2/chats`, {
     auth: { accessToken },
     forceNew: true,
-    path: '/socket.io',
+    path: '/api/v2/socket.io',
     reconnection: false,
     transports: ['websocket'],
   });
