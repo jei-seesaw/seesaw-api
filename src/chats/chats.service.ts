@@ -63,6 +63,7 @@ export class ChatsService {
         nextCursor:
           page.hasNext && firstMessage ? encodeCursor(firstMessage) : null,
       },
+      totalCount: page.totalCount,
     };
   }
 

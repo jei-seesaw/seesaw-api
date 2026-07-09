@@ -139,6 +139,7 @@ describe('ChatsService', () => {
           userId: '77777777-7777-4777-8777-777777777777',
         }),
       ],
+      totalCount: 5,
     };
 
     const result = await service.listMessages(
@@ -151,6 +152,7 @@ describe('ChatsService', () => {
       true,
       false,
     ]);
+    expect(result.totalCount).toBe(5);
   });
 });
 
@@ -178,6 +180,7 @@ class FakeChatMessagesRepository implements ChatMessagesRepository {
   page: ChatMessagePage = {
     hasNext: false,
     items: [],
+    totalCount: 0,
   };
 
   create(options: CreateChatMessageOptions): Promise<ChatMessageRecord> {

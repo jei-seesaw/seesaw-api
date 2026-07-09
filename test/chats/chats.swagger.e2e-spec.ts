@@ -119,6 +119,16 @@ describe('Chats Swagger', () => {
       required: ['id', 'nickname', 'affiliationName'],
       type: 'object',
     });
+    expect(document.components?.schemas?.ListChatMessagesResponseDto).toMatchObject({
+      properties: {
+        totalCount: {
+          description: '채팅방 전체 메시지 수',
+          example: 120,
+          type: 'number',
+        },
+      },
+      required: ['messages', 'pageInfo', 'totalCount'],
+    });
     expect(
       document.paths['/api/v2/vote-events/{id}/chat-messages']?.get,
     ).toMatchObject({

@@ -932,7 +932,8 @@ GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50&cursor=op
     "pageInfo": {
       "hasNext": false,
       "nextCursor": null
-    }
+    },
+    "totalCount": 120
   }
 }
 ```
@@ -941,6 +942,7 @@ GET /api/v2/vote-events/generated-vote-event-id/chat-messages?limit=50&cursor=op
 - cursor가 없으면 최신 메시지부터 최대 `limit`개를 고르되, 응답 배열은 오래된
   순서부터 반환한다.
 - cursor가 있으면 해당 메시지보다 오래된 메시지를 조회한다.
+- `totalCount`는 cursor와 무관하게 해당 채팅방의 전체 메시지 수다.
 - `cursor`는 opaque 문자열이며 클라이언트가 해석하지 않는다.
 - cursor가 유효하지 않으면 `400`과 `invalid_cursor`를 반환한다.
 - bearer access token이 없거나 유효하지 않으면 `401`과

@@ -84,6 +84,7 @@ describe('Chat messages REST endpoint', () => {
     });
     expect(body.data.pageInfo.hasNext).toBe(true);
     expect(typeof body.data.pageInfo.nextCursor).toBe('string');
+    expect(body.data.totalCount).toBe(3);
     const nextCursor = body.data.pageInfo.nextCursor;
 
     if (!nextCursor) {
@@ -105,6 +106,7 @@ describe('Chat messages REST endpoint', () => {
           hasNext: false,
           nextCursor: null,
         });
+        expect(nextBody.data.totalCount).toBe(3);
       });
   });
 
@@ -171,6 +173,7 @@ interface ChatMessagesEnvelope {
       hasNext: boolean;
       nextCursor: string | null;
     };
+    totalCount: number;
   };
 }
 

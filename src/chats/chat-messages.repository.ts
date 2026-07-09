@@ -39,6 +39,7 @@ export interface ListChatMessagesOptions {
 export interface ChatMessagePage {
   hasNext: boolean;
   items: ChatMessageRecord[];
+  totalCount: number;
 }
 
 export abstract class ChatMessagesRepository {
@@ -102,18 +103,21 @@ export class MikroOrmChatMessagesRepository implements ChatMessagesRepository {
 
     params.push(options.limit + 1);
 
-    const rows = await this.chatMessages
-      .getEntityManager()
-      .getConnection()
-      .execute<ChatMessageRow[]>(
-        `${chatMessageSelect()} where ${conditions.join(' and ')} order by m.\`created_at\` desc, m.\`id\` desc limit ?`,
-        params,
-      );
+    const connection = this.chatMessages.getEntityManager().getConnection();
+    const rows = await connection.execute<ChatMessageRow[]>(
+      `${chatMessageSelect()} where ${conditions.join(' and ')} order by m.\`created_at\` desc, m.\`id\` desc limit ?`,
+      params,
+    );
+    const countRows = await connection.execute<ChatMessageCountRow[]>(
+      'select count(*) as `totalCount` from `vote_event_chat_messages` where `vote_event_id` = ?',
+      [options.voteEventId],
+    );
     const items = rows.slice(0, options.limit).map(toChatMessageRecord);
 
     return {
       hasNext: rows.length > options.limit,
       items: items.reverse(),
+      totalCount: Number(countRows[0]?.totalCount ?? 0),
     };
   }
 
@@ -139,6 +143,10 @@ interface ChatMessageRow {
   userId: string;
   userNickname: string;
   voteEventId: string;
+}
+
+interface ChatMessageCountRow {
+  totalCount: number | string;
 }
 
 function chatMessageSelect(): string {

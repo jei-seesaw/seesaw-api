@@ -80,4 +80,7 @@ export class ListChatMessagesResponseDto {
 
   @ApiProperty({ type: () => ChatMessagesPageInfoDto })
   pageInfo!: ChatMessagesPageInfoDto;
+
+  @ApiProperty({ description: '채팅방 전체 메시지 수', example: 120 })
+  totalCount!: number;
 }
